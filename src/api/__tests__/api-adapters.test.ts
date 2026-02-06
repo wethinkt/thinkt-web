@@ -9,7 +9,7 @@ import {
   convertApiSessionMeta,
   convertToApiEntry,
 } from '../components/api-adapters';
-import type { Entry as ApiEntry, SessionMeta } from '../client';
+import type { Entry as ApiEntry, SessionMeta } from '@wethinkt/ts-thinkt/api';
 
 describe('API Adapters', () => {
   describe('convertApiEntry', () => {

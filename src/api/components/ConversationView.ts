@@ -5,9 +5,10 @@
  * Displays entries in a scrollable, formatted view with filter toggles.
  */
 
-import type { Entry, ContentBlock } from '../client';
-import type { ThinktClient } from '../client';
-import type { Session } from '@wethinkt/ts-thinkt';
+import type { Entry } from '@wethinkt/ts-thinkt/api';
+import type { ThinktClient } from '@wethinkt/ts-thinkt/api';
+import type { Session, Entry as ThinktEntry, ContentBlock } from '@wethinkt/ts-thinkt';
+import { convertApiEntry } from './api-adapters';
 
 // ============================================
 // Types
@@ -557,8 +558,6 @@ export class ConversationView {
       return;
     }
 
-    console.log('[ConversationView] Toolbar action:', action, 'Path:', this.currentProjectPath);
-
     // Map action to app name
     const appMap: Record<string, string> = {
       'finder': 'finder',
@@ -572,10 +571,8 @@ export class ConversationView {
 
     if (action === 'copy') {
       // Copy path to clipboard
-      console.log('[ConversationView] Copying path to clipboard:', this.currentProjectPath);
       try {
         await navigator.clipboard.writeText(this.currentProjectPath);
-        console.log('[ConversationView] Path copied successfully');
       } catch (err) {
         console.error('[ConversationView] Failed to copy path:', err);
       }
@@ -590,15 +587,12 @@ export class ConversationView {
     // Use the API to open in external app
     if (this.client) {
       try {
-        console.log(`[ConversationView] Calling API to open in ${app}:`, this.currentProjectPath);
         await this.client.openIn(app, this.currentProjectPath);
-        console.log('[ConversationView] Successfully opened via API');
       } catch (err) {
         console.error('[ConversationView] Failed to open via API:', err);
         // Fallback to clipboard
         try {
           await navigator.clipboard.writeText(this.currentProjectPath);
-          console.log('[ConversationView] Path copied to clipboard as fallback');
         } catch (clipboardErr) {
           console.error('[ConversationView] Failed to copy to clipboard:', clipboardErr);
         }
@@ -608,7 +602,6 @@ export class ConversationView {
       // Fallback to clipboard
       try {
         await navigator.clipboard.writeText(this.currentProjectPath);
-        console.log('[ConversationView] Path copied to clipboard as fallback');
       } catch (clipboardErr) {
         console.error('[ConversationView] Failed to copy to clipboard:', clipboardErr);
       }
@@ -736,7 +729,7 @@ export class ConversationView {
   }
 
   /**
-   * Display API entries directly
+   * Display API entries directly (converts to internal format first)
    */
   displayEntries(entries: Entry[]): void {
     this.contentContainer.innerHTML = '';
@@ -746,8 +739,9 @@ export class ConversationView {
       return;
     }
 
-    for (const entry of entries) {
-      const entryEl = this.renderApiEntry(entry);
+    const converted = entries.map(convertApiEntry);
+    for (const entry of converted) {
+      const entryEl = this.renderEntry(entry);
       this.contentContainer.appendChild(entryEl);
     }
 
@@ -759,20 +753,20 @@ export class ConversationView {
     this.contentContainer.scrollTop = 0;
   }
 
-  private renderEntry(entry: import('@wethinkt/ts-thinkt').Entry): HTMLElement {
+  private renderEntry(entry: ThinktEntry): HTMLElement {
     const role = entry.role || 'unknown';
     const roleClass = `thinkt-conversation-entry__role--${role}`;
-    
+
     const div = document.createElement('div');
     div.className = 'thinkt-conversation-entry';
     div.dataset.role = role;
 
-    const timestamp = entry.timestamp 
-      ? new Date(entry.timestamp).toLocaleString() 
+    const timestamp = entry.timestamp
+      ? new Date(entry.timestamp).toLocaleString()
       : '';
 
     let contentHtml = '';
-    
+
     // Render content blocks if available
     if (entry.contentBlocks && entry.contentBlocks.length > 0) {
       for (const block of entry.contentBlocks) {
@@ -795,87 +789,11 @@ export class ConversationView {
     return div;
   }
 
-  private renderApiEntry(entry: Entry): HTMLElement {
-    const role = entry.role || 'unknown';
-    const roleClass = `thinkt-conversation-entry__role--${role}`;
-    
-    const div = document.createElement('div');
-    div.className = 'thinkt-conversation-entry';
-    div.dataset.role = role;
-
-    const timestamp = entry.timestamp 
-      ? new Date(entry.timestamp).toLocaleString() 
-      : '';
-
-    let contentHtml = '';
-    
-    // Render content blocks if available
-    if (entry.content_blocks && entry.content_blocks.length > 0) {
-      for (const block of entry.content_blocks) {
-        contentHtml += this.renderApiContentBlock(block);
-      }
-    } else if (entry.text) {
-      contentHtml = `<div class="thinkt-conversation-entry__text">${this.escapeHtml(entry.text)}</div>`;
-    }
-
-    div.innerHTML = `
-      <div class="thinkt-conversation-entry__header">
-        <span class="thinkt-conversation-entry__role ${roleClass}">${role}</span>
-        ${timestamp ? `<span class="thinkt-conversation-entry__timestamp">${timestamp}</span>` : ''}
-      </div>
-      <div class="thinkt-conversation-entry__content">
-        ${contentHtml}
-      </div>
-    `;
-
-    return div;
-  }
-
   private renderContentBlock(block: ContentBlock): string {
     switch (block.type) {
       case 'text':
         return `<div class="thinkt-conversation-entry__text">${this.escapeHtml(block.text || '')}</div>`;
-      
-      case 'thinking':
-        return `
-          <div class="thinkt-conversation-entry__thinking" data-type="thinking">
-            <div class="thinkt-conversation-entry__thinking-label">Thinking</div>
-            ${this.escapeHtml(block.thinking || '')}
-          </div>
-        `;
-      
-      case 'tool_use': {
-        const toolUse = block as import('@wethinkt/ts-thinkt').ToolUseBlock;
-        return `
-          <div class="thinkt-conversation-entry__tool-use" data-type="toolUse">
-            <div class="thinkt-conversation-entry__tool-name">${this.escapeHtml(toolUse.toolName)}</div>
-            <pre class="thinkt-conversation-entry__tool-input">${this.escapeHtml(JSON.stringify(toolUse.toolInput, null, 2))}</pre>
-          </div>
-        `;
-      }
-      
-      case 'tool_result': {
-        const toolResult = block as import('@wethinkt/ts-thinkt').ToolResultBlock;
-        const resultClass = toolResult.isError ? 'thinkt-conversation-entry__tool-result--error' : '';
-        const resultLabel = toolResult.isError ? 'Error' : 'Result';
-        return `
-          <div class="thinkt-conversation-entry__tool-result ${resultClass}" data-type="toolResult">
-            <div class="thinkt-conversation-entry__tool-result-label">${resultLabel}</div>
-            <div class="thinkt-conversation-entry__text">${this.escapeHtml(String(toolResult.toolResult || ''))}</div>
-          </div>
-        `;
-      }
-      
-      default:
-        return '';
-    }
-  }
 
-  private renderApiContentBlock(block: ContentBlock): string {
-    switch (block.type) {
-      case 'text':
-        return `<div class="thinkt-conversation-entry__text">${this.escapeHtml(block.text || '')}</div>`;
-      
       case 'thinking':
         return `
           <div class="thinkt-conversation-entry__thinking" data-type="thinking">
@@ -883,26 +801,26 @@ export class ConversationView {
             ${this.escapeHtml(block.thinking || '')}
           </div>
         `;
-      
+
       case 'tool_use':
         return `
           <div class="thinkt-conversation-entry__tool-use" data-type="toolUse">
-            <div class="thinkt-conversation-entry__tool-name">${this.escapeHtml(block.tool_name || 'unknown')}</div>
-            <pre class="thinkt-conversation-entry__tool-input">${this.escapeHtml(JSON.stringify(block.tool_input, null, 2))}</pre>
+            <div class="thinkt-conversation-entry__tool-name">${this.escapeHtml(block.toolName)}</div>
+            <pre class="thinkt-conversation-entry__tool-input">${this.escapeHtml(JSON.stringify(block.toolInput, null, 2))}</pre>
           </div>
         `;
-      
+
       case 'tool_result': {
-        const resultClass = block.is_error ? 'thinkt-conversation-entry__tool-result--error' : '';
-        const resultLabel = block.is_error ? 'Error' : 'Result';
+        const resultClass = block.isError ? 'thinkt-conversation-entry__tool-result--error' : '';
+        const resultLabel = block.isError ? 'Error' : 'Result';
         return `
           <div class="thinkt-conversation-entry__tool-result ${resultClass}" data-type="toolResult">
             <div class="thinkt-conversation-entry__tool-result-label">${resultLabel}</div>
-            <div class="thinkt-conversation-entry__text">${this.escapeHtml(String(block.tool_result || ''))}</div>
+            <div class="thinkt-conversation-entry__text">${this.escapeHtml(String(block.toolResult || ''))}</div>
           </div>
         `;
       }
-      
+
       default:
         return '';
     }

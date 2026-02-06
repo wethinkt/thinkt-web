@@ -3,12 +3,12 @@
  *
  * Provides flexible runtime configuration for the API base URL.
  * Configuration priority (highest to lowest):
- * 1. Query parameter: ?api-url=http://localhost:7433
+ * 1. Query parameter: ?api-url=http://localhost:8784
  * 2. Global variable: window.THINKT_API_URL
- * 3. Meta tag: <meta name="thinkt-api-url" content="http://localhost:7433">
+ * 3. Meta tag: <meta name="thinkt-api-url" content="http://localhost:8784">
  * 4. Environment variable: VITE_API_URL (build time)
  * 5. Same origin: window.location.origin (production)
- * 6. Default: http://localhost:7433
+ * 6. Default: http://localhost:8784
  */
 
 /**
@@ -67,8 +67,8 @@ export function getApiBaseUrl(): string {
 
   // 6. Default fallback
   // eslint-disable-next-line no-console
-  console.log('[THINKT] Using default API URL: http://localhost:7433');
-  return 'http://localhost:7433';
+  console.log('[THINKT] Using default API URL: http://localhost:8784');
+  return 'http://localhost:8784';
 }
 
 /**

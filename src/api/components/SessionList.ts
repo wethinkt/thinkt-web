@@ -5,8 +5,8 @@
  * Can be embedded in the main viewer or used independently.
  */
 
-import type { SessionMeta } from '../client';
-import { ThinktClient, getDefaultClient } from '../client';
+import type { SessionMeta } from '@wethinkt/ts-thinkt/api';
+import { ThinktClient, getDefaultClient } from '@wethinkt/ts-thinkt/api';
 
 // ============================================
 // Types
@@ -495,20 +495,24 @@ export class SessionList {
     if (!this.elements.errorDisplay) return;
 
     if (error) {
-      this.elements.errorDisplay.innerHTML = `
-        <div>${error.message}</div>
-        <button class="${this.options.classPrefix}__retry">Retry</button>
-      `;
-      this.elements.errorDisplay.style.display = 'block';
+      this.elements.errorDisplay.innerHTML = '';
+      const msgDiv = document.createElement('div');
+      msgDiv.textContent = error.message;
+      this.elements.errorDisplay.appendChild(msgDiv);
 
-      const retryBtn = this.elements.errorDisplay.querySelector('button');
-      if (retryBtn && this.options.projectId) {
+      if (this.options.projectId) {
+        const retryBtn = document.createElement('button');
+        retryBtn.className = `${this.options.classPrefix}__retry`;
+        retryBtn.textContent = 'Retry';
         retryBtn.addEventListener('click', () => {
           if (this.options.projectId) {
             void this.loadSessions(this.options.projectId);
           }
         });
+        this.elements.errorDisplay.appendChild(retryBtn);
       }
+
+      this.elements.errorDisplay.style.display = 'block';
     } else {
       this.elements.errorDisplay.style.display = 'none';
     }
@@ -601,7 +605,7 @@ export class SessionList {
       const session = this.filteredSessions[i];
       const item = this.renderSessionItem(session, i);
       list.appendChild(item);
-      this.itemElements.set(session.id!, item);
+      this.itemElements.set(this.sessionKey(session, i), item);
     }
   }
 
@@ -677,11 +681,15 @@ export class SessionList {
   // Selection
   // ============================================
 
+  private sessionKey(session: SessionMeta, index: number): string {
+    return session.id ?? `session-${index}`;
+  }
+
   private selectIndex(index: number): void {
     // Deselect previous
     if (this.selectedIndex >= 0) {
-      const prevId = this.filteredSessions[this.selectedIndex]?.id;
-      const prevItem = prevId ? this.itemElements.get(prevId) : undefined;
+      const prev = this.filteredSessions[this.selectedIndex];
+      const prevItem = prev ? this.itemElements.get(this.sessionKey(prev, this.selectedIndex)) : undefined;
       if (prevItem) {
         prevItem.classList.remove(`${this.options.classPrefix}__item--selected`);
         prevItem.setAttribute('aria-selected', 'false');
@@ -692,8 +700,8 @@ export class SessionList {
 
     // Select new
     if (index >= 0) {
-      const itemId = this.filteredSessions[index]?.id;
-      const item = itemId ? this.itemElements.get(itemId) : undefined;
+      const current = this.filteredSessions[index];
+      const item = current ? this.itemElements.get(this.sessionKey(current, index)) : undefined;
       if (item) {
         item.classList.add(`${this.options.classPrefix}__item--selected`);
         item.setAttribute('aria-selected', 'true');

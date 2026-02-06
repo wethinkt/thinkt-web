@@ -1,13 +1,14 @@
 /**
  * THINKT API Module
  *
- * Type-safe API client and bindings for the THINKT server.
+ * Re-exports the API client from @wethinkt/ts-thinkt and provides
+ * thinkt-web's UI components for browsing projects and sessions.
  *
  * @example
  * ```typescript
  * import { createClient, type Project } from './api';
  *
- * const client = createClient({ baseUrl: 'http://localhost:7433' });
+ * const client = createClient({ baseUrl: 'http://localhost:8784' });
  *
  * // List all projects
  * const projects = await client.getProjects();
@@ -20,7 +21,7 @@
  * ```
  */
 
-// Client and configuration
+// Client and configuration (from ts-thinkt)
 export {
   ThinktClient,
   ThinktAPIError,
@@ -29,9 +30,9 @@ export {
   getDefaultClient,
   configureDefaultClient,
   resetDefaultClient,
-} from './client';
+} from '@wethinkt/ts-thinkt/api';
 
-// Types
+// Types (from ts-thinkt)
 export type {
   ThinktClientConfig,
   SessionResponse,
@@ -46,10 +47,10 @@ export type {
   ErrorResponse,
   APIPaths,
   APIComponents,
-} from './client';
+} from '@wethinkt/ts-thinkt/api';
 
-// Generated types (for advanced use cases)
-export type { paths, components } from './generated';
+// Generated types (from ts-thinkt, for advanced use cases)
+export type { paths, components } from '@wethinkt/ts-thinkt/api';
 
-// Components
+// Components (thinkt-web UI)
 export * from './components';

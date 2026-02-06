@@ -5,8 +5,8 @@
  * Can be embedded in the main viewer or used independently (e.g., in VSCode extension).
  */
 
-import type { Project } from '../client';
-import { ThinktClient, getDefaultClient } from '../client';
+import type { Project } from '@wethinkt/ts-thinkt/api';
+import { ThinktClient, getDefaultClient } from '@wethinkt/ts-thinkt/api';
 
 // ============================================
 // Types
@@ -479,18 +479,20 @@ export class ProjectBrowser {
     if (!this.elements.errorDisplay) return;
 
     if (error) {
-      this.elements.errorDisplay.innerHTML = `
-        <div>${error.message}</div>
-        <button class="${this.options.classPrefix}__retry">Retry</button>
-      `;
-      this.elements.errorDisplay.style.display = 'block';
+      this.elements.errorDisplay.innerHTML = '';
+      const msgDiv = document.createElement('div');
+      msgDiv.textContent = error.message;
+      this.elements.errorDisplay.appendChild(msgDiv);
 
-      const retryBtn = this.elements.errorDisplay.querySelector('button');
-      if (retryBtn) {
-        retryBtn.addEventListener('click', () => {
-          void this.loadProjects(this.elements.sourceFilter?.value || undefined);
-        });
-      }
+      const retryBtn = document.createElement('button');
+      retryBtn.className = `${this.options.classPrefix}__retry`;
+      retryBtn.textContent = 'Retry';
+      retryBtn.addEventListener('click', () => {
+        void this.loadProjects(this.elements.sourceFilter?.value || undefined);
+      });
+      this.elements.errorDisplay.appendChild(retryBtn);
+
+      this.elements.errorDisplay.style.display = 'block';
     } else {
       this.elements.errorDisplay.style.display = 'none';
     }
@@ -561,7 +563,7 @@ export class ProjectBrowser {
       const project = this.filteredProjects[i];
       const item = this.renderProjectItem(project, i);
       list.appendChild(item);
-      this.itemElements.set(project.id!, item);
+      this.itemElements.set(this.projectKey(project, i), item);
     }
   }
 
@@ -615,11 +617,15 @@ export class ProjectBrowser {
   // Selection
   // ============================================
 
+  private projectKey(project: Project, index: number): string {
+    return project.id ?? `project-${index}`;
+  }
+
   private selectIndex(index: number): void {
     // Deselect previous
     if (this.selectedIndex >= 0) {
-      const prevId = this.filteredProjects[this.selectedIndex]?.id;
-      const prevItem = prevId ? this.itemElements.get(prevId) : undefined;
+      const prev = this.filteredProjects[this.selectedIndex];
+      const prevItem = prev ? this.itemElements.get(this.projectKey(prev, this.selectedIndex)) : undefined;
       if (prevItem) {
         prevItem.classList.remove(`${this.options.classPrefix}__item--selected`);
         prevItem.setAttribute('aria-selected', 'false');
@@ -630,8 +636,8 @@ export class ProjectBrowser {
 
     // Select new
     if (index >= 0) {
-      const itemId = this.filteredProjects[index]?.id;
-      const item = itemId ? this.itemElements.get(itemId) : undefined;
+      const current = this.filteredProjects[index];
+      const item = current ? this.itemElements.get(this.projectKey(current, index)) : undefined;
       if (item) {
         item.classList.add(`${this.options.classPrefix}__item--selected`);
         item.setAttribute('aria-selected', 'true');

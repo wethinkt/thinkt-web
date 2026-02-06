@@ -8,10 +8,10 @@ Designed to be embedded by `thinkt serve`.
 
 ```bash
 npm install
-npm run dev        # starts on http://localhost:7434, proxies /api to :7433
+npm run dev        # starts on http://localhost:7434, proxies /api to :8784
 ```
 
-The dev server expects the Go API server (`thinkt serve`) running on port 7433.
+The dev server expects the Go API server (`thinkt serve`) running on port 8784.
 
 ## Scripts
 
@@ -25,29 +25,29 @@ The dev server expects the Go API server (`thinkt serve`) running on port 7433.
 | `npm run test:run` | Run tests once |
 | `npm run typecheck` | TypeScript type checking |
 | `npm run lint` | ESLint |
-| `npm run api:generate` | Regenerate TypeScript types from swagger.json |
 
 ## Architecture
 
 ```
+@wethinkt/ts-thinkt (../ts-thinkt)    <- core library (types, parsers, API client)
+  └── thinkt-web (this project)        <- web UI that consumes the library
+
 src/
 ├── main.ts              # App bootstrap, keyboard shortcuts, connection monitoring
 ├── config.ts            # Runtime API URL configuration (query param, env, meta tag, etc.)
 ├── styles.css           # Global dark theme, layout, CSS variables
 ├── i18n.ts              # Locale stub (localStorage persistence)
 └── api/
-    ├── client.ts        # Type-safe HTTP client (ThinktClient)
-    ├── generated.ts     # Auto-generated types from OpenAPI spec
-    ├── openapi.json     # OpenAPI 3.0 spec
-    ├── swagger.json     # Source Swagger 2.0 spec
+    ├── index.ts         # Re-exports from @wethinkt/ts-thinkt/api + local components
     └── components/
         ├── ApiViewer.ts       # Top-level orchestrator (split pane layout)
         ├── ProjectBrowser.ts  # Project list with search/filter/keyboard nav
         ├── SessionList.ts     # Session list within a project
-        ├── ConversationView.ts# Text-based conversation viewer
-        ├── ProjectToolbar.ts  # Project metadata and actions
-        └── api-adapters.ts    # Converts API snake_case ↔ THINKT camelCase
+        ├── ConversationView.ts# Text-based conversation viewer with filter toggles
+        └── api-adapters.ts    # Converts API snake_case <-> THINKT camelCase
 ```
+
+The API client (`ThinktClient`), generated types (`Project`, `SessionMeta`, `Entry`, etc.), and core data model all come from `@wethinkt/ts-thinkt/api`. This project adds the web UI layer and an adapter to convert between API wire format and the ts-thinkt object model.
 
 ## API URL Configuration
 
@@ -58,19 +58,10 @@ The app resolves its API base URL with this priority:
 3. Meta tag: `<meta name="thinkt-api-url" content="...">`
 4. Env variable: `VITE_API_URL` (build time)
 5. Same origin (production)
-6. Default: `http://localhost:7433`
+6. Default: `http://localhost:8784`
 
 ## Dependencies
 
-- **`@wethinkt/ts-thinkt`** — shared types and interfaces (`file:../ts-thinkt`)
+- **`@wethinkt/ts-thinkt`** (`file:../ts-thinkt`) — API client, types, parsers, and analysis utilities
 - **vite** — build tooling
 - **vitest** — test runner
-- **openapi-typescript** / **swagger2openapi** — API type generation
-
-## Regenerating API Types
-
-When the Go server's API changes:
-
-1. Copy the updated `swagger.json` into `src/api/swagger.json`
-2. Run `npm run api:generate`
-3. This converts to OpenAPI 3.0 and generates `src/api/generated.ts`

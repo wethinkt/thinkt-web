@@ -40,15 +40,6 @@ export {
   type FilterState,
 } from './ConversationView';
 
-// Project Toolbar
-export {
-  ProjectToolbar,
-  createProjectToolbar,
-  type ProjectToolbarElements,
-  type ProjectToolbarOptions,
-  type CustomApp,
-} from './ProjectToolbar';
-
 // Adapters
 export {
   convertApiEntry,

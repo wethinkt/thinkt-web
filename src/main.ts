@@ -17,6 +17,7 @@ import './styles.css';
 // ============================================
 
 let apiViewer: ApiViewer | null = null;
+let connectionIntervalId: ReturnType<typeof setInterval> | null = null;
 
 // ============================================
 // Initialization
@@ -173,16 +174,22 @@ function setupConnectionMonitoring(): void {
   void checkConnection();
 
   // Periodic check every 30 seconds
-  setInterval(checkConnection, 30000);
+  connectionIntervalId = setInterval(() => { void checkConnection(); }, 30000);
 }
 
 async function checkConnection(): Promise<void> {
   try {
-    const client = apiViewer?.getProjectBrowser();
-    if (!client) return;
-
-    // Just check if we can get the project browser (which means init succeeded)
-    updateConnectionStatus('connected');
+    const baseUrl = getApiBaseUrl();
+    const response = await fetch(`${baseUrl}/api/v1/sources`, {
+      method: 'GET',
+      headers: { 'Accept': 'application/json' },
+      signal: AbortSignal.timeout(5000),
+    });
+    if (response.ok) {
+      updateConnectionStatus('connected');
+    } else {
+      updateConnectionStatus('error', `HTTP ${response.status}`);
+    }
   } catch (error) {
     updateConnectionStatus('error', error instanceof Error ? error.message : 'Connection failed');
   }
@@ -193,6 +200,10 @@ async function checkConnection(): Promise<void> {
 // ============================================
 
 function dispose(): void {
+  if (connectionIntervalId !== null) {
+    clearInterval(connectionIntervalId);
+    connectionIntervalId = null;
+  }
   apiViewer?.dispose();
   apiViewer = null;
 }

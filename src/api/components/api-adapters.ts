@@ -4,7 +4,7 @@
  * Convert between THINKT API formats and internal library formats.
  */
 
-import type { SessionMeta, Entry, ContentBlock as ApiContentBlock } from '../client';
+import type { SessionMeta, Entry, ContentBlock as ApiContentBlock } from '@wethinkt/ts-thinkt/api';
 import type { Session, Entry as ThinktEntry, ContentBlock, Source, Role } from '@wethinkt/ts-thinkt';
 
 // ============================================

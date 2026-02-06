@@ -5,8 +5,8 @@
  * Provides a complete browsing and conversation viewing experience (no 3D).
  */
 
-import type { Project, SessionMeta, Entry } from '../client';
-import { ThinktClient, getDefaultClient } from '../client';
+import type { Project, SessionMeta, Entry } from '@wethinkt/ts-thinkt/api';
+import { ThinktClient, getDefaultClient } from '@wethinkt/ts-thinkt/api';
 import { ProjectBrowser } from './ProjectBrowser';
 import { SessionList } from './SessionList';
 import { ConversationView } from './ConversationView';
