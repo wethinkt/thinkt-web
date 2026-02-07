@@ -715,6 +715,13 @@ export class ProjectBrowser {
     }
   }
 
+  /**
+   * Focus the search input
+   */
+  focusSearch(): void {
+    this.elements.searchInput?.focus();
+  }
+
   // ============================================
   // Cleanup
   // ============================================

@@ -751,4 +751,76 @@ export const CONVERSATION_STYLES = `
 .thinkt-conversation-view__toolbar-dropdown-item:hover {
   background: rgba(255, 255, 255, 0.05);
 }
+
+/* ============================================
+   Export Dropdown (in filter bar)
+   ============================================ */
+
+.thinkt-conversation-view__export {
+  position: relative;
+  margin-left: auto;
+  flex-shrink: 0;
+}
+
+.thinkt-conversation-view__export-btn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 10px;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid var(--thinkt-border-color, #333);
+  border-radius: 4px;
+  color: var(--thinkt-muted-color, #888);
+  font-size: 11px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  white-space: nowrap;
+}
+
+.thinkt-conversation-view__export-btn:hover {
+  background: rgba(255, 255, 255, 0.08);
+  border-color: var(--thinkt-border-color-light, #444);
+  color: var(--thinkt-text-color, #e0e0e0);
+}
+
+.thinkt-conversation-view__export-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.thinkt-conversation-view__export-dropdown {
+  position: fixed;
+  min-width: 140px;
+  background: var(--thinkt-bg-secondary, #141414);
+  border: 1px solid var(--thinkt-border-color, #2a2a2a);
+  border-radius: 6px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+  z-index: 10000;
+  display: none;
+  overflow: hidden;
+}
+
+.thinkt-conversation-view__export-dropdown.open {
+  display: block;
+}
+
+.thinkt-conversation-view__export-dropdown-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  font-size: 12px;
+  color: var(--thinkt-text-color, #e0e0e0);
+  cursor: pointer;
+  transition: background 0.12s ease;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.03);
+}
+
+.thinkt-conversation-view__export-dropdown-item:last-child {
+  border-bottom: none;
+}
+
+.thinkt-conversation-view__export-dropdown-item:hover {
+  background: rgba(255, 255, 255, 0.05);
+}
 `;

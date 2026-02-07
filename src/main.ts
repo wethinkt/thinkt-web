@@ -145,6 +145,13 @@ function updateConnectionStatus(status: 'connected' | 'error' | 'connecting', me
 // Keyboard Shortcuts
 // ============================================
 
+function isInputElement(element: EventTarget | null): boolean {
+  if (!(element instanceof HTMLElement)) return false;
+  return element.tagName === 'INPUT' ||
+    element.tagName === 'TEXTAREA' ||
+    element.isContentEditable;
+}
+
 function setupKeyboardShortcuts(): void {
   document.addEventListener('keydown', (e) => {
     // Ctrl/Cmd + R - Refresh projects
@@ -156,11 +163,31 @@ function setupKeyboardShortcuts(): void {
           void err;
         });
       }
+      return;
     }
 
     // Escape - Focus app container for keyboard nav
     if (e.key === 'Escape') {
       document.getElementById('app')?.focus();
+      return;
+    }
+
+    // / - Focus search box
+    if (e.key === '/' && !e.ctrlKey && !e.metaKey && !e.altKey) {
+      // Don't intercept if user is typing in an input
+      if (isInputElement(e.target)) {
+        return;
+      }
+
+      e.preventDefault();
+
+      // Focus session search if a project is selected, otherwise focus project search
+      const currentProject = apiViewer?.getCurrentProject();
+      if (currentProject) {
+        apiViewer?.focusSessionSearch();
+      } else {
+        apiViewer?.focusProjectSearch();
+      }
     }
   });
 }

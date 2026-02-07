@@ -13,6 +13,7 @@ import type { ThinktClient } from '@wethinkt/ts-thinkt/api';
 import type { Session, Entry, ToolResultBlock } from '@wethinkt/ts-thinkt';
 import { CONVERSATION_STYLES } from './conversation-styles';
 import { escapeHtml, formatToolSummary, renderMarkdown, formatDuration } from './conversation-renderers';
+import { exportAsHtml, exportAsMarkdown, downloadFile, getSafeFilename } from './export';
 
 // ============================================
 // Types
@@ -67,6 +68,9 @@ export class ConversationView {
   private currentProjectPath: string | null = null;
   private currentEntryCount = 0;
 
+  // Current session entries for export
+  private currentEntries: Entry[] = [];
+
   // Tool result index: toolUseId → ToolResultBlock
   private toolResultIndex: Map<string, ToolResultBlock> = new Map();
   // Track which tool results were inlined with their tool_use
@@ -74,6 +78,9 @@ export class ConversationView {
 
   // Bound handlers for cleanup
   private boundFilterHandlers: Map<HTMLElement, () => void> = new Map();
+
+  // Export dropdown state
+  private exportDropdownOpen = false;
 
   constructor(options: ConversationViewOptions) {
     this.container = options.elements.container;
@@ -306,6 +313,7 @@ export class ConversationView {
   // ============================================
 
   private renderFilterBar(): void {
+    const hasEntries = this.currentEntries.length > 0;
     this.filterContainer.innerHTML = `
       <span class="thinkt-conversation-view__filter-label">Show:</span>
       <button class="thinkt-conversation-view__filter-btn ${this.filterState.user ? 'active' : ''}" data-filter="user">
@@ -326,7 +334,84 @@ export class ConversationView {
       <button class="thinkt-conversation-view__filter-btn ${this.filterState.system ? 'active' : ''}" data-filter="system">
         System
       </button>
+      <div class="thinkt-conversation-view__export">
+        <button class="thinkt-conversation-view__export-btn" id="export-btn" ${hasEntries ? '' : 'disabled'}>
+          Export ▼
+        </button>
+        <div class="thinkt-conversation-view__export-dropdown" id="export-dropdown">
+          <div class="thinkt-conversation-view__export-dropdown-item" data-format="html">
+            <span class="icon">🌐</span> Export as HTML
+          </div>
+          <div class="thinkt-conversation-view__export-dropdown-item" data-format="markdown">
+            <span class="icon">📝</span> Export as Markdown
+          </div>
+        </div>
+      </div>
     `;
+
+    this.setupExportHandlers();
+  }
+
+  private setupExportHandlers(): void {
+    const exportBtn = this.filterContainer.querySelector('#export-btn') as HTMLElement | null;
+    const dropdown = this.filterContainer.querySelector('#export-dropdown') as HTMLElement | null;
+    if (!exportBtn || !dropdown) return;
+
+    // Toggle dropdown
+    exportBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      this.exportDropdownOpen = !this.exportDropdownOpen;
+      if (this.exportDropdownOpen) {
+        this.positionDropdown(exportBtn, dropdown);
+        dropdown.classList.add('open');
+      } else {
+        dropdown.classList.remove('open');
+      }
+    });
+
+    // Close dropdown when clicking outside
+    document.addEventListener('click', () => {
+      if (this.exportDropdownOpen) {
+        this.exportDropdownOpen = false;
+        dropdown.classList.remove('open');
+      }
+    });
+
+    // Handle export format selection
+    dropdown.querySelectorAll('.thinkt-conversation-view__export-dropdown-item').forEach((item) => {
+      item.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const format = (item as HTMLElement).dataset.format;
+        if (format) {
+          this.handleExport(format);
+        }
+        this.exportDropdownOpen = false;
+        dropdown.classList.remove('open');
+      });
+    });
+  }
+
+  private positionDropdown(button: HTMLElement, dropdown: HTMLElement): void {
+    const rect = button.getBoundingClientRect();
+    dropdown.style.top = `${rect.bottom + 4}px`;
+    dropdown.style.right = `${window.innerWidth - rect.right}px`;
+  }
+
+  private handleExport(format: string): void {
+    if (this.currentEntries.length === 0) return;
+
+    const title = this.currentProjectPath
+      ? `${this.currentProjectPath.split('/').pop() || 'conversation'}`
+      : 'conversation';
+    const safeFilename = getSafeFilename(title);
+
+    if (format === 'html') {
+      const html = exportAsHtml(this.currentEntries, title);
+      downloadFile(html, `${safeFilename}.html`, 'text/html');
+    } else if (format === 'markdown') {
+      const md = exportAsMarkdown(this.currentEntries, title);
+      downloadFile(md, `${safeFilename}.md`, 'text/markdown');
+    }
   }
 
   private setupFilters(): void {
@@ -416,19 +501,23 @@ export class ConversationView {
    */
   displaySession(session: Session): void {
     this.contentContainer.innerHTML = '';
+    this.currentEntries = session.entries || [];
 
-    if (!session.entries || session.entries.length === 0) {
+    if (this.currentEntries.length === 0) {
       this.showEmpty();
+      this.renderFilterBar();
       return;
     }
 
-    this.buildToolResultIndex(session.entries);
+    this.buildToolResultIndex(this.currentEntries);
 
-    for (const entry of session.entries) {
+    for (const entry of this.currentEntries) {
       const entryEl = this.renderEntry(entry);
       this.contentContainer.appendChild(entryEl);
     }
 
+    this.renderFilterBar();
+    this.setupFilters();
     this.applyFilters();
     this.contentContainer.scrollTop = 0;
   }
@@ -438,22 +527,25 @@ export class ConversationView {
    */
   displayEntries(entries: Entry[]): void {
     this.contentContainer.innerHTML = '';
+    this.currentEntries = entries || [];
 
-    if (!entries || entries.length === 0) {
+    if (this.currentEntries.length === 0) {
       this.showEmpty();
+      this.renderFilterBar();
       return;
     }
 
-    this.buildToolResultIndex(entries);
+    this.buildToolResultIndex(this.currentEntries);
 
-    for (const entry of entries) {
+    for (const entry of this.currentEntries) {
       const entryEl = this.renderEntry(entry);
       this.contentContainer.appendChild(entryEl);
     }
 
-    this.currentEntryCount = entries.length;
+    this.currentEntryCount = this.currentEntries.length;
     this.renderToolbar();
-
+    this.renderFilterBar();
+    this.setupFilters();
     this.applyFilters();
     this.contentContainer.scrollTop = 0;
   }
@@ -671,6 +763,7 @@ export class ConversationView {
   // ============================================
 
   private showEmpty(): void {
+    this.currentEntries = [];
     this.contentContainer.innerHTML = `
       <div class="thinkt-conversation-empty">
         <div class="thinkt-conversation-empty__icon">\u{1F4AC}</div>
@@ -678,6 +771,7 @@ export class ConversationView {
         <div>Select a session to view the conversation</div>
       </div>
     `;
+    this.renderFilterBar();
   }
 
   /**

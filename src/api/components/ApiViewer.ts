@@ -419,6 +419,20 @@ export class ApiViewer {
     return this.conversationView;
   }
 
+  /**
+   * Focus the project browser search input
+   */
+  focusProjectSearch(): void {
+    this.projectBrowser?.focusSearch();
+  }
+
+  /**
+   * Focus the session list search input
+   */
+  focusSessionSearch(): void {
+    this.sessionList?.focusSearch();
+  }
+
   // ============================================
   // Cleanup
   // ============================================

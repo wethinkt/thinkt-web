@@ -789,6 +789,13 @@ export class SessionList {
     return this.loadSessions(projectId);
   }
 
+  /**
+   * Focus the search input
+   */
+  focusSearch(): void {
+    this.elements.searchInput?.focus();
+  }
+
   // ============================================
   // Cleanup
   // ============================================
