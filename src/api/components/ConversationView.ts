@@ -1,12 +1,18 @@
 /**
  * ConversationView Component
  *
- * A simple conversation viewer for the API app (no 3D).
- * Displays entries in a scrollable, formatted view with filter toggles.
+ * Rich conversation viewer with:
+ * - Markdown rendering for assistant text
+ * - Compact tool calls with inline status (expandable)
+ * - Collapsible thinking blocks
+ * - Copy buttons on code blocks and text
+ * - Filter toggles for content types
  */
 
 import type { ThinktClient } from '@wethinkt/ts-thinkt/api';
-import type { Session, Entry, ContentBlock } from '@wethinkt/ts-thinkt';
+import type { Session, Entry, ToolResultBlock } from '@wethinkt/ts-thinkt';
+import { CONVERSATION_STYLES } from './conversation-styles';
+import { escapeHtml, formatToolSummary, renderMarkdown, formatDuration } from './conversation-renderers';
 
 // ============================================
 // Types
@@ -36,383 +42,6 @@ export interface FilterState {
 }
 
 // ============================================
-// Default Styles
-// ============================================
-
-const DEFAULT_STYLES = `
-.thinkt-conversation-view {
-  height: 100%;
-  display: flex;
-  flex-direction: column;
-  font-family: var(--thinkt-font-family, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif);
-  font-size: 13px;
-  line-height: 1.6;
-  color: var(--thinkt-text-color, #e0e0e0);
-  background: var(--thinkt-bg-color, #0a0a0a);
-}
-
-.thinkt-conversation-view__filters {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 10px 16px;
-  border-bottom: 1px solid var(--thinkt-border-color, #2a2a2a);
-  background: rgba(255, 255, 255, 0.02);
-  overflow-x: auto;
-  flex-shrink: 0;
-}
-
-.thinkt-conversation-view__filter-label {
-  font-size: 11px;
-  color: var(--thinkt-muted-color, #666);
-  margin-right: 4px;
-  white-space: nowrap;
-}
-
-.thinkt-conversation-view__filter-btn {
-  display: flex;
-  align-items: center;
-  gap: 4px;
-  padding: 4px 10px;
-  border: 1px solid var(--thinkt-border-color, #333);
-  border-radius: 4px;
-  background: rgba(255, 255, 255, 0.03);
-  color: var(--thinkt-muted-color, #888);
-  font-size: 11px;
-  cursor: pointer;
-  transition: all 0.15s ease;
-  white-space: nowrap;
-}
-
-.thinkt-conversation-view__filter-btn:hover {
-  border-color: var(--thinkt-border-color-light, #444);
-  color: var(--thinkt-text-color, #e0e0e0);
-}
-
-.thinkt-conversation-view__filter-btn.active {
-  background: rgba(99, 102, 241, 0.15);
-  border-color: rgba(99, 102, 241, 0.4);
-  color: #6366f1;
-}
-
-.thinkt-conversation-view__filter-btn.active[data-filter="assistant"] {
-  background: rgba(217, 119, 80, 0.15);
-  border-color: rgba(217, 119, 80, 0.4);
-  color: #d97750;
-}
-
-.thinkt-conversation-view__filter-btn.active[data-filter="thinking"] {
-  background: rgba(99, 102, 241, 0.15);
-  border-color: rgba(99, 102, 241, 0.4);
-  color: #6366f1;
-}
-
-.thinkt-conversation-view__filter-btn.active[data-filter="toolUse"] {
-  background: rgba(25, 195, 155, 0.15);
-  border-color: rgba(25, 195, 155, 0.4);
-  color: #19c39b;
-}
-
-.thinkt-conversation-view__filter-btn.active[data-filter="toolResult"] {
-  background: rgba(34, 197, 94, 0.15);
-  border-color: rgba(34, 197, 94, 0.4);
-  color: #22c55e;
-}
-
-.thinkt-conversation-view__filter-btn.active[data-filter="system"] {
-  background: rgba(136, 136, 136, 0.15);
-  border-color: rgba(136, 136, 136, 0.4);
-  color: #888;
-}
-
-.thinkt-conversation-view__content {
-  flex: 1;
-  overflow-y: auto;
-  padding: 16px;
-}
-
-.thinkt-conversation-entry {
-  margin-bottom: 16px;
-  border-radius: 8px;
-  border: 1px solid var(--thinkt-border-color, #2a2a2a);
-  background: var(--thinkt-bg-secondary, #141414);
-  overflow: hidden;
-}
-
-.thinkt-conversation-entry.hidden {
-  display: none;
-}
-
-.thinkt-conversation-entry__header {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 8px 12px;
-  background: rgba(255, 255, 255, 0.03);
-  border-bottom: 1px solid var(--thinkt-border-color, #2a2a2a);
-}
-
-.thinkt-conversation-entry__role {
-  font-weight: 600;
-  font-size: 11px;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-}
-
-.thinkt-conversation-entry__role--user {
-  color: #6366f1;
-}
-
-.thinkt-conversation-entry__role--assistant {
-  color: #d97750;
-}
-
-.thinkt-conversation-entry__role--system {
-  color: #888;
-}
-
-.thinkt-conversation-entry__role--tool {
-  color: #19c39b;
-}
-
-.thinkt-conversation-entry__timestamp {
-  margin-left: auto;
-  font-size: 11px;
-  color: var(--thinkt-muted-color, #666);
-}
-
-.thinkt-conversation-entry__content {
-  padding: 12px;
-}
-
-.thinkt-conversation-entry__text {
-  white-space: pre-wrap;
-  word-break: break-word;
-}
-
-.thinkt-conversation-entry__thinking {
-  margin-top: 12px;
-  padding: 10px 12px;
-  background: rgba(99, 102, 241, 0.1);
-  border-left: 3px solid #6366f1;
-  border-radius: 0 4px 4px 0;
-  font-style: italic;
-  color: #a5a6f3;
-}
-
-.thinkt-conversation-entry__thinking.hidden {
-  display: none;
-}
-
-.thinkt-conversation-entry__thinking-label {
-  font-size: 10px;
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-  margin-bottom: 6px;
-  color: #6366f1;
-}
-
-.thinkt-conversation-entry__tool-use {
-  margin-top: 12px;
-  padding: 10px 12px;
-  background: rgba(25, 195, 155, 0.1);
-  border-left: 3px solid #19c39b;
-  border-radius: 0 4px 4px 0;
-}
-
-.thinkt-conversation-entry__tool-use.hidden {
-  display: none;
-}
-
-.thinkt-conversation-entry__tool-name {
-  font-size: 10px;
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-  margin-bottom: 6px;
-  color: #19c39b;
-}
-
-.thinkt-conversation-entry__tool-input {
-  font-family: var(--thinkt-font-mono, 'SF Mono', Monaco, monospace);
-  font-size: 11px;
-  background: rgba(0, 0, 0, 0.3);
-  padding: 8px;
-  border-radius: 4px;
-  overflow-x: auto;
-  max-height: 200px;
-  overflow-y: auto;
-}
-
-.thinkt-conversation-entry__tool-result {
-  margin-top: 12px;
-  padding: 10px 12px;
-  background: rgba(34, 197, 94, 0.1);
-  border-left: 3px solid #22c55e;
-  border-radius: 0 4px 4px 0;
-}
-
-.thinkt-conversation-entry__tool-result.hidden {
-  display: none;
-}
-
-.thinkt-conversation-entry__tool-result-label {
-  font-size: 10px;
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-  margin-bottom: 6px;
-  color: #22c55e;
-}
-
-.thinkt-conversation-entry__tool-result--error {
-  background: rgba(239, 68, 68, 0.1);
-  border-left-color: #ef4444;
-}
-
-.thinkt-conversation-entry__tool-result--error .thinkt-conversation-entry__tool-result-label {
-  color: #ef4444;
-}
-
-.thinkt-conversation-empty {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  height: 100%;
-  color: var(--thinkt-muted-color, #666);
-  text-align: center;
-  padding: 48px;
-}
-
-.thinkt-conversation-empty__icon {
-  font-size: 40px;
-  margin-bottom: 12px;
-  opacity: 0.4;
-}
-
-.thinkt-conversation-empty__title {
-  font-size: 16px;
-  font-weight: 500;
-  margin-bottom: 6px;
-  color: var(--thinkt-text-color, #e0e0e0);
-}
-
-/* Project Toolbar */
-.thinkt-conversation-view__toolbar {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  padding: 10px 16px;
-  border-bottom: 1px solid var(--thinkt-border-color, #2a2a2a);
-  background: rgba(255, 255, 255, 0.02);
-  flex-shrink: 0;
-}
-
-.thinkt-conversation-view__toolbar-path {
-  flex: 1;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  min-width: 0;
-}
-
-.thinkt-conversation-view__toolbar-path-icon {
-  font-size: 14px;
-  color: var(--thinkt-muted-color, #666);
-  flex-shrink: 0;
-}
-
-.thinkt-conversation-view__toolbar-path-text {
-  font-size: 13px;
-  color: var(--thinkt-text-color, #e0e0e0);
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  font-family: var(--thinkt-font-mono, 'SF Mono', Monaco, monospace);
-}
-
-.thinkt-conversation-view__toolbar-path-actions {
-  display: flex;
-  align-items: center;
-  margin-left: 4px;
-}
-
-.thinkt-conversation-view__toolbar-metrics {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  font-size: 11px;
-  color: var(--thinkt-muted-color, #888);
-  margin-left: auto;
-}
-
-.thinkt-conversation-view__toolbar-actions {
-  position: relative;
-  flex-shrink: 0;
-}
-
-.thinkt-conversation-view__toolbar-btn {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  padding: 6px 12px;
-  background: rgba(255, 255, 255, 0.05);
-  border: 1px solid var(--thinkt-border-color, #333);
-  border-radius: 6px;
-  color: var(--thinkt-text-color, #e0e0e0);
-  font-size: 12px;
-  cursor: pointer;
-  transition: all 0.15s ease;
-}
-
-.thinkt-conversation-view__toolbar-btn:hover {
-  background: rgba(255, 255, 255, 0.08);
-  border-color: var(--thinkt-border-color-light, #444);
-}
-
-.thinkt-conversation-view__toolbar-dropdown {
-  position: absolute;
-  top: 100%;
-  right: 0;
-  margin-top: 4px;
-  min-width: 160px;
-  background: var(--thinkt-bg-secondary, #141414);
-  border: 1px solid var(--thinkt-border-color, #2a2a2a);
-  border-radius: 8px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
-  z-index: 1000;
-  display: none;
-  overflow: hidden;
-}
-
-.thinkt-conversation-view__toolbar-dropdown.open {
-  display: block;
-}
-
-.thinkt-conversation-view__toolbar-dropdown-item {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  padding: 10px 14px;
-  font-size: 13px;
-  color: var(--thinkt-text-color, #e0e0e0);
-  cursor: pointer;
-  transition: background 0.12s ease;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.03);
-}
-
-.thinkt-conversation-view__toolbar-dropdown-item:last-child {
-  border-bottom: none;
-}
-
-.thinkt-conversation-view__toolbar-dropdown-item:hover {
-  background: rgba(255, 255, 255, 0.05);
-}
-`;
-
-// ============================================
 // Component Class
 // ============================================
 
@@ -438,6 +67,11 @@ export class ConversationView {
   private currentProjectPath: string | null = null;
   private currentEntryCount = 0;
 
+  // Tool result index: toolUseId → ToolResultBlock
+  private toolResultIndex: Map<string, ToolResultBlock> = new Map();
+  // Track which tool results were inlined with their tool_use
+  private inlinedToolResults: Set<string> = new Set();
+
   // Bound handlers for cleanup
   private boundFilterHandlers: Map<HTMLElement, () => void> = new Map();
 
@@ -461,7 +95,7 @@ export class ConversationView {
     if (!document.getElementById(styleId)) {
       const style = document.createElement('style');
       style.id = styleId;
-      style.textContent = DEFAULT_STYLES;
+      style.textContent = CONVERSATION_STYLES;
       document.head.appendChild(style);
     }
     this.stylesInjected = true;
@@ -485,8 +119,83 @@ export class ConversationView {
     this.contentContainer.className = 'thinkt-conversation-view__content';
     this.container.appendChild(this.contentContainer);
 
+    // Event delegation on content container
+    this.contentContainer.addEventListener('click', (e) => this.handleContentClick(e));
+
     this.showEmpty();
   }
+
+  // ============================================
+  // Event Delegation
+  // ============================================
+
+  private handleContentClick(e: Event): void {
+    const target = e.target as HTMLElement;
+
+    // Thinking block toggle
+    const thinkingHeader = target.closest('.thinkt-thinking-block__header');
+    if (thinkingHeader) {
+      const block = thinkingHeader.closest('.thinkt-thinking-block') as HTMLElement;
+      block?.classList.toggle('expanded');
+      return;
+    }
+
+    // Tool call toggle
+    const toolSummary = target.closest('.thinkt-tool-call__summary');
+    if (toolSummary) {
+      const block = toolSummary.closest('.thinkt-tool-call') as HTMLElement;
+      block?.classList.toggle('expanded');
+      return;
+    }
+
+    // Copy button
+    const copyBtn = target.closest('.thinkt-copy-btn') as HTMLElement | null;
+    if (copyBtn) {
+      void this.handleCopy(copyBtn);
+      return;
+    }
+  }
+
+  private async handleCopy(btn: HTMLElement): Promise<void> {
+    let text = '';
+    const action = btn.dataset.copyAction;
+
+    if (action === 'code') {
+      const codeBlock = btn.closest('.thinkt-code-block');
+      const code = codeBlock?.querySelector('code');
+      text = code?.textContent ?? '';
+    } else if (action === 'text') {
+      const textBlock = btn.closest('.thinkt-conversation-entry__text');
+      // Clone and remove the copy button to avoid including "Copy" in output
+      if (textBlock) {
+        const clone = textBlock.cloneNode(true) as HTMLElement;
+        clone.querySelectorAll('.thinkt-copy-btn').forEach(b => b.remove());
+        text = clone.textContent ?? '';
+      }
+    } else if (action === 'detail') {
+      const detail = btn.closest('.thinkt-tool-call__detail-content');
+      if (detail) {
+        const clone = detail.cloneNode(true) as HTMLElement;
+        clone.querySelectorAll('.thinkt-copy-btn').forEach(b => b.remove());
+        text = clone.textContent ?? '';
+      }
+    }
+
+    if (!text) return;
+
+    try {
+      await navigator.clipboard.writeText(text);
+      const original = btn.textContent;
+      btn.textContent = '\u2713';
+      setTimeout(() => { btn.textContent = original; }, 1500);
+    } catch {
+      // Silently fail
+    }
+  }
+
+  // ============================================
+  // Toolbar
+  // ============================================
 
   private renderToolbar(): void {
     const path = this.currentProjectPath ?? 'No project selected';
@@ -494,22 +203,22 @@ export class ConversationView {
 
     this.toolbarContainer.innerHTML = `
       <div class="thinkt-conversation-view__toolbar-path">
-        <span class="thinkt-conversation-view__toolbar-path-icon">📁</span>
-        <span class="thinkt-conversation-view__toolbar-path-text" title="${path}">${path}</span>
+        <span class="thinkt-conversation-view__toolbar-path-icon">\u{1F4C1}</span>
+        <span class="thinkt-conversation-view__toolbar-path-text" title="${escapeHtml(path)}">${escapeHtml(path)}</span>
         <div class="thinkt-conversation-view__toolbar-path-actions">
           <div class="thinkt-conversation-view__toolbar-actions">
             <button class="thinkt-conversation-view__toolbar-btn" id="toolbar-open-btn">
-              Open ▼
+              Open \u25BC
             </button>
             <div class="thinkt-conversation-view__toolbar-dropdown" id="toolbar-dropdown">
               <div class="thinkt-conversation-view__toolbar-dropdown-item" data-action="finder">
-                <span class="icon">📂</span> Open in Finder
+                <span class="icon">\u{1F4C2}</span> Open in Finder
               </div>
               <div class="thinkt-conversation-view__toolbar-dropdown-item" data-action="ghostty">
-                <span class="icon">⌨️</span> Open in Ghostty
+                <span class="icon">\u2328\uFE0F</span> Open in Ghostty
               </div>
               <div class="thinkt-conversation-view__toolbar-dropdown-item" data-action="copy">
-                <span class="icon">📋</span> Copy Path
+                <span class="icon">\u{1F4CB}</span> Copy Path
               </div>
             </div>
           </div>
@@ -528,18 +237,15 @@ export class ConversationView {
     const dropdown = this.toolbarContainer.querySelector('#toolbar-dropdown') as HTMLElement | null;
     if (!openBtn || !dropdown) return;
 
-    // Toggle dropdown
     openBtn.addEventListener('click', (e) => {
       e.stopPropagation();
       dropdown.classList.toggle('open');
     });
 
-    // Close dropdown when clicking outside
     document.addEventListener('click', () => {
       dropdown.classList.remove('open');
     });
 
-    // Handle actions
     dropdown.querySelectorAll('.thinkt-conversation-view__toolbar-dropdown-item').forEach((item) => {
       item.addEventListener('click', (e) => {
         e.stopPropagation();
@@ -551,12 +257,8 @@ export class ConversationView {
   }
 
   private async handleToolbarAction(action: string): Promise<void> {
-    if (!this.currentProjectPath) {
-      console.warn('[ConversationView] No project path set, cannot perform action:', action);
-      return;
-    }
+    if (!this.currentProjectPath) return;
 
-    // Map action to app name
     const appMap: Record<string, string> = {
       'finder': 'finder',
       'ghostty': 'ghostty',
@@ -565,44 +267,26 @@ export class ConversationView {
       'terminal': 'terminal',
     };
 
-    const app = appMap[action];
-
     if (action === 'copy') {
-      // Copy path to clipboard
       try {
         await navigator.clipboard.writeText(this.currentProjectPath);
-      } catch (err) {
-        console.error('[ConversationView] Failed to copy path:', err);
+      } catch {
+        // Silently fail
       }
       return;
     }
 
-    if (!app) {
-      console.warn('[ConversationView] Unknown toolbar action:', action);
-      return;
-    }
+    const app = appMap[action];
+    if (!app) return;
 
-    // Use the API to open in external app
     if (this.client) {
       try {
         await this.client.openIn(app, this.currentProjectPath);
-      } catch (err) {
-        console.error('[ConversationView] Failed to open via API:', err);
-        // Fallback to clipboard
-        try {
-          await navigator.clipboard.writeText(this.currentProjectPath);
-        } catch (clipboardErr) {
-          console.error('[ConversationView] Failed to copy to clipboard:', clipboardErr);
-        }
+      } catch {
+        try { await navigator.clipboard.writeText(this.currentProjectPath!); } catch { /* */ }
       }
     } else {
-      console.warn('[ConversationView] No API client available, cannot open externally');
-      // Fallback to clipboard
-      try {
-        await navigator.clipboard.writeText(this.currentProjectPath);
-      } catch (clipboardErr) {
-        console.error('[ConversationView] Failed to copy to clipboard:', clipboardErr);
-      }
+      try { await navigator.clipboard.writeText(this.currentProjectPath); } catch { /* */ }
     }
   }
 
@@ -616,6 +300,10 @@ export class ConversationView {
     }
     this.renderToolbar();
   }
+
+  // ============================================
+  // Filter Bar
+  // ============================================
 
   private renderFilterBar(): void {
     this.filterContainer.innerHTML = `
@@ -660,32 +348,26 @@ export class ConversationView {
   }
 
   private applyFilters(): void {
-    // Show/hide entries based on role
-    this.contentContainer.querySelectorAll('.thinkt-conversation-entry').forEach((el) => {
-      const entry = el as HTMLElement;
-      const role = entry.dataset.role;
-      if (role === 'user') {
-        entry.classList.toggle('hidden', !this.filterState.user);
-      } else if (role === 'assistant') {
-        entry.classList.toggle('hidden', !this.filterState.assistant);
-      } else if (role === 'system') {
-        entry.classList.toggle('hidden', !this.filterState.system);
+    // All top-level items have data-role and data-block-type
+    this.contentContainer.querySelectorAll('[data-role]').forEach((el) => {
+      const item = el as HTMLElement;
+      const role = item.dataset.role;
+      const blockType = item.dataset.blockType;
+
+      // Check role filter
+      let hidden = false;
+      if (role === 'user') hidden = !this.filterState.user;
+      else if (role === 'assistant') hidden = !this.filterState.assistant;
+      else if (role === 'system') hidden = !this.filterState.system;
+
+      // Check block-type filter (standalone blocks only)
+      if (!hidden && blockType) {
+        if (blockType === 'thinking') hidden = !this.filterState.thinking;
+        else if (blockType === 'toolUse') hidden = !this.filterState.toolUse;
+        else if (blockType === 'toolResult') hidden = !this.filterState.toolResult;
       }
-    });
 
-    // Show/hide thinking blocks
-    this.contentContainer.querySelectorAll('.thinkt-conversation-entry__thinking').forEach((el) => {
-      (el as HTMLElement).classList.toggle('hidden', !this.filterState.thinking);
-    });
-
-    // Show/hide tool use blocks
-    this.contentContainer.querySelectorAll('.thinkt-conversation-entry__tool-use').forEach((el) => {
-      (el as HTMLElement).classList.toggle('hidden', !this.filterState.toolUse);
-    });
-
-    // Show/hide tool result blocks
-    this.contentContainer.querySelectorAll('.thinkt-conversation-entry__tool-result').forEach((el) => {
-      (el as HTMLElement).classList.toggle('hidden', !this.filterState.toolResult);
+      item.classList.toggle('hidden', hidden);
     });
   }
 
@@ -706,6 +388,29 @@ export class ConversationView {
     this.applyFilters();
   }
 
+  // ============================================
+  // Tool Result Index
+  // ============================================
+
+  private buildToolResultIndex(entries: Entry[]): void {
+    this.toolResultIndex.clear();
+    this.inlinedToolResults.clear();
+
+    for (const entry of entries) {
+      if (!entry.contentBlocks) continue;
+      for (const block of entry.contentBlocks) {
+        if (block.type === 'tool_result') {
+          const tb = block as ToolResultBlock;
+          this.toolResultIndex.set(tb.toolUseId, tb);
+        }
+      }
+    }
+  }
+
+  // ============================================
+  // Display Methods
+  // ============================================
+
   /**
    * Display entries from a session
    */
@@ -716,6 +421,8 @@ export class ConversationView {
       this.showEmpty();
       return;
     }
+
+    this.buildToolResultIndex(session.entries);
 
     for (const entry of session.entries) {
       const entryEl = this.renderEntry(entry);
@@ -737,12 +444,13 @@ export class ConversationView {
       return;
     }
 
+    this.buildToolResultIndex(entries);
+
     for (const entry of entries) {
       const entryEl = this.renderEntry(entry);
       this.contentContainer.appendChild(entryEl);
     }
 
-    // Update entry count in toolbar
     this.currentEntryCount = entries.length;
     this.renderToolbar();
 
@@ -750,93 +458,226 @@ export class ConversationView {
     this.contentContainer.scrollTop = 0;
   }
 
-  private renderEntry(entry: Entry): HTMLElement {
+  // ============================================
+  // Entry Rendering
+  // ============================================
+
+  /**
+   * Render an entry as a DocumentFragment.
+   * Text blocks go into entry cards (with header).
+   * Thinking, tool_use, and tool_result blocks render as standalone peers.
+   * Block order is preserved.
+   */
+  private renderEntry(entry: Entry): DocumentFragment {
+    const fragment = document.createDocumentFragment();
     const role = entry.role || 'unknown';
-    const roleClass = `thinkt-conversation-entry__role--${role}`;
-
-    const div = document.createElement('div');
-    div.className = 'thinkt-conversation-entry';
-    div.dataset.role = role;
-
     const timestamp = entry.timestamp
       ? new Date(entry.timestamp).toLocaleString()
       : '';
 
-    let contentHtml = '';
-
-    // Render content blocks if available
-    if (entry.contentBlocks && entry.contentBlocks.length > 0) {
-      for (const block of entry.contentBlocks) {
-        contentHtml += this.renderContentBlock(block);
+    // Simple text-only entry (no content blocks)
+    if (!entry.contentBlocks?.length) {
+      if (entry.text) {
+        const textHtml = role === 'assistant'
+          ? this.renderAssistantText(entry.text)
+          : this.renderPlainText(entry.text);
+        fragment.appendChild(this.createTextCard(role, timestamp, textHtml));
       }
-    } else if (entry.text) {
-      contentHtml = `<div class="thinkt-conversation-entry__text">${this.escapeHtml(entry.text)}</div>`;
+      return fragment;
     }
 
+    // Process blocks in order, grouping consecutive text into cards
+    let pendingTextHtml = '';
+    let showTimestamp = true;
+
+    const flushText = () => {
+      if (!pendingTextHtml) return;
+      fragment.appendChild(this.createTextCard(role, showTimestamp ? timestamp : '', pendingTextHtml));
+      pendingTextHtml = '';
+      showTimestamp = false;
+    };
+
+    for (const block of entry.contentBlocks) {
+      switch (block.type) {
+        case 'text':
+          // Skip empty text blocks to avoid blank cards
+          if (block.text && block.text.trim()) {
+            pendingTextHtml += role === 'assistant'
+              ? this.renderAssistantText(block.text)
+              : this.renderPlainText(block.text);
+          }
+          break;
+
+        case 'thinking':
+          flushText();
+          fragment.appendChild(this.createStandaloneBlock(role, 'thinking',
+            this.renderThinkingBlock(block.thinking || '', block.durationMs)));
+          break;
+
+        case 'tool_use':
+          flushText();
+          fragment.appendChild(this.createStandaloneBlock(role, 'toolUse',
+            this.renderToolCall(block.toolUseId, block.toolName, block.toolInput)));
+          break;
+
+        case 'tool_result':
+          if (!this.inlinedToolResults.has(block.toolUseId)) {
+            flushText();
+            fragment.appendChild(this.createStandaloneBlock(role, 'toolResult',
+              this.renderToolResultBlock(block)));
+          }
+          break;
+      }
+    }
+
+    flushText();
+    return fragment;
+  }
+
+  private createTextCard(role: string, timestamp: string, contentHtml: string): HTMLElement {
+    const div = document.createElement('div');
+    div.className = 'thinkt-conversation-entry';
+    div.dataset.role = role;
+    div.dataset.blockType = 'text';
+    const roleClass = `thinkt-conversation-entry__role--${role}`;
     div.innerHTML = `
       <div class="thinkt-conversation-entry__header">
-        <span class="thinkt-conversation-entry__role ${roleClass}">${role}</span>
-        ${timestamp ? `<span class="thinkt-conversation-entry__timestamp">${timestamp}</span>` : ''}
+        <span class="thinkt-conversation-entry__role ${roleClass}">${escapeHtml(role)}</span>
+        ${timestamp ? `<span class="thinkt-conversation-entry__timestamp">${escapeHtml(timestamp)}</span>` : ''}
       </div>
-      <div class="thinkt-conversation-entry__content">
-        ${contentHtml}
-      </div>
+      <div class="thinkt-conversation-entry__content">${contentHtml}</div>
     `;
-
     return div;
   }
 
-  private renderContentBlock(block: ContentBlock): string {
-    switch (block.type) {
-      case 'text':
-        return `<div class="thinkt-conversation-entry__text">${this.escapeHtml(block.text || '')}</div>`;
+  private createStandaloneBlock(role: string, blockType: string, innerHTML: string): HTMLElement {
+    const div = document.createElement('div');
+    div.className = 'thinkt-standalone-block';
+    div.dataset.role = role;
+    div.dataset.blockType = blockType;
+    div.innerHTML = innerHTML;
+    return div;
+  }
 
-      case 'thinking':
-        return `
-          <div class="thinkt-conversation-entry__thinking" data-type="thinking">
-            <div class="thinkt-conversation-entry__thinking-label">Thinking</div>
-            ${this.escapeHtml(block.thinking || '')}
-          </div>
-        `;
+  private renderAssistantText(text: string): string {
+    return `<div class="thinkt-conversation-entry__text thinkt-conversation-entry__text--markdown">${renderMarkdown(text)}<button class="thinkt-copy-btn thinkt-copy-btn--float" data-copy-action="text">Copy</button></div>`;
+  }
 
-      case 'tool_use':
-        return `
-          <div class="thinkt-conversation-entry__tool-use" data-type="toolUse">
-            <div class="thinkt-conversation-entry__tool-name">${this.escapeHtml(block.toolName)}</div>
-            <pre class="thinkt-conversation-entry__tool-input">${this.escapeHtml(JSON.stringify(block.toolInput, null, 2))}</pre>
-          </div>
-        `;
+  private renderPlainText(text: string): string {
+    return `<div class="thinkt-conversation-entry__text">${escapeHtml(text)}</div>`;
+  }
 
-      case 'tool_result': {
-        const resultClass = block.isError ? 'thinkt-conversation-entry__tool-result--error' : '';
-        const resultLabel = block.isError ? 'Error' : 'Result';
-        return `
-          <div class="thinkt-conversation-entry__tool-result ${resultClass}" data-type="toolResult">
-            <div class="thinkt-conversation-entry__tool-result-label">${resultLabel}</div>
-            <div class="thinkt-conversation-entry__text">${this.escapeHtml(String(block.toolResult || ''))}</div>
-          </div>
-        `;
+  private renderToolResultBlock(block: ToolResultBlock): string {
+    const resultClass = block.isError ? 'thinkt-conversation-entry__tool-result--error' : '';
+    const resultLabel = block.isError ? 'Error' : 'Result';
+    return `
+      <div class="thinkt-conversation-entry__tool-result ${resultClass}">
+        <div class="thinkt-conversation-entry__tool-result-label">${resultLabel}</div>
+        <div class="thinkt-conversation-entry__text">${escapeHtml(String(block.toolResult || ''))}</div>
+      </div>
+    `;
+  }
+
+  // ============================================
+  // Thinking Block (collapsible)
+  // ============================================
+
+  private renderThinkingBlock(thinking: string, durationMs?: number): string {
+    const duration = formatDuration(durationMs);
+    const durationHtml = duration ? `<span class="thinkt-thinking-block__duration">(${escapeHtml(duration)})</span>` : '';
+
+    // Preview: first ~80 chars, single line
+    const preview = thinking.replace(/\n/g, ' ').slice(0, 80);
+    const previewHtml = preview ? `<span class="thinkt-thinking-block__preview">${escapeHtml(preview)}${thinking.length > 80 ? '\u2026' : ''}</span>` : '';
+
+    return `
+      <div class="thinkt-thinking-block" data-type="thinking">
+        <div class="thinkt-thinking-block__header">
+          <span class="thinkt-thinking-block__toggle">\u25B6</span>
+          <span class="thinkt-thinking-block__label">Thinking</span>
+          ${durationHtml}
+          ${previewHtml}
+        </div>
+        <div class="thinkt-thinking-block__content">${escapeHtml(thinking)}</div>
+      </div>
+    `;
+  }
+
+  // ============================================
+  // Tool Call (compact with inline status)
+  // ============================================
+
+  private renderToolCall(toolUseId: string, toolName: string, toolInput: unknown): string {
+    const summary = formatToolSummary(toolName, toolInput);
+    const summaryHtml = summary ? `<span class="thinkt-tool-call__arg">(${escapeHtml(summary)})</span>` : '';
+
+    // Look up the result
+    const result = this.toolResultIndex.get(toolUseId);
+    let statusHtml: string;
+    let resultDetailHtml = '';
+    let durationHtml = '';
+
+    if (result) {
+      this.inlinedToolResults.add(toolUseId);
+
+      if (result.isError) {
+        statusHtml = '<span class="thinkt-tool-call__status thinkt-tool-call__status--error">\u2717</span>';
+      } else {
+        statusHtml = '<span class="thinkt-tool-call__status thinkt-tool-call__status--ok">\u2713</span>';
       }
 
-      default:
-        return '';
+      const duration = formatDuration(result.durationMs);
+      if (duration) {
+        durationHtml = `<span class="thinkt-tool-call__duration">${escapeHtml(duration)}</span>`;
+      }
+
+      const errorClass = result.isError ? ' thinkt-tool-call__detail-result--error' : '';
+      const resultLabel = result.isError ? 'Error' : 'Result';
+      resultDetailHtml = `
+        <div class="thinkt-tool-call__detail-section thinkt-tool-call__detail-result${errorClass}">
+          <div class="thinkt-tool-call__detail-label">${resultLabel}</div>
+          <div class="thinkt-tool-call__detail-content">${escapeHtml(String(result.toolResult || ''))}<button class="thinkt-copy-btn thinkt-copy-btn--float" data-copy-action="detail">Copy</button></div>
+        </div>
+      `;
+    } else {
+      statusHtml = '<span class="thinkt-tool-call__status thinkt-tool-call__status--pending">\u2022</span>';
     }
+
+    const inputJson = escapeHtml(JSON.stringify(toolInput, null, 2));
+
+    return `
+      <div class="thinkt-tool-call" data-type="toolUse" data-tool-use-id="${escapeHtml(toolUseId)}">
+        <div class="thinkt-tool-call__summary">
+          <span class="thinkt-tool-call__toggle">\u25B6</span>
+          <span class="thinkt-tool-call__bullet">\u2022</span>
+          <span class="thinkt-tool-call__name">${escapeHtml(toolName)}</span>
+          ${summaryHtml}
+          ${durationHtml}
+          ${statusHtml}
+        </div>
+        <div class="thinkt-tool-call__detail">
+          <div class="thinkt-tool-call__detail-section">
+            <div class="thinkt-tool-call__detail-label">Input</div>
+            <div class="thinkt-tool-call__detail-content">${inputJson}<button class="thinkt-copy-btn thinkt-copy-btn--float" data-copy-action="detail">Copy</button></div>
+          </div>
+          ${resultDetailHtml}
+        </div>
+      </div>
+    `;
   }
+
+  // ============================================
+  // Empty State
+  // ============================================
 
   private showEmpty(): void {
     this.contentContainer.innerHTML = `
       <div class="thinkt-conversation-empty">
-        <div class="thinkt-conversation-empty__icon">💬</div>
+        <div class="thinkt-conversation-empty__icon">\u{1F4AC}</div>
         <div class="thinkt-conversation-empty__title">No conversation loaded</div>
         <div>Select a session to view the conversation</div>
       </div>
     `;
-  }
-
-  private escapeHtml(text: string): string {
-    const div = document.createElement('div');
-    div.textContent = text;
-    return div.innerHTML;
   }
 
   /**
@@ -850,7 +691,6 @@ export class ConversationView {
    * Dispose the view
    */
   dispose(): void {
-    // Clean up filter handlers
     this.boundFilterHandlers.forEach((handler, button) => {
       button.removeEventListener('click', handler);
     });
