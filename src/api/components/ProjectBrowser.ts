@@ -5,8 +5,8 @@
  * Can be embedded in the main viewer or used independently (e.g., in VSCode extension).
  */
 
-import type { Project } from '@wethinkt/ts-thinkt/api';
-import { ThinktClient, getDefaultClient } from '@wethinkt/ts-thinkt/api';
+import type { Project } from '@wethinkt/ts-thinkt';
+import { type ThinktClient, getDefaultClient } from '@wethinkt/ts-thinkt/api';
 
 // ============================================
 // Types
@@ -591,11 +591,11 @@ export class ProjectBrowser {
       <div class="${classPrefix}__icon ${iconClass}">${icon}</div>
       <div class="${classPrefix}__info">
         <div class="${classPrefix}__name">${this.escapeHtml(project.name ?? 'Unknown')}</div>
-        <div class="${classPrefix}__path">${this.escapeHtml(project.display_path ?? project.path ?? '')}</div>
+        <div class="${classPrefix}__path">${this.escapeHtml(project.displayPath ?? project.path ?? '')}</div>
       </div>
       <div class="${classPrefix}__meta">
-        <span class="${classPrefix}__count">${project.session_count ?? 0}</span>
-        <span>session${(project.session_count ?? 0) !== 1 ? 's' : ''}</span>
+        <span class="${classPrefix}__count">${project.sessionCount ?? 0}</span>
+        <span>session${(project.sessionCount ?? 0) !== 1 ? 's' : ''}</span>
       </div>
     `;
 

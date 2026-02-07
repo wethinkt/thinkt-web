@@ -5,8 +5,8 @@
  * Can be embedded in the main viewer or used independently.
  */
 
-import type { SessionMeta } from '@wethinkt/ts-thinkt/api';
-import { ThinktClient, getDefaultClient } from '@wethinkt/ts-thinkt/api';
+import type { SessionMeta } from '@wethinkt/ts-thinkt';
+import { type ThinktClient, getDefaultClient } from '@wethinkt/ts-thinkt/api';
 
 // ============================================
 // Types
@@ -243,12 +243,12 @@ const DEFAULT_STYLES = `
 // Utility Functions
 // ============================================
 
-function formatRelativeTime(dateStr: string | undefined): string {
-  if (!dateStr) return 'Unknown';
+function formatRelativeTime(date: Date | string | undefined): string {
+  if (!date) return 'Unknown';
   try {
-    const date = new Date(dateStr);
+    const d = date instanceof Date ? date : new Date(date);
     const now = new Date();
-    const diffMs = now.getTime() - date.getTime();
+    const diffMs = now.getTime() - d.getTime();
     const diffSecs = Math.floor(diffMs / 1000);
     const diffMins = Math.floor(diffSecs / 60);
     const diffHours = Math.floor(diffMins / 60);
@@ -463,8 +463,8 @@ export class SessionList {
       this.sessions = await this.client.getSessions(projectId);
       // Sort by modified date descending
       this.sessions.sort((a, b) => {
-        const dateA = a.modified_at ? new Date(a.modified_at).getTime() : 0;
-        const dateB = b.modified_at ? new Date(b.modified_at).getTime() : 0;
+        const dateA = a.modifiedAt?.getTime() ?? 0;
+        const dateB = b.modifiedAt?.getTime() ?? 0;
         return dateB - dateA;
       });
       this.filteredSessions = [...this.sessions];
@@ -531,9 +531,9 @@ export class SessionList {
       const searchFields = [
         session.id,
         session.summary,
-        session.first_prompt,
+        session.firstPrompt,
         session.model,
-        session.git_branch,
+        session.gitBranch,
       ];
 
       return searchFields.some(field =>
@@ -623,22 +623,22 @@ export class SessionList {
     li.dataset.sessionId = session.id;
 
     const source = session.source ?? 'claude';
-    const isChunked = (session.chunk_count ?? 0) > 1;
+    const isChunked = (session.chunkCount ?? 0) > 1;
 
     // Build title from first prompt or ID
-    const title = session.first_prompt
-      ? session.first_prompt.slice(0, 80) + (session.first_prompt.length > 80 ? '...' : '')
+    const title = session.firstPrompt
+      ? session.firstPrompt.slice(0, 80) + (session.firstPrompt.length > 80 ? '...' : '')
       : session.id ?? 'Unknown Session';
 
     // Build meta items - compact format like Kimi Code
     const metaItems: string[] = [];
 
     // Relative time (primary)
-    metaItems.push(`<span class="${classPrefix}__meta-item">${formatRelativeTime(session.modified_at)}</span>`);
+    metaItems.push(`<span class="${classPrefix}__meta-item">${formatRelativeTime(session.modifiedAt)}</span>`);
 
     // Entry count (compact)
-    if (showEntryCount && session.entry_count !== undefined) {
-      metaItems.push(`<span class="${classPrefix}__meta-item">${formatNumber(session.entry_count)} msgs</span>`);
+    if (showEntryCount && session.entryCount !== undefined) {
+      metaItems.push(`<span class="${classPrefix}__meta-item">${formatNumber(session.entryCount)} msgs</span>`);
     }
 
     // Model (shortened)

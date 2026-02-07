@@ -1,6 +1,6 @@
 # THINKT API Module
 
-Re-exports the `@wethinkt/ts-thinkt/api` client and provides UI components for browsing projects and sessions.
+Re-exports the `@wethinkt/ts-thinkt/api` clients and provides UI components for browsing projects and sessions.
 
 ## Structure
 
@@ -12,11 +12,14 @@ src/api/
     ├── ProjectBrowser.ts  # Project list with search/filter/keyboard nav
     ├── SessionList.ts     # Session list within a project
     ├── ConversationView.ts# Text-based conversation viewer with filter toggles
-    ├── api-adapters.ts    # Converts API snake_case <-> ts-thinkt camelCase
     └── index.ts           # Component exports
 ```
 
-The API client (`ThinktClient`), types (`Project`, `SessionMeta`, `Entry`, `ContentBlock`, etc.), and error classes all come from `@wethinkt/ts-thinkt/api`. This module re-exports them so the rest of the app can `import { ... } from './api'`.
+Two client layers are re-exported from `@wethinkt/ts-thinkt/api`:
+- **`ThinktClient`** / `createClient` — high-level client returning camelCase domain types (`Project`, `SessionMeta`, `Entry`, etc.). This is what the UI components use.
+- **`ThinktApiClient`** / `createApiClient` — low-level client returning raw OpenAPI snake_case types.
+
+All snake_case ↔ camelCase conversion is handled inside ts-thinkt.
 
 ## Usage
 
@@ -29,6 +32,15 @@ configureDefaultClient({ baseUrl: 'http://localhost:8784' });
 // Or create a standalone client
 const client = createClient({ baseUrl: 'http://localhost:8784' });
 const projects = await client.getProjects();
+```
+
+For raw OpenAPI access:
+
+```typescript
+import { createApiClient } from './api';
+
+const apiClient = createApiClient({ baseUrl: 'http://localhost:8784' });
+const response = await apiClient.getProjects(); // returns snake_case types
 ```
 
 ## UI Components
@@ -72,15 +84,4 @@ const viewer = new ApiViewer({
   },
   onSessionLoaded: (session, entries) => { /* ... */ },
 });
-```
-
-## Type Conversions
-
-The API wire format uses snake_case; ts-thinkt uses camelCase. The adapter layer handles conversion:
-
-```typescript
-import { convertApiToSession, convertApiEntry } from './api';
-
-const session = convertApiToSession(apiMeta, apiEntries);
-const entry = convertApiEntry(apiEntry);
 ```

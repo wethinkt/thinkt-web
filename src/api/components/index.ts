@@ -40,10 +40,3 @@ export {
   type FilterState,
 } from './ConversationView';
 
-// Adapters
-export {
-  convertApiEntry,
-  convertApiToSession,
-  convertApiSessionMeta,
-  convertToApiEntry,
-} from './api-adapters';

@@ -43,11 +43,14 @@ src/
         ├── ApiViewer.ts       # Top-level orchestrator (split pane layout)
         ├── ProjectBrowser.ts  # Project list with search/filter/keyboard nav
         ├── SessionList.ts     # Session list within a project
-        ├── ConversationView.ts# Text-based conversation viewer with filter toggles
-        └── api-adapters.ts    # Converts API snake_case <-> THINKT camelCase
+        └── ConversationView.ts# Text-based conversation viewer with filter toggles
 ```
 
-The API client (`ThinktClient`), generated types (`Project`, `SessionMeta`, `Entry`, etc.), and core data model all come from `@wethinkt/ts-thinkt/api`. This project adds the web UI layer and an adapter to convert between API wire format and the ts-thinkt object model.
+Types and clients come from `@wethinkt/ts-thinkt/api`. Two client layers are available:
+- **`ThinktClient`** (high-level, default) — returns camelCase domain types (`Project`, `SessionMeta`, `Entry`, etc.). This is what the UI components use.
+- **`ThinktApiClient`** (low-level) — returns raw OpenAPI snake_case types for advanced use cases.
+
+All snake_case ↔ camelCase conversion is handled inside ts-thinkt. This project is purely the web UI layer.
 
 ## API URL Configuration
 

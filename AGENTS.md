@@ -14,16 +14,17 @@ This is a Vite + TypeScript web app (no framework — vanilla TS with DOM APIs).
 ```
 
 - **`@wethinkt/ts-thinkt`** is a sibling package at `../ts-thinkt` linked via `file:../ts-thinkt` in package.json.
-- **API client and types** (`ThinktClient`, `Project`, `SessionMeta`, `Entry`, etc.) come from `@wethinkt/ts-thinkt/api`. Do not duplicate them here.
+- **API clients and types** come from `@wethinkt/ts-thinkt/api`. Two layers are available:
+  - `ThinktClient` (high-level) — returns camelCase domain types. This is what UI components use.
+  - `ThinktApiClient` (low-level) — returns raw OpenAPI snake_case types for advanced use.
 - **UI components** (`ProjectBrowser`, `SessionList`, `ConversationView`, `ApiViewer`) are vanilla TypeScript DOM components unique to this project, in `src/api/components/`.
-- **Adapter layer** (`src/api/components/api-adapters.ts`) converts between API wire format (snake_case) and the ts-thinkt object model (camelCase). Keep this boundary clean.
 - **`src/api/index.ts`** re-exports from `@wethinkt/ts-thinkt/api` plus the local components, so the rest of the app can `import { ... } from './api'`.
 
 ## Key Constraints
 
 - **No framework.** All UI components are vanilla TypeScript that create/manage DOM elements directly. Do not introduce React, Vue, Svelte, etc.
 - **Types come from ts-thinkt.** Do not create local copies of `ThinktClient`, `Entry`, `Session`, `ContentBlock`, etc.
-- **Snake_case vs camelCase.** The API uses snake_case. Internal THINKT types use camelCase. Conversion happens in `api-adapters.ts`.
+- **Snake_case vs camelCase.** The API uses snake_case. The high-level `ThinktClient` (from ts-thinkt) handles all conversion — components receive camelCase domain types directly.
 
 ## Commands
 
@@ -55,12 +56,10 @@ npm run lint         # ESLint only
   - `SessionList.ts` — session list within a project
   - `ConversationView.ts` — conversation entry viewer with filter toggles
   - `ApiViewer.ts` — orchestrator that wires the above together
-  - `api-adapters.ts` — snake_case ↔ camelCase conversion layer
 
 ## Testing
 
-Tests use vitest with jsdom. Run `npm run test:run` to verify changes. The test files are:
-- `src/api/__tests__/api-adapters.test.ts` — adapter conversion tests
+Tests use vitest with jsdom. Run `npm run test:run` to verify changes.
 
 ## Build Output
 

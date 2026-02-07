@@ -5,10 +5,8 @@
  * Displays entries in a scrollable, formatted view with filter toggles.
  */
 
-import type { Entry } from '@wethinkt/ts-thinkt/api';
 import type { ThinktClient } from '@wethinkt/ts-thinkt/api';
-import type { Session, Entry as ThinktEntry, ContentBlock } from '@wethinkt/ts-thinkt';
-import { convertApiEntry } from './api-adapters';
+import type { Session, Entry, ContentBlock } from '@wethinkt/ts-thinkt';
 
 // ============================================
 // Types
@@ -729,7 +727,7 @@ export class ConversationView {
   }
 
   /**
-   * Display API entries directly (converts to internal format first)
+   * Display entries in the conversation view
    */
   displayEntries(entries: Entry[]): void {
     this.contentContainer.innerHTML = '';
@@ -739,8 +737,7 @@ export class ConversationView {
       return;
     }
 
-    const converted = entries.map(convertApiEntry);
-    for (const entry of converted) {
+    for (const entry of entries) {
       const entryEl = this.renderEntry(entry);
       this.contentContainer.appendChild(entryEl);
     }
@@ -753,7 +750,7 @@ export class ConversationView {
     this.contentContainer.scrollTop = 0;
   }
 
-  private renderEntry(entry: ThinktEntry): HTMLElement {
+  private renderEntry(entry: Entry): HTMLElement {
     const role = entry.role || 'unknown';
     const roleClass = `thinkt-conversation-entry__role--${role}`;
 

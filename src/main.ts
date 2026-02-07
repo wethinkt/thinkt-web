@@ -62,7 +62,7 @@ async function init(): Promise<void> {
     onSessionLoaded: (session, entries) => {
       // eslint-disable-next-line no-console
   console.log(`[THINKT] Loaded session: ${session.id} (${entries.length} entries)`);
-      updateWindowTitle(session.first_prompt ?? session.id ?? 'Session');
+      updateWindowTitle(session.firstPrompt ?? session.id ?? 'Session');
     },
     onError: (error) => {
       // Error is already logged by the API client

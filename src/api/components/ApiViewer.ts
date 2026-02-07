@@ -5,8 +5,8 @@
  * Provides a complete browsing and conversation viewing experience (no 3D).
  */
 
-import type { Project, SessionMeta, Entry } from '@wethinkt/ts-thinkt/api';
-import { ThinktClient, getDefaultClient } from '@wethinkt/ts-thinkt/api';
+import type { Project, SessionMeta, Entry } from '@wethinkt/ts-thinkt';
+import { type ThinktClient, getDefaultClient } from '@wethinkt/ts-thinkt/api';
 import { ProjectBrowser } from './ProjectBrowser';
 import { SessionList } from './SessionList';
 import { ConversationView } from './ConversationView';
@@ -337,7 +337,7 @@ export class ApiViewer {
 
     try {
       // Load all entries for the session
-      const sessionPath = session.full_path;
+      const sessionPath = session.fullPath;
       if (!sessionPath) {
         throw new Error('Session has no path');
       }
