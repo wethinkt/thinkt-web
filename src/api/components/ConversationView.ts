@@ -398,18 +398,30 @@ export class ConversationView {
   }
 
   private handleExport(format: string): void {
-    if (this.currentEntries.length === 0) return;
-
     const title = this.currentProjectPath
       ? `${this.currentProjectPath.split('/').pop() || 'conversation'}`
       : 'conversation';
+
+    // Pass current filter state to export
+    const exportFilters = {
+      user: this.filterState.user,
+      assistant: this.filterState.assistant,
+      thinking: this.filterState.thinking,
+      toolUse: this.filterState.toolUse,
+      toolResult: this.filterState.toolResult,
+      system: this.filterState.system,
+    };
+
+    // File/copy exports require entries
+    if (this.currentEntries.length === 0) return;
+
     const safeFilename = getSafeFilename(title);
 
     if (format === 'html') {
-      const html = exportAsHtml(this.currentEntries, title);
+      const html = exportAsHtml(this.currentEntries, title, exportFilters);
       downloadFile(html, `${safeFilename}.html`, 'text/html');
     } else if (format === 'markdown') {
-      const md = exportAsMarkdown(this.currentEntries, title);
+      const md = exportAsMarkdown(this.currentEntries, title, exportFilters);
       downloadFile(md, `${safeFilename}.md`, 'text/markdown');
     }
   }
