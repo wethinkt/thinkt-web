@@ -9,7 +9,7 @@
  * - Filter toggles for content types
  */
 
-import type { ThinktClient } from '@wethinkt/ts-thinkt/api';
+import type { ThinktClient, AppInfo } from '@wethinkt/ts-thinkt/api';
 import type { Session, Entry, ToolResultBlock } from '@wethinkt/ts-thinkt';
 import { CONVERSATION_STYLES } from './conversation-styles';
 import { escapeHtml, formatToolSummary, renderMarkdown, formatDuration } from './conversation-renderers';
@@ -79,6 +79,9 @@ export class ConversationView {
   // Bound handlers for cleanup
   private boundFilterHandlers: Map<HTMLElement, () => void> = new Map();
 
+  // Available apps for open-in
+  private availableApps: AppInfo[] = [];
+
   // Export dropdown state
   private exportDropdownOpen = false;
 
@@ -86,6 +89,7 @@ export class ConversationView {
     this.container = options.elements.container;
     this.client = options.client ?? null;
     this.init();
+    void this.fetchAvailableApps();
   }
 
   private init(): void {
@@ -204,9 +208,27 @@ export class ConversationView {
   // Toolbar
   // ============================================
 
+  private async fetchAvailableApps(): Promise<void> {
+    if (!this.client) return;
+    try {
+      this.availableApps = await this.client.getOpenInApps();
+      this.renderToolbar();
+    } catch {
+      // Silently fall back to no app items
+    }
+  }
+
   private renderToolbar(): void {
     const path = this.currentProjectPath ?? 'No project selected';
     const entryCount = this.currentEntryCount;
+
+    const appItems = this.availableApps
+      .filter(app => app.enabled)
+      .map(app => `
+        <div class="thinkt-conversation-view__toolbar-dropdown-item" data-action="${escapeHtml(app.id ?? '')}">
+          Open in ${escapeHtml(app.name ?? app.id ?? '')}
+        </div>
+      `).join('');
 
     this.toolbarContainer.innerHTML = `
       <div class="thinkt-conversation-view__toolbar-path">
@@ -218,12 +240,7 @@ export class ConversationView {
               Open \u25BC
             </button>
             <div class="thinkt-conversation-view__toolbar-dropdown" id="toolbar-dropdown">
-              <div class="thinkt-conversation-view__toolbar-dropdown-item" data-action="finder">
-                <span class="icon">\u{1F4C2}</span> Open in Finder
-              </div>
-              <div class="thinkt-conversation-view__toolbar-dropdown-item" data-action="ghostty">
-                <span class="icon">\u2328\uFE0F</span> Open in Ghostty
-              </div>
+              ${appItems}
               <div class="thinkt-conversation-view__toolbar-dropdown-item" data-action="copy">
                 <span class="icon">\u{1F4CB}</span> Copy Path
               </div>
@@ -266,14 +283,6 @@ export class ConversationView {
   private async handleToolbarAction(action: string): Promise<void> {
     if (!this.currentProjectPath) return;
 
-    const appMap: Record<string, string> = {
-      'finder': 'finder',
-      'ghostty': 'ghostty',
-      'vscode': 'vscode',
-      'cursor': 'cursor',
-      'terminal': 'terminal',
-    };
-
     if (action === 'copy') {
       try {
         await navigator.clipboard.writeText(this.currentProjectPath);
@@ -283,12 +292,9 @@ export class ConversationView {
       return;
     }
 
-    const app = appMap[action];
-    if (!app) return;
-
     if (this.client) {
       try {
-        await this.client.openIn(app, this.currentProjectPath);
+        await this.client.openIn(action, this.currentProjectPath);
       } catch {
         try { await navigator.clipboard.writeText(this.currentProjectPath!); } catch { /* */ }
       }
