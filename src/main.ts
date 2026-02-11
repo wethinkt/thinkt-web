@@ -7,7 +7,7 @@
 
 /// <reference types="vite/client" />
 
-import { ApiViewer, configureDefaultClient } from './api';
+import { ApiViewer, SearchOverlay, configureDefaultClient } from './api';
 import { getApiBaseUrl } from './config';
 import { initI18n, changeLocale, SUPPORTED_LOCALES, type SupportedLocale } from './i18n';
 import './styles.css';
@@ -17,6 +17,7 @@ import './styles.css';
 // ============================================
 
 let apiViewer: ApiViewer | null = null;
+let searchOverlay: SearchOverlay | null = null;
 let connectionIntervalId: ReturnType<typeof setInterval> | null = null;
 
 // ============================================
@@ -166,8 +167,19 @@ function setupKeyboardShortcuts(): void {
       return;
     }
 
-    // Escape - Focus app container for keyboard nav
+    // Ctrl/Cmd + K - Open global search overlay
+    if ((e.ctrlKey || e.metaKey) && e.key === 'k') {
+      e.preventDefault();
+      openSearchOverlay();
+      return;
+    }
+
+    // Escape - Focus app container for keyboard nav (if search is not open)
     if (e.key === 'Escape') {
+      if (searchOverlay?.isOpened()) {
+        // SearchOverlay handles its own escape
+        return;
+      }
       document.getElementById('app')?.focus();
       return;
     }
@@ -190,6 +202,42 @@ function setupKeyboardShortcuts(): void {
       }
     }
   });
+}
+
+function openSearchOverlay(): void {
+  if (searchOverlay?.isOpened()) {
+    return;
+  }
+
+  searchOverlay = new SearchOverlay({
+    elements: {
+      container: document.body,
+    },
+    onSessionSelect: (result) => {
+      void loadSessionFromSearch(result);
+    },
+    onClose: () => {
+      searchOverlay = null;
+    },
+    onError: (error) => {
+      console.error('[THINKT] Search error:', error);
+    },
+  });
+
+  searchOverlay.open();
+}
+
+async function loadSessionFromSearch(result: { path: string; session_id: string; project_name: string }): Promise<void> {
+  if (!result.path) {
+    console.error('[THINKT] Search result has no path');
+    return;
+  }
+
+  try {
+    await apiViewer?.loadSession(result.path);
+  } catch (error) {
+    console.error('[THINKT] Failed to load session from search:', error);
+  }
 }
 
 // ============================================
@@ -233,6 +281,8 @@ function dispose(): void {
   }
   apiViewer?.dispose();
   apiViewer = null;
+  searchOverlay?.dispose();
+  searchOverlay = null;
 }
 
 // ============================================

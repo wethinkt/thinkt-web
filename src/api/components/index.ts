@@ -40,3 +40,11 @@ export {
   type FilterState,
 } from './ConversationView';
 
+// Search Overlay (global session search)
+export {
+  SearchOverlay,
+  createSearchOverlay,
+  type SearchOverlayElements,
+  type SearchOverlayOptions,
+} from './SearchOverlay';
+
