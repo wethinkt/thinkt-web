@@ -130,6 +130,21 @@ export const CONVERSATION_STYLES = `
   display: none;
 }
 
+.thinkt-conversation-entry--highlighted {
+  animation: thinkt-highlight-pulse 2s ease;
+}
+
+@keyframes thinkt-highlight-pulse {
+  0%, 100% {
+    border-color: var(--thinkt-border-color, #2a2a2a);
+    box-shadow: none;
+  }
+  20%, 80% {
+    border-color: var(--thinkt-accent-color, #6366f1);
+    box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.3);
+  }
+}
+
 .thinkt-conversation-entry__header {
   display: flex;
   align-items: center;

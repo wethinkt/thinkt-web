@@ -21,8 +21,8 @@ export interface SearchOverlayOptions {
   elements: SearchOverlayElements;
   /** API client instance (defaults to getDefaultClient()) */
   client?: ThinktClient;
-  /** Callback when a session is selected (can be async) */
-  onSessionSelect?: (result: SearchSessionResult) => void | Promise<void>;
+  /** Callback when a session is selected (can be async). lineNum is the first match line number for scrolling */
+  onSessionSelect?: (result: SearchSessionResult, lineNum?: number) => void | Promise<void>;
   /** Callback when the overlay is closed */
   onClose?: () => void;
   /** Callback on error */
@@ -1048,8 +1048,11 @@ export class SearchOverlay {
 
   private async selectResult(result: SearchSessionResult): Promise<void> {
     try {
+      // Get the first match's line number for scrolling
+      const firstMatch = result.matches?.[0];
+      const lineNum = firstMatch?.line_num;
       // Wait for the callback to complete before closing
-      await this.options.onSessionSelect?.(result);
+      await this.options.onSessionSelect?.(result, lineNum);
     } finally {
       this.close();
     }

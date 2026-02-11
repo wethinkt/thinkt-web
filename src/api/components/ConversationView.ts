@@ -529,8 +529,9 @@ export class ConversationView {
 
     this.buildToolResultIndex(this.currentEntries);
 
-    for (const entry of this.currentEntries) {
-      const entryEl = this.renderEntry(entry);
+    for (let i = 0; i < this.currentEntries.length; i++) {
+      const entry = this.currentEntries[i];
+      const entryEl = this.renderEntry(entry, i);
       this.contentContainer.appendChild(entryEl);
     }
 
@@ -555,8 +556,9 @@ export class ConversationView {
 
     this.buildToolResultIndex(this.currentEntries);
 
-    for (const entry of this.currentEntries) {
-      const entryEl = this.renderEntry(entry);
+    for (let i = 0; i < this.currentEntries.length; i++) {
+      const entry = this.currentEntries[i];
+      const entryEl = this.renderEntry(entry, i);
       this.contentContainer.appendChild(entryEl);
     }
 
@@ -578,7 +580,7 @@ export class ConversationView {
    * Thinking, tool_use, and tool_result blocks render as standalone peers.
    * Block order is preserved.
    */
-  private renderEntry(entry: Entry): DocumentFragment {
+  private renderEntry(entry: Entry, entryIndex?: number): DocumentFragment {
     const fragment = document.createDocumentFragment();
     const role = entry.role || 'unknown';
     const timestamp = entry.timestamp
@@ -641,6 +643,17 @@ export class ConversationView {
     }
 
     flushText();
+
+    // Add entry index to all top-level elements for scrolling
+    if (entryIndex !== undefined) {
+      for (let i = 0; i < fragment.childNodes.length; i++) {
+        const child = fragment.childNodes[i];
+        if (child instanceof HTMLElement) {
+          child.dataset.entryIndex = String(entryIndex);
+        }
+      }
+    }
+
     return fragment;
   }
 
@@ -797,6 +810,21 @@ export class ConversationView {
    */
   clear(): void {
     this.showEmpty();
+  }
+
+  /**
+   * Scroll to a specific entry by index
+   */
+  scrollToEntry(entryIndex: number): void {
+    const element = this.contentContainer.querySelector(`[data-entry-index="${entryIndex}"]`);
+    if (element) {
+      element.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      // Highlight the entry temporarily
+      element.classList.add('thinkt-conversation-entry--highlighted');
+      setTimeout(() => {
+        element.classList.remove('thinkt-conversation-entry--highlighted');
+      }, 2000);
+    }
   }
 
   /**

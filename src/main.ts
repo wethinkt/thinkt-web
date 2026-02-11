@@ -213,8 +213,8 @@ function openSearchOverlay(): void {
     elements: {
       container: document.body,
     },
-    onSessionSelect: (result) => {
-      void loadSessionFromSearch(result);
+    onSessionSelect: (result, lineNum) => {
+      void loadSessionFromSearch(result, lineNum);
     },
     onClose: () => {
       searchOverlay = null;
@@ -227,14 +227,51 @@ function openSearchOverlay(): void {
   searchOverlay.open();
 }
 
-async function loadSessionFromSearch(result: { path: string; session_id: string; project_name: string }): Promise<void> {
+async function loadSessionFromSearch(
+  result: { path: string; session_id: string; project_name: string },
+  lineNum?: number
+): Promise<void> {
   if (!result.path) {
     console.error('[THINKT] Search result has no path');
     return;
   }
 
   try {
+    // Step 1: Find and select the project
+    const projectBrowser = apiViewer?.getProjectBrowser();
+    if (projectBrowser && result.project_name) {
+      // Try to find project by name
+      let project = projectBrowser.getProjects().find(
+        p => p.name === result.project_name
+      );
+      
+      // If not found, refresh projects and try again
+      if (!project) {
+        await apiViewer?.refreshProjects();
+        project = projectBrowser.getProjects().find(
+          p => p.name === result.project_name
+        );
+      }
+      
+      // Select the project (this loads sessions)
+      if (project?.id) {
+        await apiViewer?.selectProject(project.id);
+      }
+    }
+
+    // Step 2: Load the session (this loads entries and updates conversation view)
     await apiViewer?.loadSession(result.path);
+
+    // Step 3: Select the session in the session list UI
+    apiViewer?.selectSessionById(result.session_id);
+
+    // Step 4: Scroll to the matching entry if line number is available
+    if (lineNum !== undefined && lineNum > 0) {
+      // Small delay to ensure DOM is updated
+      await new Promise(resolve => setTimeout(resolve, 100));
+      const approxEntryIndex = Math.max(0, lineNum - 1);
+      apiViewer?.scrollToEntry(approxEntryIndex);
+    }
   } catch (error) {
     console.error('[THINKT] Failed to load session from search:', error);
   }

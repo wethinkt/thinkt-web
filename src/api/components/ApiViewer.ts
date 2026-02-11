@@ -433,6 +433,42 @@ export class ApiViewer {
     this.sessionList?.focusSearch();
   }
 
+  /**
+   * Select a project by ID and load its sessions
+   */
+  async selectProject(projectId: string): Promise<void> {
+    // Find the project in the browser
+    const project = this.projectBrowser?.getProjects().find(p => p.id === projectId);
+    if (project) {
+      // Update UI selection
+      this.projectBrowser?.selectProjectById(projectId);
+      this.handleProjectSelect(project);
+    } else {
+      // Project not loaded yet, try to refresh and find it
+      await this.refreshProjects();
+      const refreshedProject = this.projectBrowser?.getProjects().find(p => p.id === projectId);
+      if (refreshedProject) {
+        // Update UI selection
+        this.projectBrowser?.selectProjectById(projectId);
+        this.handleProjectSelect(refreshedProject);
+      }
+    }
+  }
+
+  /**
+   * Select a session by ID (project must be selected first)
+   */
+  selectSessionById(sessionId: string): void {
+    this.sessionList?.selectSessionById(sessionId);
+  }
+
+  /**
+   * Scroll to a specific entry in the conversation by index
+   */
+  scrollToEntry(entryIndex: number): void {
+    this.conversationView?.scrollToEntry(entryIndex);
+  }
+
   // ============================================
   // Cleanup
   // ============================================
