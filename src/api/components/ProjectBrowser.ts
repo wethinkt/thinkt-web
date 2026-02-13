@@ -41,6 +41,8 @@ export interface ProjectBrowserOptions {
   initialSource?: string;
   /** Enable search filtering */
   enableSearch?: boolean;
+  /** Enable source filtering */
+  enableSourceFilter?: boolean;
   /** Custom CSS class prefix */
   classPrefix?: string;
 }
@@ -248,11 +250,13 @@ const DEFAULT_STYLES = `
 
 export class ProjectBrowser {
   private elements: ProjectBrowserElements;
-  private options: Required<Pick<ProjectBrowserOptions, 'enableSearch' | 'classPrefix'>> &
-    Omit<ProjectBrowserOptions, 'enableSearch' | 'classPrefix'>;
+  private options: Required<Pick<ProjectBrowserOptions, 'enableSearch' | 'enableSourceFilter' | 'classPrefix'>> &
+    Omit<ProjectBrowserOptions, 'enableSearch' | 'enableSourceFilter' | 'classPrefix'>;
   private client: ThinktClient;
   private projects: Project[] = [];
   private filteredProjects: Project[] = [];
+  private searchQuery = '';
+  private currentSourceFilter: string | null = null;
   private selectedIndex = -1;
   private isLoading = false;
   private itemElements: Map<string, HTMLElement> = new Map();
@@ -265,15 +269,17 @@ export class ProjectBrowser {
     this.options = {
       ...options,
       enableSearch: options.enableSearch ?? true,
+      enableSourceFilter: options.enableSourceFilter ?? true,
       classPrefix: options.classPrefix ?? 'thinkt-project-browser',
     };
+    this.currentSourceFilter = options.initialSource ?? null;
 
     // Get client (either provided or default)
     this.client = options.client ?? getDefaultClient();
     this.init();
     
     // Load projects after initialization
-    void this.loadProjects();
+    void this.loadProjects(this.currentSourceFilter ?? undefined);
   }
 
   // ============================================
@@ -309,7 +315,7 @@ export class ProjectBrowser {
     const header = document.createElement('div');
     header.className = `${classPrefix}__header`;
 
-    // Create toolbar
+    const hasToolbar = this.options.enableSearch || this.options.enableSourceFilter;
     const toolbar = document.createElement('div');
     toolbar.className = `${classPrefix}__toolbar`;
 
@@ -319,6 +325,7 @@ export class ProjectBrowser {
       searchInput.className = `${classPrefix}__search`;
       searchInput.type = 'text';
       searchInput.placeholder = 'Search projects...';
+      searchInput.value = this.searchQuery;
       if (!this.elements.searchInput) {
         this.elements.searchInput = searchInput;
         toolbar.appendChild(searchInput);
@@ -326,20 +333,25 @@ export class ProjectBrowser {
     }
 
     // Source filter
-    const sourceFilter = this.elements.sourceFilter ?? document.createElement('select');
-    sourceFilter.className = `${classPrefix}__filter`;
-    sourceFilter.innerHTML = `
-      <option value="">All Sources</option>
-      <option value="claude">Claude</option>
-      <option value="kimi">Kimi</option>
-      <option value="gemini">Gemini</option>
-    `;
-    if (!this.elements.sourceFilter) {
-      this.elements.sourceFilter = sourceFilter;
-      toolbar.appendChild(sourceFilter);
+    if (this.options.enableSourceFilter) {
+      const sourceFilter = this.elements.sourceFilter ?? document.createElement('select');
+      sourceFilter.className = `${classPrefix}__filter`;
+      sourceFilter.innerHTML = `
+        <option value="">All Sources</option>
+        <option value="claude">Claude</option>
+        <option value="kimi">Kimi</option>
+        <option value="gemini">Gemini</option>
+      `;
+      sourceFilter.value = this.currentSourceFilter ?? '';
+      if (!this.elements.sourceFilter) {
+        this.elements.sourceFilter = sourceFilter;
+        toolbar.appendChild(sourceFilter);
+      }
     }
 
-    header.appendChild(toolbar);
+    if (hasToolbar && toolbar.childElementCount > 0) {
+      header.appendChild(toolbar);
+    }
 
     // Stats
     const stats = document.createElement('div');
@@ -387,7 +399,10 @@ export class ProjectBrowser {
 
     // Search input
     if (searchInput) {
-      const handleSearch = () => this.filterProjects();
+      const handleSearch = () => {
+        this.searchQuery = searchInput.value.toLowerCase();
+        this.filterProjects();
+      };
       searchInput.addEventListener('input', handleSearch);
       this.boundHandlers.push(() => searchInput.removeEventListener('input', handleSearch));
     }
@@ -395,7 +410,8 @@ export class ProjectBrowser {
     // Source filter
     if (sourceFilter) {
       const handleFilter = () => {
-        void this.loadProjects(sourceFilter.value || undefined);
+        this.currentSourceFilter = sourceFilter.value || null;
+        void this.loadProjects(this.currentSourceFilter ?? undefined);
       };
       sourceFilter.addEventListener('change', handleFilter);
       this.boundHandlers.push(() => sourceFilter.removeEventListener('change', handleFilter));
@@ -444,15 +460,18 @@ export class ProjectBrowser {
 
   async loadProjects(source?: string): Promise<void> {
     if (this.isLoading) return;
+    if (typeof source === 'string') {
+      this.currentSourceFilter = source || null;
+    }
+    const activeSource = this.currentSourceFilter ?? undefined;
 
     this.isLoading = true;
     this.showLoading(true);
     this.showError(null);
 
     try {
-      this.projects = await this.client.getProjects(source);
-      this.filteredProjects = [...this.projects];
-      this.render();
+      this.projects = await this.client.getProjects(activeSource);
+      this.filterProjects();
       void Promise.resolve(this.options.onProjectsLoaded?.(this.projects));
     } catch (error) {
       const err = error instanceof Error ? error : new Error(String(error));
@@ -461,6 +480,10 @@ export class ProjectBrowser {
     } finally {
       this.isLoading = false;
       this.showLoading(false);
+      const latestSource = this.currentSourceFilter ?? undefined;
+      if (latestSource !== activeSource) {
+        void this.loadProjects(latestSource);
+      }
     }
   }
 
@@ -488,7 +511,7 @@ export class ProjectBrowser {
       retryBtn.className = `${this.options.classPrefix}__retry`;
       retryBtn.textContent = 'Retry';
       retryBtn.addEventListener('click', () => {
-        void this.loadProjects(this.elements.sourceFilter?.value || undefined);
+        void this.loadProjects(this.currentSourceFilter ?? undefined);
       });
       this.elements.errorDisplay.appendChild(retryBtn);
 
@@ -503,7 +526,7 @@ export class ProjectBrowser {
   // ============================================
 
   private filterProjects(): void {
-    const searchTerm = this.elements.searchInput?.value.toLowerCase() ?? '';
+    const searchTerm = this.searchQuery.trim();
 
     this.filteredProjects = this.projects.filter(project => {
       const matchesSearch = !searchTerm ||
@@ -692,27 +715,34 @@ export class ProjectBrowser {
    * Refresh the project list
    */
   refresh(): void {
-    void this.loadProjects(this.elements.sourceFilter?.value || undefined);
+    void this.loadProjects(this.currentSourceFilter ?? undefined);
   }
 
   /**
    * Set the search query
    */
   setSearch(query: string): void {
+    this.searchQuery = query.toLowerCase();
     if (this.elements.searchInput) {
       this.elements.searchInput.value = query;
-      this.filterProjects();
     }
+    if (this.isLoading) return;
+    this.filterProjects();
   }
 
   /**
    * Set the source filter
    */
   setSourceFilter(source: string | null): void {
-    if (this.elements.sourceFilter) {
-      this.elements.sourceFilter.value = source ?? '';
-      void this.loadProjects(source ?? undefined);
+    const normalized = source && source.length > 0 ? source : null;
+    if (this.currentSourceFilter === normalized) {
+      return;
     }
+    this.currentSourceFilter = normalized;
+    if (this.elements.sourceFilter) {
+      this.elements.sourceFilter.value = normalized ?? '';
+    }
+    void this.loadProjects(normalized ?? undefined);
   }
 
   /**

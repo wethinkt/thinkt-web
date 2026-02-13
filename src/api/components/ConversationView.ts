@@ -28,6 +28,12 @@ export interface ConversationViewOptions {
   elements: ConversationViewElements;
   /** API client for opening in external apps */
   client?: ThinktClient;
+  /** Toggle timeline panel visibility */
+  onToggleTimelinePanel?: () => void;
+  /** Whether timeline panel is visible */
+  isTimelinePanelVisible?: () => boolean;
+  /** Whether timeline panel can be toggled */
+  canToggleTimelinePanel?: () => boolean;
 }
 
 /**
@@ -53,6 +59,9 @@ export class ConversationView {
   private toolbarContainer!: HTMLElement;
   private stylesInjected = false;
   private client: ThinktClient | null = null;
+  private onToggleTimelinePanel: (() => void) | null = null;
+  private isTimelinePanelVisible: (() => boolean) | null = null;
+  private canToggleTimelinePanel: (() => boolean) | null = null;
 
   // Filter state (default: show user and assistant, hide thinking/tools)
   private filterState: FilterState = {
@@ -88,6 +97,9 @@ export class ConversationView {
   constructor(options: ConversationViewOptions) {
     this.container = options.elements.container;
     this.client = options.client ?? null;
+    this.onToggleTimelinePanel = options.onToggleTimelinePanel ?? null;
+    this.isTimelinePanelVisible = options.isTimelinePanelVisible ?? null;
+    this.canToggleTimelinePanel = options.canToggleTimelinePanel ?? null;
     this.init();
     void this.fetchAvailableApps();
   }
@@ -221,6 +233,15 @@ export class ConversationView {
   private renderToolbar(): void {
     const path = this.currentProjectPath ?? 'No project selected';
     const entryCount = this.currentEntryCount;
+    const timelineVisible = this.isTimelinePanelVisible?.() ?? false;
+    const canToggleTimeline = this.canToggleTimelinePanel?.() ?? false;
+    const timelineBtn = this.onToggleTimelinePanel
+      ? `
+          <button class="thinkt-conversation-view__toolbar-btn" id="toolbar-timeline-btn" ${canToggleTimeline ? '' : 'disabled'}>
+            ${timelineVisible ? 'Hide Timeline' : 'Show Timeline'}
+          </button>
+        `
+      : '';
 
     const appItems = this.availableApps
       .filter(app => app.enabled)
@@ -235,6 +256,7 @@ export class ConversationView {
         <span class="thinkt-conversation-view__toolbar-path-icon">\u{1F4C1}</span>
         <span class="thinkt-conversation-view__toolbar-path-text" title="${escapeHtml(path)}">${escapeHtml(path)}</span>
         <div class="thinkt-conversation-view__toolbar-path-actions">
+          ${timelineBtn}
           <div class="thinkt-conversation-view__toolbar-actions">
             <button class="thinkt-conversation-view__toolbar-btn" id="toolbar-open-btn">
               Open \u25BC
@@ -257,6 +279,14 @@ export class ConversationView {
   }
 
   private setupToolbarActions(): void {
+    const timelineBtn = this.toolbarContainer.querySelector('#toolbar-timeline-btn') as HTMLElement | null;
+    if (timelineBtn) {
+      timelineBtn.addEventListener('click', () => {
+        this.onToggleTimelinePanel?.();
+        this.renderToolbar();
+      });
+    }
+
     const openBtn = this.toolbarContainer.querySelector('#toolbar-open-btn') as HTMLElement | null;
     const dropdown = this.toolbarContainer.querySelector('#toolbar-dropdown') as HTMLElement | null;
     if (!openBtn || !dropdown) return;
@@ -810,6 +840,13 @@ export class ConversationView {
    */
   clear(): void {
     this.showEmpty();
+  }
+
+  /**
+   * Re-render toolbar for external state changes (timeline panel visibility).
+   */
+  refreshToolbar(): void {
+    this.renderToolbar();
   }
 
   /**

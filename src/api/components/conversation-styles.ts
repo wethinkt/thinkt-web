@@ -728,6 +728,11 @@ export const CONVERSATION_STYLES = `
   border-color: var(--thinkt-border-color-light, #444);
 }
 
+.thinkt-conversation-view__toolbar-btn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
 .thinkt-conversation-view__toolbar-dropdown {
   position: absolute;
   top: 100%;

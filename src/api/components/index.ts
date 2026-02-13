@@ -48,3 +48,29 @@ export {
   type SearchOverlayOptions,
 } from './SearchOverlay';
 
+// Tree Project Browser (hierarchical project view)
+export {
+  TreeProjectBrowser,
+  createTreeProjectBrowser,
+  type TreeProjectBrowserElements,
+  type TreeProjectBrowserOptions,
+  type ProjectGroup,
+  type SourceGroup,
+} from './TreeProjectBrowser';
+
+// Timeline Visualization (time-based session view)
+export {
+  TimelineVisualization,
+  createTimelineVisualization,
+  type TimelineVisualizationElements,
+  type TimelineVisualizationOptions,
+} from './TimelineVisualization';
+
+// Project Timeline Panel (per-project timeline below conversation)
+export {
+  ProjectTimelinePanel,
+  createProjectTimelinePanel,
+  type ProjectTimelinePanelElements,
+  type ProjectTimelinePanelOptions,
+} from './ProjectTimelinePanel';
+
