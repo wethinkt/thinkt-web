@@ -255,6 +255,7 @@ export class ProjectBrowser {
   private client: ThinktClient;
   private projects: Project[] = [];
   private filteredProjects: Project[] = [];
+  private discoveredSources: string[] = [];
   private searchQuery = '';
   private currentSourceFilter: string | null = null;
   private selectedIndex = -1;
@@ -336,17 +337,11 @@ export class ProjectBrowser {
     if (this.options.enableSourceFilter) {
       const sourceFilter = this.elements.sourceFilter ?? document.createElement('select');
       sourceFilter.className = `${classPrefix}__filter`;
-      sourceFilter.innerHTML = `
-        <option value="">All Sources</option>
-        <option value="claude">Claude</option>
-        <option value="kimi">Kimi</option>
-        <option value="gemini">Gemini</option>
-      `;
-      sourceFilter.value = this.currentSourceFilter ?? '';
       if (!this.elements.sourceFilter) {
         this.elements.sourceFilter = sourceFilter;
         toolbar.appendChild(sourceFilter);
       }
+      this.renderSourceFilterOptions();
     }
 
     if (hasToolbar && toolbar.childElementCount > 0) {
@@ -471,6 +466,14 @@ export class ProjectBrowser {
 
     try {
       this.projects = await this.client.getProjects(activeSource);
+      const seen = new Set(this.discoveredSources);
+      this.projects.forEach((project) => {
+        if (typeof project.source === 'string' && project.source.trim().length > 0) {
+          seen.add(project.source.trim().toLowerCase());
+        }
+      });
+      this.discoveredSources = Array.from(seen).sort((a, b) => a.localeCompare(b));
+      this.renderSourceFilterOptions();
       this.filterProjects();
       void Promise.resolve(this.options.onProjectsLoaded?.(this.projects));
     } catch (error) {
@@ -538,6 +541,33 @@ export class ProjectBrowser {
 
     this.selectedIndex = -1;
     this.render();
+  }
+
+  private renderSourceFilterOptions(): void {
+    if (!this.elements.sourceFilter) return;
+
+    const sourceFilter = this.elements.sourceFilter;
+    const selected = this.currentSourceFilter ?? '';
+    const discovered = [...this.discoveredSources];
+
+    sourceFilter.innerHTML = '';
+    const allOption = document.createElement('option');
+    allOption.value = '';
+    allOption.textContent = 'All Sources';
+    sourceFilter.appendChild(allOption);
+
+    if (selected && !discovered.includes(selected)) {
+      discovered.push(selected);
+    }
+
+    discovered.forEach((source) => {
+      const option = document.createElement('option');
+      option.value = source;
+      option.textContent = source.charAt(0).toUpperCase() + source.slice(1);
+      sourceFilter.appendChild(option);
+    });
+
+    sourceFilter.value = selected;
   }
 
   // ============================================

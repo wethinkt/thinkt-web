@@ -689,19 +689,19 @@ export const CONVERSATION_STYLES = `
   font-family: var(--thinkt-font-mono, 'SF Mono', Monaco, monospace);
 }
 
-.thinkt-conversation-view__toolbar-path-actions {
+.thinkt-conversation-view__toolbar-right {
   display: flex;
   align-items: center;
-  margin-left: 4px;
+  gap: 10px;
+  margin-left: auto;
 }
 
 .thinkt-conversation-view__toolbar-metrics {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 8px;
   font-size: 11px;
   color: var(--thinkt-muted-color, #888);
-  margin-left: auto;
 }
 
 .thinkt-conversation-view__toolbar-actions {

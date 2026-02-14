@@ -52,41 +52,38 @@
       to { transform: rotate(360deg); }
     }
 
-    /* Brand in top-left */
-    #brand {
+    /* Top bar */
+    #top-bar {
       position: fixed;
       top: 8px;
       left: 12px;
+      right: auto;
+      width: min(356px, calc(100vw - 24px));
       z-index: 1000;
       display: flex;
       align-items: center;
-      gap: 8px;
-      padding: 4px 10px;
+      justify-content: space-between;
+      padding: 6px 10px;
       background: rgba(10, 10, 10, 0.8);
       border-radius: 4px;
       border: 1px solid #333;
       backdrop-filter: blur(4px);
     }
 
-    #brand .brand-name {
+    #brand-link {
+      text-decoration: none;
+    }
+
+    #brand-link .brand-name {
       font-size: 13px;
       font-weight: 600;
       color: #6366f1;
       letter-spacing: 0.5px;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace;
+      text-transform: lowercase;
     }
 
-    #brand .brand-version {
-      font-size: 11px;
-      color: #666;
-      font-weight: 400;
-    }
-
-    /* Language selector in top-right */
-    #lang-selector {
-      position: fixed;
-      top: 8px;
-      right: 12px;
-      z-index: 1000;
+    #top-bar-right {
       display: flex;
       align-items: center;
       gap: 8px;
@@ -117,7 +114,7 @@
       color: #e0e0e0;
     }
 
-    /* Connection status next to language selector */
+    /* Connection status in top bar */
     #global-status {
       display: flex;
       align-items: center;
@@ -161,21 +158,20 @@
     <div class="spinner"></div>
   </div>
 
-  <!-- Branding -->
-  <div id="brand">
-    <span class="brand-name">THINKT</span>
-    <span class="brand-version">Viewer</span>
-  </div>
-
-  <div id="lang-selector">
-    <select id="lang-select">
-      <option value="en">English</option>
-      <option value="zh">中文</option>
-      <option value="es">Español</option>
-    </select>
-    <div id="global-status">
-      <span class="status-dot"></span>
-      <span class="status-text">Connecting...</span>
+  <div id="top-bar">
+    <a id="brand-link" href="https://wethinkt.com" target="_blank" rel="noopener noreferrer">
+      <span class="brand-name">thinkt</span>
+    </a>
+    <div id="top-bar-right">
+      <select id="lang-select">
+        <option value="en">English</option>
+        <option value="zh">中文</option>
+        <option value="es">Español</option>
+      </select>
+      <div id="global-status">
+        <span class="status-dot"></span>
+        <span class="status-text">Connecting...</span>
+      </div>
     </div>
   </div>
 

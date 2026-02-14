@@ -270,6 +270,7 @@ export class ApiViewer {
   private projectSourceFilter: HTMLSelectElement | null = null;
   private projectSearchQuery = '';
   private projectSource = '';
+  private discoveredSources: string[] = [];
   private isLoadingSession = false;
   private boundHandlers: Array<() => void> = [];
   private disposed = false;
@@ -337,17 +338,21 @@ export class ApiViewer {
     sidebar.appendChild(sessionsSection);
 
     container.appendChild(sidebar);
+    this.syncTopBarToSidebar(sidebar);
+    const handleWindowResize = () => {
+      this.syncTopBarToSidebar(sidebar);
+    };
+    window.addEventListener('resize', handleWindowResize);
+    this.boundHandlers.push(() => window.removeEventListener('resize', handleWindowResize));
 
     // Resizer (optional)
-    if (this.elements.resizer) {
-      container.appendChild(this.elements.resizer);
-    } else {
+    if (!this.elements.resizer) {
       const resizer = document.createElement('div');
       resizer.className = 'thinkt-api-viewer__resizer';
       this.elements.resizer = resizer;
-      container.appendChild(resizer);
-      this.setupResizer();
     }
+    container.appendChild(this.elements.resizer);
+    this.setupResizer();
 
     // Viewer section - contains conversation and timeline panel
     const viewerSection = document.createElement('div');
@@ -412,16 +417,8 @@ export class ApiViewer {
 
     const sourceFilter = document.createElement('select');
     sourceFilter.className = 'thinkt-project-filter__source';
-    sourceFilter.innerHTML = `
-      <option value="">All Sources</option>
-      <option value="claude">Claude</option>
-      <option value="kimi">Kimi</option>
-      <option value="gemini">Gemini</option>
-      <option value="copilot">Copilot</option>
-      <option value="thinkt">Thinkt</option>
-    `;
-    sourceFilter.value = this.projectSource;
     this.projectSourceFilter = sourceFilter;
+    this.renderSourceFilterOptions();
 
     const handleSearchInput = () => {
       this.projectSearchQuery = searchInput.value;
@@ -440,6 +437,63 @@ export class ApiViewer {
     container.appendChild(searchInput);
     container.appendChild(sourceFilter);
     return container;
+  }
+
+  private normalizeSourceName(source: string): string {
+    return source.trim().toLowerCase();
+  }
+
+  private mergeDiscoveredSources(sources: string[]): void {
+    const merged = new Set(this.discoveredSources);
+    for (const source of sources) {
+      const normalized = this.normalizeSourceName(source);
+      if (normalized) {
+        merged.add(normalized);
+      }
+    }
+    this.discoveredSources = Array.from(merged).sort((a, b) => a.localeCompare(b));
+    this.renderSourceFilterOptions();
+  }
+
+  private renderSourceFilterOptions(): void {
+    if (!this.projectSourceFilter) return;
+
+    const sourceFilter = this.projectSourceFilter;
+    const selected = this.normalizeSourceName(sourceFilter.value || this.projectSource || '');
+    sourceFilter.innerHTML = '';
+
+    const allOption = document.createElement('option');
+    allOption.value = '';
+    allOption.textContent = 'All Sources';
+    sourceFilter.appendChild(allOption);
+
+    const optionSources = [...this.discoveredSources];
+    if (selected && !optionSources.includes(selected)) {
+      optionSources.push(selected);
+    }
+
+    optionSources.sort((a, b) => a.localeCompare(b));
+    optionSources.forEach((source) => {
+      const option = document.createElement('option');
+      option.value = source;
+      option.textContent = source.charAt(0).toUpperCase() + source.slice(1);
+      sourceFilter.appendChild(option);
+    });
+
+    sourceFilter.value = selected;
+    this.projectSource = sourceFilter.value;
+  }
+
+  private async discoverSourcesFromProjects(): Promise<void> {
+    try {
+      const projects = await this.client.getProjects();
+      const discovered = projects
+        .map((project) => (typeof project.source === 'string' ? project.source.trim() : ''))
+        .filter((source) => source.length > 0);
+      this.mergeDiscoveredSources(discovered);
+    } catch {
+      // Ignore discovery failures; project loading in active views still works.
+    }
   }
 
   private applyProjectFilters(): void {
@@ -465,12 +519,27 @@ export class ApiViewer {
     }
   }
 
+  private syncTopBarToSidebar(sidebar: HTMLElement): void {
+    const topBar = document.getElementById('top-bar');
+    if (!topBar) return;
+
+    const inset = 12;
+    const sidebarWidth = Math.round(sidebar.getBoundingClientRect().width);
+    if (sidebarWidth <= 0) return;
+
+    const width = Math.max(220, sidebarWidth - (inset * 2));
+    topBar.style.left = `${inset}px`;
+    topBar.style.right = 'auto';
+    topBar.style.width = `${width}px`;
+  }
+
   private setupResizer(): void {
     const { resizer, container } = this.elements;
     if (!resizer) return;
 
     const sidebar = container.querySelector('.thinkt-api-viewer__sidebar') as HTMLElement;
     if (!sidebar) return;
+    this.syncTopBarToSidebar(sidebar);
 
     let isResizing = false;
 
@@ -485,6 +554,7 @@ export class ApiViewer {
       const newWidth = e.clientX;
       if (newWidth >= 250 && newWidth <= 600) {
         sidebar.style.width = `${newWidth}px`;
+        this.syncTopBarToSidebar(sidebar);
       }
     };
 
@@ -611,6 +681,9 @@ export class ApiViewer {
       onSessionSelect: (session) => { 
         void this.handleTimelineSessionSelect(session);
       },
+      onSourcesDiscovered: (sources) => {
+        this.mergeDiscoveredSources(sources);
+      },
       onError: (error) => { this.handleError(error); },
     });
     this.applyProjectFilters();
@@ -687,7 +760,12 @@ export class ApiViewer {
 
   private async checkConnection(): Promise<void> {
     try {
-      await this.client.getSources();
+      const sources = await this.client.getSources();
+      const discovered = sources
+        .map((source) => source.name)
+        .filter((name): name is string => typeof name === 'string' && name.trim().length > 0);
+      this.mergeDiscoveredSources(discovered);
+      await this.discoverSourcesFromProjects();
       this.updateConnectionStatus(true);
     } catch (error) {
       this.updateConnectionStatus(false, error instanceof Error ? error.message : 'Connection failed');
@@ -866,6 +944,7 @@ export class ApiViewer {
    * Refresh the project list
    */
   refreshProjects(): Promise<void> {
+    void this.discoverSourcesFromProjects();
     switch (this.currentProjectView) {
       case 'list':
         return this.projectBrowser?.refresh() ?? Promise.resolve();

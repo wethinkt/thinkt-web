@@ -146,24 +146,66 @@ body {
 }
 
 /* ============================================
-   Global Connection Status (top-right)
+   Top Bar
    ============================================ */
 
-#global-status {
+#top-bar {
   position: fixed;
   top: 8px;
-  right: 12px;
-  z-index: 100;
+  left: 12px;
+  right: auto;
+  width: min(356px, calc(100vw - 24px));
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 2px 10px;
+  background: rgba(20, 20, 20, 0.9);
+  border-radius: 4px;
+  border: 1px solid #2f2a2a;
+  backdrop-filter: blur(4px);
+}
+
+#brand-link {
+  text-decoration: none;
+}
+
+#brand-link .brand-name {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--accent-primary);
+  letter-spacing: 0.5px;
+  font-family: var(--font-mono);
+  text-transform: lowercase;
+}
+
+#top-bar-right {
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+#lang-select {
+  background: transparent;
+  border: 1px solid #333;
+  border-radius: 4px;
+  color: var(--text-secondary);
+  font-size: 11px;
+  padding: 4px 8px;
+}
+
+#global-status {
   font-size: 11px;
   display: flex;
   align-items: center;
   gap: 6px;
   padding: 4px 10px;
-  background: rgba(20, 20, 20, 0.9);
+  background: transparent;
   border-radius: 4px;
   border: 1px solid #333;
   color: #888;
-  backdrop-filter: blur(4px);
 }
 
 #global-status .status-dot {

@@ -10,12 +10,13 @@ function createSession(
   modifiedAtIso: string,
   source: string,
   firstPrompt = 'prompt',
+  fullPath?: string,
 ): SessionMeta {
   return {
     id,
     source,
     firstPrompt,
-    fullPath: `/tmp/${id}`,
+    fullPath: fullPath ?? `/tmp/${id}`,
     modifiedAt: new Date(modifiedAtIso),
   } as SessionMeta;
 }
@@ -23,6 +24,11 @@ function createSession(
 function createClient(
   projectSessions: Record<string, SessionMeta[]>,
   projectSources: Record<string, string>,
+  options?: {
+    projectPaths?: Record<string, string>;
+    projectSourceBasePaths?: Record<string, string>;
+    sources?: Array<{ name: string; base_path?: string; available?: boolean }>;
+  },
 ): ThinktClient {
   return {
     getProjects: vi.fn().mockResolvedValue(
@@ -30,9 +36,12 @@ function createClient(
         id,
         name: id,
         source: projectSources[id] ?? 'unknown',
+        path: options?.projectPaths?.[id],
+        sourceBasePath: options?.projectSourceBasePaths?.[id],
       })),
     ),
     getSessions: vi.fn().mockImplementation(async (projectId: string) => projectSessions[projectId] ?? []),
+    getSources: vi.fn().mockResolvedValue(options?.sources ?? []),
   } as unknown as ThinktClient;
 }
 
@@ -251,6 +260,46 @@ describe('TimelineVisualization', () => {
     const newerY = Number((circles[1] as SVGCircleElement).getAttribute('cy'));
     expect(newerY).toBeLessThan(olderY);
 
+    timeline.dispose();
+  });
+
+  it('infers copilot in source mode from source base paths', async () => {
+    const container = document.createElement('div');
+    document.body.appendChild(container);
+
+    const client = createClient(
+      {
+        projectA: [
+          createSession(
+            'copilot-1',
+            '2026-02-03T10:00:00Z',
+            'claude',
+            'prompt',
+            '/home/user/.copilot/projects/app/session-1.json',
+          ),
+        ],
+      },
+      { projectA: 'claude' },
+      {
+        projectPaths: { projectA: '/home/user/.copilot/projects/app' },
+        projectSourceBasePaths: { projectA: '/home/user/.copilot' },
+        sources: [{ name: 'copilot', base_path: '/home/user/.copilot', available: true }],
+      },
+    );
+
+    const timeline = new TimelineVisualization({
+      elements: { container },
+      client,
+      groupBy: 'source',
+    });
+
+    await flush();
+
+    const labels = Array.from(
+      container.querySelectorAll('.thinkt-timeline-source-header-label'),
+    ).map((el) => (el.textContent ?? '').trim().toLowerCase());
+
+    expect(labels).toContain('copilot');
     timeline.dispose();
   });
 });

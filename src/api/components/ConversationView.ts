@@ -255,23 +255,23 @@ export class ConversationView {
       <div class="thinkt-conversation-view__toolbar-path">
         <span class="thinkt-conversation-view__toolbar-path-icon">\u{1F4C1}</span>
         <span class="thinkt-conversation-view__toolbar-path-text" title="${escapeHtml(path)}">${escapeHtml(path)}</span>
-        <div class="thinkt-conversation-view__toolbar-path-actions">
-          ${timelineBtn}
-          <div class="thinkt-conversation-view__toolbar-actions">
-            <button class="thinkt-conversation-view__toolbar-btn" id="toolbar-open-btn">
-              Open \u25BC
-            </button>
-            <div class="thinkt-conversation-view__toolbar-dropdown" id="toolbar-dropdown">
-              ${appItems}
-              <div class="thinkt-conversation-view__toolbar-dropdown-item" data-action="copy">
-                <span class="icon">\u{1F4CB}</span> Copy Path
-              </div>
+      </div>
+      <div class="thinkt-conversation-view__toolbar-right">
+        <div class="thinkt-conversation-view__toolbar-metrics">
+          ${entryCount > 0 ? `<span>${entryCount} entries</span>` : ''}
+        </div>
+        <div class="thinkt-conversation-view__toolbar-actions">
+          <button class="thinkt-conversation-view__toolbar-btn" id="toolbar-open-btn">
+            Open \u25BC
+          </button>
+          <div class="thinkt-conversation-view__toolbar-dropdown" id="toolbar-dropdown">
+            ${appItems}
+            <div class="thinkt-conversation-view__toolbar-dropdown-item" data-action="copy">
+              <span class="icon">\u{1F4CB}</span> Copy Path
             </div>
           </div>
         </div>
-      </div>
-      <div class="thinkt-conversation-view__toolbar-metrics">
-        ${entryCount > 0 ? `<span>${entryCount} entries</span>` : ''}
+        ${timelineBtn}
       </div>
     `;
 

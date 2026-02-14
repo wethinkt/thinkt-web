@@ -26,6 +26,8 @@ export interface TimelineVisualizationOptions {
   onSessionSelect?: (session: SessionMeta) => void;
   /** Callback when a project label is selected */
   onProjectSelect?: (project: TimelineProjectSelection) => void;
+  /** Callback when sources are discovered from loaded sessions */
+  onSourcesDiscovered?: (sources: string[]) => void;
   /** Callback on error */
   onError?: (error: Error) => void;
   /** Grouping mode: 'project' | 'source' */
@@ -45,6 +47,11 @@ interface TimelineSession {
   projectPath: string | null;
   source: string;
   timestamp: Date;
+}
+
+interface TimelineSourceInfo {
+  name: string;
+  basePath: string;
 }
 
 interface TimelineRow {
@@ -375,6 +382,7 @@ export class TimelineVisualization {
   private allSessions: TimelineSession[] = [];
   private sessions: TimelineSession[] = [];
   private rows: TimelineRow[] = [];
+  private sourceInfos: TimelineSourceInfo[] = [];
   private searchQuery = '';
   private sourceFilter: string | null = null;
   private tooltip: HTMLElement | null = null;
@@ -686,12 +694,98 @@ export class TimelineVisualization {
     };
   }
 
+  private normalizePath(value: string): string {
+    return value.replace(/\\/g, '/').replace(/\/+$/, '').toLowerCase();
+  }
+
+  private inferSourceFromPath(pathValue: string): string | null {
+    const normalized = this.normalizePath(pathValue);
+    const hiddenSourceMatch = normalized.match(/\/\.([a-z0-9_-]+)(?:\/|$)/);
+    if (!hiddenSourceMatch) return null;
+
+    const inferred = hiddenSourceMatch[1];
+    if (!inferred || inferred === 'config' || inferred === 'cache') {
+      return null;
+    }
+    return inferred;
+  }
+
+  private detectSourceFromPaths(paths: Array<string | null | undefined>): string | null {
+    const normalizedPaths = paths
+      .filter((value): value is string => typeof value === 'string' && value.trim().length > 0)
+      .map((value) => this.normalizePath(value));
+    if (normalizedPaths.length === 0) return null;
+
+    let bestMatch: TimelineSourceInfo | null = null;
+    for (const sourceInfo of this.sourceInfos) {
+      const basePath = sourceInfo.basePath;
+      if (!basePath) continue;
+      const isMatch = normalizedPaths.some((pathValue) =>
+        pathValue === basePath || pathValue.startsWith(`${basePath}/`));
+      if (!isMatch) continue;
+      if (!bestMatch || sourceInfo.basePath.length > bestMatch.basePath.length) {
+        bestMatch = sourceInfo;
+      }
+    }
+    if (bestMatch) {
+      return bestMatch.name;
+    }
+
+    for (const pathValue of normalizedPaths) {
+      const inferred = this.inferSourceFromPath(pathValue);
+      if (inferred) {
+        return inferred;
+      }
+    }
+
+    return null;
+  }
+
+  private resolveSource(
+    session: SessionMeta,
+    project: { path?: string | null; source?: string | null; sourceBasePath?: string | null },
+  ): string {
+    const pathSource = this.detectSourceFromPaths([
+      session.fullPath,
+      session.projectPath,
+      project.path ?? null,
+      project.sourceBasePath ?? null,
+    ]);
+    if (pathSource) {
+      return pathSource;
+    }
+
+    const direct = (session.source || project.source || '').toString().trim().toLowerCase();
+    return direct || 'unknown';
+  }
+
+  private async loadSourceInfos(): Promise<void> {
+    try {
+      const sourceInfos = await this.client.getSources();
+      this.sourceInfos = sourceInfos
+        .map((sourceInfo) => {
+          const name = (sourceInfo.name ?? '').toString().trim().toLowerCase();
+          const rawBasePath = 'base_path' in sourceInfo
+            ? sourceInfo.base_path
+            : ('basePath' in sourceInfo ? sourceInfo.basePath : '');
+          const basePath = typeof rawBasePath === 'string' && rawBasePath.trim().length > 0
+            ? this.normalizePath(rawBasePath)
+            : '';
+          return { name, basePath };
+        })
+        .filter((sourceInfo) => sourceInfo.name.length > 0);
+    } catch {
+      this.sourceInfos = [];
+    }
+  }
+
   private async loadData(): Promise<void> {
     if (this.isLoading || this.disposed) return;
     this.isLoading = true;
     this.showLoading();
 
     try {
+      await this.loadSourceInfos();
       const projects = await this.client.getProjects();
       const allSessions: TimelineSession[] = [];
 
@@ -707,7 +801,11 @@ export class TimelineVisualization {
               projectId: project.id,
               projectName: project.name || 'Unknown',
               projectPath: project.path ?? null,
-              source: session.source || project.source || 'unknown',
+              source: this.resolveSource(session, {
+                path: project.path ?? null,
+                source: project.source ?? null,
+                sourceBasePath: project.sourceBasePath ?? null,
+              }),
               timestamp: session.modifiedAt instanceof Date
                 ? session.modifiedAt
                 : new Date(session.modifiedAt),
@@ -719,6 +817,14 @@ export class TimelineVisualization {
       }
 
       allSessions.sort((a, b) => a.timestamp.getTime() - b.timestamp.getTime());
+      const discoveredSources = Array.from(
+        new Set(
+          allSessions
+            .map((session) => session.source.trim().toLowerCase())
+            .filter((source) => source.length > 0),
+        ),
+      );
+      this.options.onSourcesDiscovered?.(discoveredSources);
       this.allSessions = allSessions;
       this.applyFilters();
     } catch (error) {

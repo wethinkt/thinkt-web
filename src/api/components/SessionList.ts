@@ -355,7 +355,7 @@ export class SessionList {
       const searchInput = this.elements.searchInput ?? document.createElement('input');
       searchInput.className = `${classPrefix}__search`;
       searchInput.type = 'text';
-      searchInput.placeholder = 'Search sessions...';
+      searchInput.placeholder = 'Filter sessions...';
       if (!this.elements.searchInput) {
         this.elements.searchInput = searchInput;
       }
