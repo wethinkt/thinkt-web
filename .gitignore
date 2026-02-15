@@ -32,3 +32,6 @@ coverage/
 # Temp files
 *.tmp
 *.temp
+
+# Lingui compiled catalogs
+src/locales/**/*.js

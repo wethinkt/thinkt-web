@@ -7,6 +7,7 @@
 
 import type { SessionMeta } from '@wethinkt/ts-thinkt';
 import { type ThinktClient, getDefaultClient } from '@wethinkt/ts-thinkt/api';
+import { i18n } from '@lingui/core';
 
 // ============================================
 // Types
@@ -255,8 +256,8 @@ export class ProjectTimelinePanel {
   private createStructure(): void {
     this.container.innerHTML = `
       <div class="thinkt-project-timeline-header">
-        <span class="thinkt-project-timeline-title">📊 Project Timeline</span>
-        <button class="thinkt-project-timeline-close" title="Close">×</button>
+        <span class="thinkt-project-timeline-title">📊 ${i18n._('Project Timeline')}</span>
+        <button class="thinkt-project-timeline-close" title="${i18n._('Close')}">×</button>
       </div>
     `;
 
@@ -273,15 +274,15 @@ export class ProjectTimelinePanel {
     legend.innerHTML = `
       <div class="thinkt-project-timeline-legend-item">
         <span class="thinkt-project-timeline-legend-start"></span>
-        <span>Start</span>
+        <span>${i18n._('Start')}</span>
       </div>
       <div class="thinkt-project-timeline-legend-item">
         <span class="thinkt-project-timeline-legend-end"></span>
-        <span>End</span>
+        <span>${i18n._('End')}</span>
       </div>
       <div class="thinkt-project-timeline-legend-item">
         <span class="thinkt-project-timeline-legend-line"></span>
-        <span>Session duration</span>
+        <span>${i18n._('Session duration')}</span>
       </div>
     `;
     this.container.appendChild(legend);
@@ -568,9 +569,9 @@ export class ProjectTimelinePanel {
 
     const title = session.session.firstPrompt
       ? session.session.firstPrompt.slice(0, 80) + (session.session.firstPrompt.length > 80 ? '...' : '')
-      : session.session.id?.slice(0, 8) || 'Unknown';
+      : session.session.id?.slice(0, 8) || i18n._('Unknown');
 
-    const timeLabel = point === 'start' ? 'Started' : 'Ended';
+    const timeLabel = point === 'start' ? i18n._('Started') : i18n._('Ended');
     const time = point === 'start' ? session.startTime : session.endTime;
 
     this.tooltip.innerHTML = `
@@ -578,9 +579,9 @@ export class ProjectTimelinePanel {
       <div class="thinkt-project-timeline-tooltip-meta">
         <span>${timeLabel}: ${time.toLocaleString()}</span>
         <span class="thinkt-project-timeline-tooltip-duration">
-          Duration: ${this.formatDuration(session.duration)}
+          ${i18n._('Duration: {duration}', { duration: this.formatDuration(session.duration) })}
         </span>
-        <span>Source: ${session.source}</span>
+        <span>${i18n._('Source: {source}', { source: session.source })}</span>
       </div>
     `;
 
@@ -606,11 +607,11 @@ export class ProjectTimelinePanel {
   }
 
   private formatDuration(minutes: number): string {
-    if (minutes < 1) return '< 1 min';
-    if (minutes < 60) return `${Math.round(minutes)} min`;
+    if (minutes < 1) return i18n._('< 1 min');
+    if (minutes < 60) return i18n._('{count} min', { count: Math.round(minutes) });
     const hours = Math.floor(minutes / 60);
     const mins = Math.round(minutes % 60);
-    return `${hours}h ${mins}m`;
+    return i18n._('{hours}h {mins}m', { hours, mins });
   }
 
   // ============================================
@@ -619,19 +620,19 @@ export class ProjectTimelinePanel {
 
   private showLoading(): void {
     this.contentContainer.innerHTML = `
-      <div class="thinkt-project-timeline-loading">Loading timeline...</div>
+      <div class="thinkt-project-timeline-loading">${i18n._('Loading timeline...')}</div>
     `;
   }
 
   private showEmpty(): void {
     this.contentContainer.innerHTML = `
-      <div class="thinkt-project-timeline-empty">No sessions with timing data</div>
+      <div class="thinkt-project-timeline-empty">${i18n._('No sessions with timing data')}</div>
     `;
   }
 
   private showError(error: Error): void {
     this.contentContainer.innerHTML = `
-      <div class="thinkt-project-timeline-error">Error: ${this.escapeHtml(error.message)}</div>
+      <div class="thinkt-project-timeline-error">${i18n._('Error: {message}', { message: error.message })}</div>
     `;
   }
 
@@ -679,6 +680,14 @@ export class ProjectTimelinePanel {
     if (this.isVisible) {
       void this.loadSessions(projectId);
     }
+  }
+
+  /**
+   * Re-render translatable UI text in place when locale changes.
+   */
+  refreshI18n(): void {
+    this.createStructure();
+    this.render();
   }
 
   dispose(): void {

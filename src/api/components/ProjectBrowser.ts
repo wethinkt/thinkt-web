@@ -7,6 +7,7 @@
 
 import type { Project } from '@wethinkt/ts-thinkt';
 import { type ThinktClient, getDefaultClient } from '@wethinkt/ts-thinkt/api';
+import { i18n } from '@lingui/core';
 
 // ============================================
 // Types
@@ -261,6 +262,7 @@ export class ProjectBrowser {
   private selectedIndex = -1;
   private isLoading = false;
   private itemElements: Map<string, HTMLElement> = new Map();
+  private currentError: Error | null = null;
   private boundHandlers: Array<() => void> = [];
   private disposed = false;
   private stylesInjected = false;
@@ -325,7 +327,7 @@ export class ProjectBrowser {
       const searchInput = this.elements.searchInput ?? document.createElement('input');
       searchInput.className = `${classPrefix}__search`;
       searchInput.type = 'text';
-      searchInput.placeholder = 'Search projects...';
+      searchInput.placeholder = i18n._('Filter projects...');
       searchInput.value = this.searchQuery;
       if (!this.elements.searchInput) {
         this.elements.searchInput = searchInput;
@@ -351,7 +353,7 @@ export class ProjectBrowser {
     // Stats
     const stats = document.createElement('div');
     stats.className = `${classPrefix}__stats`;
-    stats.textContent = 'Loading...';
+    stats.textContent = i18n._('Loading...');
     header.appendChild(stats);
 
     container.appendChild(header);
@@ -370,7 +372,7 @@ export class ProjectBrowser {
     if (!this.elements.loadingIndicator) {
       this.elements.loadingIndicator = document.createElement('div');
       this.elements.loadingIndicator.className = `${classPrefix}__loading`;
-      this.elements.loadingIndicator.textContent = 'Loading projects...';
+      this.elements.loadingIndicator.textContent = i18n._('Loading projects...');
     }
     content.appendChild(this.elements.loadingIndicator);
 
@@ -503,6 +505,7 @@ export class ProjectBrowser {
 
   private showError(error: Error | null): void {
     if (!this.elements.errorDisplay) return;
+    this.currentError = error;
 
     if (error) {
       this.elements.errorDisplay.innerHTML = '';
@@ -512,7 +515,7 @@ export class ProjectBrowser {
 
       const retryBtn = document.createElement('button');
       retryBtn.className = `${this.options.classPrefix}__retry`;
-      retryBtn.textContent = 'Retry';
+      retryBtn.textContent = i18n._('Retry');
       retryBtn.addEventListener('click', () => {
         void this.loadProjects(this.currentSourceFilter ?? undefined);
       });
@@ -553,7 +556,7 @@ export class ProjectBrowser {
     sourceFilter.innerHTML = '';
     const allOption = document.createElement('option');
     allOption.value = '';
-    allOption.textContent = 'All Sources';
+    allOption.textContent = i18n._('All Sources');
     sourceFilter.appendChild(allOption);
 
     if (selected && !discovered.includes(selected)) {
@@ -585,9 +588,9 @@ export class ProjectBrowser {
       const total = this.projects.length;
       const showing = this.filteredProjects.length;
       if (showing === total) {
-        stats.textContent = `${total} project${total !== 1 ? 's' : ''}`;
+        stats.textContent = i18n._('{count, plural, one {# project} other {# projects}}', { count: total });
       } else {
-        stats.textContent = `Showing ${showing} of ${total} projects`;
+        stats.textContent = i18n._('Showing {showing} of {total} projects', { showing, total });
       }
     }
   }
@@ -606,8 +609,8 @@ export class ProjectBrowser {
       const empty = document.createElement('div');
       empty.className = `${this.options.classPrefix}__empty`;
       empty.textContent = this.projects.length === 0
-        ? 'No projects found'
-        : 'No projects match your search';
+        ? i18n._('No projects found')
+        : i18n._('No projects match your search');
       list.parentElement?.appendChild(empty);
       return;
     }
@@ -643,12 +646,12 @@ export class ProjectBrowser {
     li.innerHTML = `
       <div class="${classPrefix}__icon ${iconClass}">${icon}</div>
       <div class="${classPrefix}__info">
-        <div class="${classPrefix}__name">${this.escapeHtml(project.name ?? 'Unknown')}</div>
+        <div class="${classPrefix}__name">${this.escapeHtml(project.name ?? i18n._('Unknown'))}</div>
         <div class="${classPrefix}__path">${this.escapeHtml(project.displayPath ?? project.path ?? '')}</div>
       </div>
       <div class="${classPrefix}__meta">
         <span class="${classPrefix}__count">${project.sessionCount ?? 0}</span>
-        <span>session${(project.sessionCount ?? 0) !== 1 ? 's' : ''}</span>
+        <span>${i18n._('{count, plural, one {session} other {sessions}}', { count: project.sessionCount ?? 0 })}</span>
       </div>
     `;
 
@@ -780,6 +783,26 @@ export class ProjectBrowser {
    */
   focusSearch(): void {
     this.elements.searchInput?.focus();
+  }
+
+  /**
+   * Re-render translated UI labels in place.
+   */
+  refreshI18n(): void {
+    if (this.elements.searchInput) {
+      this.elements.searchInput.placeholder = i18n._('Filter projects...');
+    }
+    if (this.elements.loadingIndicator) {
+      this.elements.loadingIndicator.textContent = i18n._('Loading projects...');
+    }
+
+    this.renderSourceFilterOptions();
+    this.updateStats();
+    this.renderList();
+
+    if (this.currentError) {
+      this.showError(this.currentError);
+    }
   }
 
   // ============================================

@@ -7,6 +7,7 @@
 
 import type { SessionMeta } from '@wethinkt/ts-thinkt';
 import { type ThinktClient, getDefaultClient } from '@wethinkt/ts-thinkt/api';
+import { i18n } from '@lingui/core';
 
 // ============================================
 // Types
@@ -244,7 +245,7 @@ const DEFAULT_STYLES = `
 // ============================================
 
 function formatRelativeTime(date: Date | string | undefined): string {
-  if (!date) return 'Unknown';
+  if (!date) return i18n._('Unknown');
   try {
     const d = date instanceof Date ? date : new Date(date);
     const now = new Date();
@@ -257,15 +258,15 @@ function formatRelativeTime(date: Date | string | undefined): string {
     const diffMonths = Math.floor(diffDays / 30);
     const diffYears = Math.floor(diffDays / 365);
 
-    if (diffSecs < 60) return 'just now';
-    if (diffMins < 60) return `${diffMins}m ago`;
-    if (diffHours < 24) return `${diffHours}h ago`;
-    if (diffDays < 7) return `${diffDays}d ago`;
-    if (diffWeeks < 4) return `${diffWeeks}w ago`;
-    if (diffMonths < 12) return `${diffMonths}mo ago`;
-    return `${diffYears}y ago`;
+    if (diffSecs < 60) return i18n._('just now');
+    if (diffMins < 60) return i18n._('{count}m ago', { count: diffMins });
+    if (diffHours < 24) return i18n._('{count}h ago', { count: diffHours });
+    if (diffDays < 7) return i18n._('{count}d ago', { count: diffDays });
+    if (diffWeeks < 4) return i18n._('{count}w ago', { count: diffWeeks });
+    if (diffMonths < 12) return i18n._('{count}mo ago', { count: diffMonths });
+    return i18n._('{count}y ago', { count: diffYears });
   } catch {
-    return 'Invalid';
+    return i18n._('Invalid');
   }
 }
 
@@ -292,6 +293,7 @@ export class SessionList {
   private selectedIndex = -1;
   private isLoading = false;
   private itemElements: Map<string, HTMLElement> = new Map();
+  private currentError: Error | null = null;
   private boundHandlers: Array<() => void> = [];
   private disposed = false;
   private stylesInjected = false;
@@ -355,7 +357,7 @@ export class SessionList {
       const searchInput = this.elements.searchInput ?? document.createElement('input');
       searchInput.className = `${classPrefix}__search`;
       searchInput.type = 'text';
-      searchInput.placeholder = 'Filter sessions...';
+      searchInput.placeholder = i18n._('Filter sessions...');
       if (!this.elements.searchInput) {
         this.elements.searchInput = searchInput;
       }
@@ -364,7 +366,7 @@ export class SessionList {
 
     const stats = document.createElement('div');
     stats.className = `${classPrefix}__stats`;
-    stats.textContent = this.options.projectId ? 'Loading...' : 'Select a project';
+    stats.textContent = this.options.projectId ? i18n._('Loading...') : i18n._('Select a project');
     header.appendChild(stats);
 
     container.appendChild(header);
@@ -381,7 +383,7 @@ export class SessionList {
     if (!this.elements.loadingIndicator) {
       this.elements.loadingIndicator = document.createElement('div');
       this.elements.loadingIndicator.className = `${classPrefix}__loading`;
-      this.elements.loadingIndicator.textContent = 'Loading sessions...';
+      this.elements.loadingIndicator.textContent = i18n._('Loading sessions...');
     }
     content.appendChild(this.elements.loadingIndicator);
 
@@ -493,6 +495,7 @@ export class SessionList {
 
   private showError(error: Error | null): void {
     if (!this.elements.errorDisplay) return;
+    this.currentError = error;
 
     if (error) {
       this.elements.errorDisplay.innerHTML = '';
@@ -503,7 +506,7 @@ export class SessionList {
       if (this.options.projectId) {
         const retryBtn = document.createElement('button');
         retryBtn.className = `${this.options.classPrefix}__retry`;
-        retryBtn.textContent = 'Retry';
+        retryBtn.textContent = i18n._('Retry');
         retryBtn.addEventListener('click', () => {
           if (this.options.projectId) {
             void this.loadSessions(this.options.projectId);
@@ -558,16 +561,16 @@ export class SessionList {
     const stats = this.elements.container.querySelector(`.${this.options.classPrefix}__stats`);
     if (stats) {
       if (!this.options.projectId) {
-        stats.textContent = 'Select a project to view sessions';
+        stats.textContent = i18n._('Select a project to view sessions');
       } else if (this.isLoading) {
-        stats.textContent = 'Loading sessions...';
+        stats.textContent = i18n._('Loading sessions...');
       } else {
         const total = this.sessions.length;
         const showing = this.filteredSessions.length;
         if (showing === total) {
-          stats.textContent = `${total} session${total !== 1 ? 's' : ''}`;
+          stats.textContent = i18n._('{count, plural, one {# session} other {# sessions}}', { count: total });
         } else {
-          stats.textContent = `Showing ${showing} of ${total} sessions`;
+          stats.textContent = i18n._('Showing {showing} of {total} sessions', { showing, total });
         }
       }
     }
@@ -586,7 +589,7 @@ export class SessionList {
     if (!this.options.projectId) {
       const empty = document.createElement('div');
       empty.className = `${this.options.classPrefix}__empty`;
-      empty.textContent = 'Select a project to view its sessions';
+      empty.textContent = i18n._('Select a project to view its sessions');
       list.parentElement?.appendChild(empty);
       return;
     }
@@ -595,8 +598,8 @@ export class SessionList {
       const empty = document.createElement('div');
       empty.className = `${this.options.classPrefix}__empty`;
       empty.textContent = this.sessions.length === 0
-        ? 'No sessions found for this project'
-        : 'No sessions match your search';
+        ? i18n._('No sessions found for this project')
+        : i18n._('No sessions match your search');
       list.parentElement?.appendChild(empty);
       return;
     }
@@ -628,7 +631,7 @@ export class SessionList {
     // Build title from first prompt or ID
     const title = session.firstPrompt
       ? session.firstPrompt.slice(0, 80) + (session.firstPrompt.length > 80 ? '...' : '')
-      : session.id ?? 'Unknown Session';
+      : session.id ?? i18n._('Unknown Session');
 
     // Build meta items - compact format like Kimi Code
     const metaItems: string[] = [];
@@ -638,7 +641,8 @@ export class SessionList {
 
     // Entry count (compact)
     if (showEntryCount && session.entryCount !== undefined) {
-      metaItems.push(`<span class="${classPrefix}__meta-item">${formatNumber(session.entryCount)} msgs</span>`);
+      const msgLabel = i18n._('{count, plural, one {msg} other {msgs}}', { count: session.entryCount });
+      metaItems.push(`<span class="${classPrefix}__meta-item">${formatNumber(session.entryCount)} ${msgLabel}</span>`);
     }
 
     // Model (shortened)
@@ -654,7 +658,7 @@ export class SessionList {
 
     // Chunked indicator
     if (isChunked) {
-      metaItems.push(`<span class="${classPrefix}__badge ${classPrefix}__badge--chunked">chunked</span>`);
+      metaItems.push(`<span class="${classPrefix}__badge ${classPrefix}__badge--chunked">${i18n._('chunked')}</span>`);
     }
 
     li.innerHTML = `
@@ -794,6 +798,25 @@ export class SessionList {
    */
   focusSearch(): void {
     this.elements.searchInput?.focus();
+  }
+
+  /**
+   * Re-render translated UI labels in place.
+   */
+  refreshI18n(): void {
+    if (this.elements.searchInput) {
+      this.elements.searchInput.placeholder = i18n._('Filter sessions...');
+    }
+    if (this.elements.loadingIndicator) {
+      this.elements.loadingIndicator.textContent = i18n._('Loading sessions...');
+    }
+
+    this.updateStats();
+    this.renderList();
+
+    if (this.currentError) {
+      this.showError(this.currentError);
+    }
   }
 
   // ============================================

@@ -12,6 +12,7 @@
 
 import type { Project, SessionMeta, Entry } from '@wethinkt/ts-thinkt';
 import { type ThinktClient, getDefaultClient } from '@wethinkt/ts-thinkt/api';
+import { i18n } from '@lingui/core';
 import { ProjectBrowser } from './ProjectBrowser';
 import { SessionList } from './SessionList';
 import { ConversationView } from './ConversationView';
@@ -345,6 +346,12 @@ export class ApiViewer {
     window.addEventListener('resize', handleWindowResize);
     this.boundHandlers.push(() => window.removeEventListener('resize', handleWindowResize));
 
+    const handleLocaleChange = () => {
+      this.refreshI18n();
+    };
+    window.addEventListener('thinkt:locale-changed', handleLocaleChange as EventListener);
+    this.boundHandlers.push(() => window.removeEventListener('thinkt:locale-changed', handleLocaleChange as EventListener));
+
     // Resizer (optional)
     if (!this.elements.resizer) {
       const resizer = document.createElement('div');
@@ -388,14 +395,15 @@ export class ApiViewer {
     switcher.className = 'thinkt-view-switcher';
     
     const views: { id: ProjectViewMode; label: string; icon: string }[] = [
-      { id: 'list', label: 'List', icon: '☰' },
-      { id: 'tree', label: 'Tree', icon: '🌳' },
-      { id: 'timeline', label: 'Timeline', icon: '◯' },
+      { id: 'list', label: i18n._('List'), icon: '☰' },
+      { id: 'tree', label: i18n._('Tree'), icon: '🌳' },
+      { id: 'timeline', label: i18n._('Timeline'), icon: '◯' },
     ];
 
     views.forEach(view => {
       const btn = document.createElement('button');
       btn.className = `thinkt-view-switcher-btn ${this.currentProjectView === view.id ? 'active' : ''}`;
+      btn.dataset.view = view.id;
       btn.innerHTML = `<span class="icon">${view.icon}</span> ${view.label}`;
       btn.addEventListener('click', () => this.switchProjectView(view.id));
       switcher.appendChild(btn);
@@ -411,7 +419,7 @@ export class ApiViewer {
     const searchInput = document.createElement('input');
     searchInput.className = 'thinkt-project-filter__search';
     searchInput.type = 'text';
-    searchInput.placeholder = 'Filter projects...';
+    searchInput.placeholder = i18n._('Filter projects...');
     searchInput.value = this.projectSearchQuery;
     this.projectSearchInput = searchInput;
 
@@ -464,7 +472,7 @@ export class ApiViewer {
 
     const allOption = document.createElement('option');
     allOption.value = '';
-    allOption.textContent = 'All Sources';
+    allOption.textContent = i18n._('All Sources');
     sourceFilter.appendChild(allOption);
 
     const optionSources = [...this.discoveredSources];
@@ -768,7 +776,7 @@ export class ApiViewer {
       await this.discoverSourcesFromProjects();
       this.updateConnectionStatus(true);
     } catch (error) {
-      this.updateConnectionStatus(false, error instanceof Error ? error.message : 'Connection failed');
+      this.updateConnectionStatus(false, error instanceof Error ? error.message : i18n._('Connection failed'));
     }
   }
 
@@ -781,8 +789,42 @@ export class ApiViewer {
 
     const text = status.querySelector('.status-text');
     if (text) {
-      text.textContent = connected ? 'Connected' : (errorMessage ?? 'Disconnected');
+      text.textContent = connected ? i18n._('Connected') : (errorMessage ?? i18n._('Disconnected'));
     }
+  }
+
+  private refreshViewSwitcherLabels(): void {
+    const labels: Record<ProjectViewMode, string> = {
+      list: i18n._('List'),
+      tree: i18n._('Tree'),
+      timeline: i18n._('Timeline'),
+    };
+
+    this.elements.container.querySelectorAll<HTMLElement>('.thinkt-view-switcher-btn').forEach((button) => {
+      const view = button.dataset.view as ProjectViewMode | undefined;
+      if (!view) return;
+      const icon = button.querySelector('.icon')?.textContent ?? '';
+      button.innerHTML = `<span class="icon">${icon}</span> ${labels[view]}`;
+    });
+  }
+
+  /**
+   * Re-render translatable UI text in place when locale changes.
+   */
+  refreshI18n(): void {
+    this.refreshViewSwitcherLabels();
+
+    if (this.projectSearchInput) {
+      this.projectSearchInput.placeholder = i18n._('Filter projects...');
+    }
+    this.renderSourceFilterOptions();
+
+    this.projectBrowser?.refreshI18n();
+    this.treeProjectBrowser?.refreshI18n();
+    this.timelineVisualization?.refreshI18n();
+    this.sessionList?.refreshI18n();
+    this.conversationView?.refreshI18n();
+    this.projectTimelinePanel?.refreshI18n();
   }
 
   // ============================================

@@ -8,8 +8,10 @@
 /// <reference types="vite/client" />
 
 import { ApiViewer, SearchOverlay, configureDefaultClient } from './api';
+import { i18n } from '@lingui/core';
 import { getApiBaseUrl } from './config';
 import { initI18n, changeLocale, SUPPORTED_LOCALES, type SupportedLocale } from './i18n';
+import { LanguageSelector } from './components/LanguageSelector';
 import './styles.css';
 
 // ============================================
@@ -19,6 +21,11 @@ import './styles.css';
 let apiViewer: ApiViewer | null = null;
 let searchOverlay: SearchOverlay | null = null;
 let connectionIntervalId: ReturnType<typeof setInterval> | null = null;
+let languageSelector: LanguageSelector<SupportedLocale> | null = null;
+let currentSessionTitle: string | null = null;
+let currentConnectionStatus: { status: 'connected' | 'error' | 'connecting'; message?: string } = {
+  status: 'connecting',
+};
 
 // ============================================
 // Initialization
@@ -27,7 +34,9 @@ let connectionIntervalId: ReturnType<typeof setInterval> | null = null;
 async function init(): Promise<void> {
   // Initialize i18n first
   const currentLocale = await initI18n();
+  document.documentElement.lang = currentLocale;
   setupLanguageSelector(currentLocale);
+  updateConnectionStatus('connecting');
 
   // Configure API client
   const baseUrl = getApiBaseUrl();
@@ -63,7 +72,8 @@ async function init(): Promise<void> {
     onSessionLoaded: (session, entries) => {
       // eslint-disable-next-line no-console
   console.log(`[THINKT] Loaded session: ${session.id} (${entries.length} entries)`);
-      updateWindowTitle(session.firstPrompt ?? session.id ?? 'Session');
+      currentSessionTitle = session.firstPrompt ?? session.id ?? 'Session';
+      updateWindowTitle(currentSessionTitle);
     },
     onError: (error) => {
       // Error is already logged by the API client
@@ -89,24 +99,23 @@ async function init(): Promise<void> {
 // ============================================
 
 function setupLanguageSelector(currentLocale: SupportedLocale): void {
-  const langSelect = document.getElementById('lang-select') as HTMLSelectElement | null;
-  if (!langSelect) return;
+  const container = document.getElementById('lang-select-container');
+  if (!(container instanceof HTMLElement)) return;
 
-  // Set current value
-  langSelect.value = currentLocale;
-
-  // Handle language change
-  langSelect.addEventListener('change', async (e) => {
-    const newLocale = (e.target as HTMLSelectElement).value as SupportedLocale;
-    if (SUPPORTED_LOCALES.includes(newLocale)) {
+  languageSelector?.dispose();
+  languageSelector = new LanguageSelector<SupportedLocale>({
+    container,
+    locales: SUPPORTED_LOCALES,
+    currentLocale,
+    onChange: async (newLocale) => {
       await changeLocale(newLocale);
+      document.documentElement.lang = newLocale;
+      languageSelector?.setCurrentLocale(newLocale);
+      refreshLocalizedTopBarText();
       // eslint-disable-next-line no-console
       console.log(`[THINKT] Language changed to: ${newLocale}`);
-
-      // Reload the page to apply translations to all components
-      // This is simpler than trying to update all components dynamically
-      window.location.reload();
-    }
+      window.dispatchEvent(new CustomEvent('thinkt:locale-changed', { detail: { locale: newLocale } }));
+    },
   });
 }
 
@@ -124,10 +133,12 @@ function hideLoadingScreen(): void {
 }
 
 function updateWindowTitle(sessionTitle: string): void {
-  document.title = `${sessionTitle} - THINKT`;
+  document.title = i18n._('{sessionTitle} - THINKT', { sessionTitle });
 }
 
 function updateConnectionStatus(status: 'connected' | 'error' | 'connecting', message?: string): void {
+  currentConnectionStatus = { status, message };
+
   const statusEl = document.getElementById('global-status');
   if (!statusEl) return;
 
@@ -138,7 +149,12 @@ function updateConnectionStatus(status: 'connected' | 'error' | 'connecting', me
 
   const textEl = statusEl.querySelector('.status-text');
   if (textEl) {
-    textEl.textContent = message ?? (status === 'connected' ? 'Connected' : 'Disconnected');
+    textEl.textContent = message ??
+      (status === 'connected'
+        ? i18n._('Connected')
+        : status === 'connecting'
+          ? i18n._('Connecting...')
+          : i18n._('Disconnected'));
   }
 }
 
@@ -303,8 +319,15 @@ async function checkConnection(): Promise<void> {
       updateConnectionStatus('error', `HTTP ${response.status}`);
     }
   } catch (error) {
-    updateConnectionStatus('error', error instanceof Error ? error.message : 'Connection failed');
+    updateConnectionStatus('error', error instanceof Error ? error.message : i18n._('Connection failed'));
   }
+}
+
+function refreshLocalizedTopBarText(): void {
+  if (currentSessionTitle) {
+    updateWindowTitle(currentSessionTitle);
+  }
+  updateConnectionStatus(currentConnectionStatus.status, currentConnectionStatus.message);
 }
 
 // ============================================
@@ -316,6 +339,8 @@ function dispose(): void {
     clearInterval(connectionIntervalId);
     connectionIntervalId = null;
   }
+  languageSelector?.dispose();
+  languageSelector = null;
   apiViewer?.dispose();
   apiViewer = null;
   searchOverlay?.dispose();

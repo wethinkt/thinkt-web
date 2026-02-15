@@ -13,6 +13,7 @@
 
 import type { Project, SessionMeta } from '@wethinkt/ts-thinkt';
 import { type ThinktClient, getDefaultClient } from '@wethinkt/ts-thinkt/api';
+import { i18n } from '@lingui/core';
 
 // ============================================
 // Types
@@ -342,7 +343,7 @@ export class TreeProjectBrowser {
     this.container.className = 'thinkt-tree-browser';
     this.container.innerHTML = `
       <div class="thinkt-tree-header">
-        <span class="thinkt-tree-title">Projects</span>
+        <span class="thinkt-tree-title">${i18n._('Projects')}</span>
       </div>
     `;
 
@@ -522,8 +523,8 @@ export class TreeProjectBrowser {
     const filteredProjects = this.getFilteredProjectGroups();
     if (filteredProjects.length === 0) {
       this.showEmpty(this.hasActiveFilters() && this.projectGroups.size > 0
-        ? 'No projects match your filter'
-        : 'No projects found');
+        ? i18n._('No projects match your filter')
+        : i18n._('No projects found'));
       return;
     }
 
@@ -554,8 +555,8 @@ export class TreeProjectBrowser {
       <span class="thinkt-tree-folder-icon">📁</span>
       <span class="thinkt-tree-project-name" title="${this.escapeHtml(project.path)}">${this.escapeHtml(project.name)}</span>
       <span class="thinkt-tree-project-meta">
-        <span class="thinkt-tree-badge">${project.sources.size} source${project.sources.size !== 1 ? 's' : ''}</span>
-        <span class="thinkt-tree-badge">${project.totalSessions}</span>
+        <span class="thinkt-tree-badge">${i18n._('{count, plural, one {# source} other {# sources}}', { count: project.sources.size })}</span>
+        <span class="thinkt-tree-badge">${i18n._('{count, plural, one {# session} other {# sessions}}', { count: project.totalSessions })}</span>
       </span>
     `;
 
@@ -688,7 +689,7 @@ export class TreeProjectBrowser {
     const diffHours = Math.floor(diffMins / 60);
     const diffDays = Math.floor(diffHours / 24);
 
-    if (diffSecs < 60) return 'now';
+    if (diffSecs < 60) return i18n._('now');
     if (diffMins < 60) return `${diffMins}m`;
     if (diffHours < 24) return `${diffHours}h`;
     if (diffDays < 7) return `${diffDays}d`;
@@ -712,12 +713,12 @@ export class TreeProjectBrowser {
   private showLoading(): void {
     this.contentContainer.innerHTML = `
       <div class="thinkt-tree-loading">
-        <div>Loading projects...</div>
+        <div>${i18n._('Loading projects...')}</div>
       </div>
     `;
   }
 
-  private showEmpty(message = 'No projects found'): void {
+  private showEmpty(message = i18n._('No projects found')): void {
     this.contentContainer.innerHTML = `
       <div class="thinkt-tree-empty">
         <div class="thinkt-tree-empty-icon">📁</div>
@@ -729,8 +730,8 @@ export class TreeProjectBrowser {
   private showError(error: Error): void {
     this.contentContainer.innerHTML = `
       <div class="thinkt-tree-error">
-        <div>Error: ${this.escapeHtml(error.message)}</div>
-        <button class="thinkt-tree-retry">Retry</button>
+        <div>${i18n._('Error: {message}', { message: error.message })}</div>
+        <button class="thinkt-tree-retry">${i18n._('Retry')}</button>
       </div>
     `;
 
@@ -824,6 +825,14 @@ export class TreeProjectBrowser {
     }
 
     return result;
+  }
+
+  /**
+   * Re-render translatable UI text in place when locale changes.
+   */
+  refreshI18n(): void {
+    this.createStructure();
+    this.render();
   }
 
   dispose(): void {

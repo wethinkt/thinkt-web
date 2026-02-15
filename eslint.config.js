@@ -53,6 +53,7 @@ export default tseslint.config(
       '*.config.js',
       '*.config.ts',
       'vite.config.ts',
+      'src/locales/**/*.js',
     ],
   }
 );

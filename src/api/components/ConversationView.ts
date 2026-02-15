@@ -11,6 +11,7 @@
 
 import type { ThinktClient, AppInfo } from '@wethinkt/ts-thinkt/api';
 import type { Session, Entry, ToolResultBlock } from '@wethinkt/ts-thinkt';
+import { i18n } from '@lingui/core';
 import { CONVERSATION_STYLES } from './conversation-styles';
 import { escapeHtml, formatToolSummary, renderMarkdown, formatDuration } from './conversation-renderers';
 import { exportAsHtml, exportAsMarkdown, downloadFile, getSafeFilename } from './export';
@@ -231,14 +232,14 @@ export class ConversationView {
   }
 
   private renderToolbar(): void {
-    const path = this.currentProjectPath ?? 'No project selected';
+    const path = this.currentProjectPath ?? i18n._('No project selected');
     const entryCount = this.currentEntryCount;
     const timelineVisible = this.isTimelinePanelVisible?.() ?? false;
     const canToggleTimeline = this.canToggleTimelinePanel?.() ?? false;
     const timelineBtn = this.onToggleTimelinePanel
       ? `
           <button class="thinkt-conversation-view__toolbar-btn" id="toolbar-timeline-btn" ${canToggleTimeline ? '' : 'disabled'}>
-            ${timelineVisible ? 'Hide Timeline' : 'Show Timeline'}
+            ${timelineVisible ? i18n._('Hide Timeline') : i18n._('Show Timeline')}
           </button>
         `
       : '';
@@ -247,7 +248,7 @@ export class ConversationView {
       .filter(app => app.enabled)
       .map(app => `
         <div class="thinkt-conversation-view__toolbar-dropdown-item" data-action="${escapeHtml(app.id ?? '')}">
-          Open in ${escapeHtml(app.name ?? app.id ?? '')}
+          ${i18n._('Open in')} ${escapeHtml(app.name ?? app.id ?? '')}
         </div>
       `).join('');
 
@@ -258,16 +259,16 @@ export class ConversationView {
       </div>
       <div class="thinkt-conversation-view__toolbar-right">
         <div class="thinkt-conversation-view__toolbar-metrics">
-          ${entryCount > 0 ? `<span>${entryCount} entries</span>` : ''}
+          ${entryCount > 0 ? `<span>${i18n._('{count, plural, one {# entry} other {# entries}}', { count: entryCount })}</span>` : ''}
         </div>
         <div class="thinkt-conversation-view__toolbar-actions">
           <button class="thinkt-conversation-view__toolbar-btn" id="toolbar-open-btn">
-            Open \u25BC
+            ${i18n._('Open')} \u25BC
           </button>
           <div class="thinkt-conversation-view__toolbar-dropdown" id="toolbar-dropdown">
             ${appItems}
             <div class="thinkt-conversation-view__toolbar-dropdown-item" data-action="copy">
-              <span class="icon">\u{1F4CB}</span> Copy Path
+              <span class="icon">\u{1F4CB}</span> ${i18n._('Copy Path')}
             </div>
           </div>
         </div>
@@ -351,35 +352,35 @@ export class ConversationView {
   private renderFilterBar(): void {
     const hasEntries = this.currentEntries.length > 0;
     this.filterContainer.innerHTML = `
-      <span class="thinkt-conversation-view__filter-label">Show:</span>
+      <span class="thinkt-conversation-view__filter-label">${i18n._('Show:')}</span>
       <button class="thinkt-conversation-view__filter-btn ${this.filterState.user ? 'active' : ''}" data-filter="user">
-        User
+        ${i18n._('User')}
       </button>
       <button class="thinkt-conversation-view__filter-btn ${this.filterState.assistant ? 'active' : ''}" data-filter="assistant">
-        Assistant
+        ${i18n._('Assistant')}
       </button>
       <button class="thinkt-conversation-view__filter-btn ${this.filterState.thinking ? 'active' : ''}" data-filter="thinking">
-        Thinking
+        ${i18n._('Thinking')}
       </button>
       <button class="thinkt-conversation-view__filter-btn ${this.filterState.toolUse ? 'active' : ''}" data-filter="toolUse">
-        Tool Use
+        ${i18n._('Tool Use')}
       </button>
       <button class="thinkt-conversation-view__filter-btn ${this.filterState.toolResult ? 'active' : ''}" data-filter="toolResult">
-        Tool Result
+        ${i18n._('Tool Result')}
       </button>
       <button class="thinkt-conversation-view__filter-btn ${this.filterState.system ? 'active' : ''}" data-filter="system">
-        System
+        ${i18n._('System')}
       </button>
       <div class="thinkt-conversation-view__export">
         <button class="thinkt-conversation-view__export-btn" id="export-btn" ${hasEntries ? '' : 'disabled'}>
-          Export ▼
+          ${i18n._('Export')} ▼
         </button>
         <div class="thinkt-conversation-view__export-dropdown" id="export-dropdown">
           <div class="thinkt-conversation-view__export-dropdown-item" data-format="html">
-            <span class="icon">🌐</span> Export as HTML
+            <span class="icon">🌐</span> ${i18n._('Export as HTML')}
           </div>
           <div class="thinkt-conversation-view__export-dropdown-item" data-format="markdown">
-            <span class="icon">📝</span> Export as Markdown
+            <span class="icon">📝</span> ${i18n._('Export as Markdown')}
           </div>
         </div>
       </div>
@@ -435,8 +436,8 @@ export class ConversationView {
 
   private handleExport(format: string): void {
     const title = this.currentProjectPath
-      ? `${this.currentProjectPath.split('/').pop() || 'conversation'}`
-      : 'conversation';
+      ? `${this.currentProjectPath.split('/').pop() || i18n._('conversation')}`
+      : i18n._('conversation');
 
     // Pass current filter state to export
     const exportFilters = {
@@ -713,7 +714,7 @@ export class ConversationView {
   }
 
   private renderAssistantText(text: string): string {
-    return `<div class="thinkt-conversation-entry__text thinkt-conversation-entry__text--markdown">${renderMarkdown(text)}<button class="thinkt-copy-btn thinkt-copy-btn--float" data-copy-action="text">Copy</button></div>`;
+    return `<div class="thinkt-conversation-entry__text thinkt-conversation-entry__text--markdown">${renderMarkdown(text)}<button class="thinkt-copy-btn thinkt-copy-btn--float" data-copy-action="text">${i18n._('Copy')}</button></div>`;
   }
 
   private renderPlainText(text: string): string {
@@ -722,7 +723,7 @@ export class ConversationView {
 
   private renderToolResultBlock(block: ToolResultBlock): string {
     const resultClass = block.isError ? 'thinkt-conversation-entry__tool-result--error' : '';
-    const resultLabel = block.isError ? 'Error' : 'Result';
+    const resultLabel = block.isError ? i18n._('Error') : i18n._('Result');
     return `
       <div class="thinkt-conversation-entry__tool-result ${resultClass}">
         <div class="thinkt-conversation-entry__tool-result-label">${resultLabel}</div>
@@ -747,7 +748,7 @@ export class ConversationView {
       <div class="thinkt-thinking-block" data-type="thinking">
         <div class="thinkt-thinking-block__header">
           <span class="thinkt-thinking-block__toggle">\u25B6</span>
-          <span class="thinkt-thinking-block__label">Thinking</span>
+          <span class="thinkt-thinking-block__label">${i18n._('Thinking')}</span>
           ${durationHtml}
           ${previewHtml}
         </div>
@@ -785,11 +786,11 @@ export class ConversationView {
       }
 
       const errorClass = result.isError ? ' thinkt-tool-call__detail-result--error' : '';
-      const resultLabel = result.isError ? 'Error' : 'Result';
+      const resultLabel = result.isError ? i18n._('Error') : i18n._('Result');
       resultDetailHtml = `
         <div class="thinkt-tool-call__detail-section thinkt-tool-call__detail-result${errorClass}">
           <div class="thinkt-tool-call__detail-label">${resultLabel}</div>
-          <div class="thinkt-tool-call__detail-content">${escapeHtml(String(result.toolResult || ''))}<button class="thinkt-copy-btn thinkt-copy-btn--float" data-copy-action="detail">Copy</button></div>
+          <div class="thinkt-tool-call__detail-content">${escapeHtml(String(result.toolResult || ''))}<button class="thinkt-copy-btn thinkt-copy-btn--float" data-copy-action="detail">${i18n._('Copy')}</button></div>
         </div>
       `;
     } else {
@@ -810,8 +811,8 @@ export class ConversationView {
         </div>
         <div class="thinkt-tool-call__detail">
           <div class="thinkt-tool-call__detail-section">
-            <div class="thinkt-tool-call__detail-label">Input</div>
-            <div class="thinkt-tool-call__detail-content">${inputJson}<button class="thinkt-copy-btn thinkt-copy-btn--float" data-copy-action="detail">Copy</button></div>
+            <div class="thinkt-tool-call__detail-label">${i18n._('Input')}</div>
+            <div class="thinkt-tool-call__detail-content">${inputJson}<button class="thinkt-copy-btn thinkt-copy-btn--float" data-copy-action="detail">${i18n._('Copy')}</button></div>
           </div>
           ${resultDetailHtml}
         </div>
@@ -828,8 +829,8 @@ export class ConversationView {
     this.contentContainer.innerHTML = `
       <div class="thinkt-conversation-empty">
         <div class="thinkt-conversation-empty__icon">\u{1F4AC}</div>
-        <div class="thinkt-conversation-empty__title">No conversation loaded</div>
-        <div>Select a session to view the conversation</div>
+        <div class="thinkt-conversation-empty__title">${i18n._('No conversation loaded')}</div>
+        <div>${i18n._('Select a session to view the conversation')}</div>
       </div>
     `;
     this.renderFilterBar();
@@ -847,6 +848,22 @@ export class ConversationView {
    */
   refreshToolbar(): void {
     this.renderToolbar();
+  }
+
+  /**
+   * Re-render translatable UI text in place when locale changes.
+   */
+  refreshI18n(): void {
+    this.renderToolbar();
+
+    if (this.currentEntries.length === 0) {
+      this.showEmpty();
+      return;
+    }
+
+    const scrollTop = this.contentContainer.scrollTop;
+    this.displayEntries(this.currentEntries);
+    this.contentContainer.scrollTop = scrollTop;
   }
 
   /**

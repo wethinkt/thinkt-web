@@ -7,9 +7,11 @@
 
 import { defineConfig } from 'vite';
 import { resolve } from 'path';
+import { lingui } from '@lingui/vite-plugin';
 
 export default defineConfig({
   root: '.',
+  plugins: [lingui()],
 
   build: {
     outDir: 'dist',

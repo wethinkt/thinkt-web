@@ -12,7 +12,10 @@
     "test:run": "vitest run",
     "lint": "eslint src",
     "lint:fix": "eslint src --fix",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "i18n:extract": "lingui extract",
+    "i18n:compile": "lingui compile",
+    "i18n": "npm run i18n:extract && npm run i18n:compile"
   },
   "author": "Neomantra Corp",
   "license": "MIT",
@@ -28,6 +31,10 @@
     "vitest": "^2.1.0"
   },
   "dependencies": {
+    "@lingui/cli": "^5.9.1",
+    "@lingui/core": "^5.9.1",
+    "@lingui/message-utils": "^5.9.1",
+    "@lingui/vite-plugin": "^5.9.1",
     "@wethinkt/ts-thinkt": "^0.1.6",
     "marked": "^17.0.1"
   }

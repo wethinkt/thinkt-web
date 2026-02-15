@@ -4,16 +4,24 @@
 
 import { describe, it, expect, beforeAll } from 'vitest';
 
-// Mock document before importing modules that use it
 beforeAll(() => {
-  // @ts-expect-error - mocking document for Node.js environment
-  global.document = {
+  const mockDocument = {
     createElement: () => ({
       textContent: '',
-      get innerHTML() { return this.textContent; },
-      set innerHTML(value: string) { this.textContent = value; },
+      get innerHTML() {
+        return this.textContent;
+      },
+      set innerHTML(value: string) {
+        this.textContent = value;
+      },
     }),
-  };
+  } as unknown as Document;
+
+  Object.defineProperty(globalThis, 'document', {
+    value: mockDocument,
+    configurable: true,
+    writable: true,
+  });
 });
 
 // Dynamic import after setting up mock

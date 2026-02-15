@@ -8,6 +8,7 @@
 
 import type { SessionMeta } from '@wethinkt/ts-thinkt';
 import { type ThinktClient, getDefaultClient } from '@wethinkt/ts-thinkt/api';
+import { i18n } from '@lingui/core';
 
 // ============================================
 // Types
@@ -447,10 +448,10 @@ export class TimelineVisualization {
     this.container.className = 'thinkt-timeline';
     this.container.innerHTML = `
       <div class="thinkt-timeline-header">
-        <span class="thinkt-timeline-title">Timeline</span>
+        <span class="thinkt-timeline-title">${i18n._('Timeline')}</span>
         <div class="thinkt-timeline-controls">
-          <button class="thinkt-timeline-btn ${this.groupBy === 'project' ? 'active' : ''}" data-group="project">By Project</button>
-          <button class="thinkt-timeline-btn ${this.groupBy === 'source' ? 'active' : ''}" data-group="source">By Source</button>
+          <button class="thinkt-timeline-btn ${this.groupBy === 'project' ? 'active' : ''}" data-group="project">${i18n._('By Project')}</button>
+          <button class="thinkt-timeline-btn ${this.groupBy === 'source' ? 'active' : ''}" data-group="source">${i18n._('By Source')}</button>
           <div class="thinkt-timeline-zoom">
             ${ZOOM_PRESETS.map((preset) => `<button class="thinkt-timeline-zoom-preset" data-zoom-preset="${preset.id}">${preset.label}</button>`).join('')}
           </div>
@@ -1289,7 +1290,7 @@ export class TimelineVisualization {
   private showLoading(): void {
     this.scrollArea.innerHTML = `
       <div class="thinkt-timeline-loading">
-        <div>Loading timeline...</div>
+        <div>${i18n._('Loading timeline...')}</div>
       </div>
     `;
   }
@@ -1297,7 +1298,7 @@ export class TimelineVisualization {
   private showEmpty(): void {
     this.scrollArea.innerHTML = `
       <div class="thinkt-timeline-empty">
-        <div>No sessions to display</div>
+        <div>${i18n._('No sessions to display')}</div>
       </div>
     `;
   }
@@ -1305,7 +1306,7 @@ export class TimelineVisualization {
   private showError(error: Error): void {
     this.scrollArea.innerHTML = `
       <div class="thinkt-timeline-error">
-        <div>Error: ${this.escapeHtml(error.message)}</div>
+        <div>${i18n._('Error: {message}', { message: error.message })}</div>
       </div>
     `;
   }
@@ -1342,6 +1343,14 @@ export class TimelineVisualization {
 
   refresh(): Promise<void> {
     return this.loadData();
+  }
+
+  /**
+   * Re-render translatable UI text in place when locale changes.
+   */
+  refreshI18n(): void {
+    this.createStructure();
+    this.render();
   }
 
   dispose(): void {

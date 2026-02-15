@@ -7,6 +7,7 @@
 
 import type { SearchSessionResult, SearchMatch, SearchOptions } from '@wethinkt/ts-thinkt/api';
 import { type ThinktClient, getDefaultClient } from '@wethinkt/ts-thinkt/api';
+import { i18n } from '@lingui/core';
 
 // ============================================
 // Types
@@ -544,31 +545,31 @@ export class SearchOverlay {
       <div class="thinkt-search-modal">
         <div class="thinkt-search-header">
           <div class="thinkt-search-title">
-            <span>Search Sessions</span>
-            <kbd>esc</kbd>
+            <span>${i18n._('Search Sessions')}</span>
+            <kbd>${i18n._('esc')}</kbd>
           </div>
           <div class="thinkt-search-input-wrapper">
             <span class="thinkt-search-icon">🔍</span>
-            <input type="text" class="thinkt-search-input" placeholder="Type to search across all sessions..." autocomplete="off">
+            <input type="text" class="thinkt-search-input" placeholder="${i18n._('Type to search across all sessions...')}" autocomplete="off">
           </div>
           <div class="thinkt-search-options">
             <label class="thinkt-search-option">
               <input type="checkbox" id="search-case-sensitive">
-              <span>Case sensitive</span>
+              <span>${i18n._('Case sensitive')}</span>
             </label>
             <label class="thinkt-search-option">
               <input type="checkbox" id="search-regex">
-              <span>Regex</span>
+              <span>${i18n._('Regex')}</span>
             </label>
           </div>
         </div>
         <div class="thinkt-search-body">
           <div class="thinkt-search-projects" style="display: none;">
             <div class="thinkt-search-projects-header">
-              <span>Projects</span>
+              <span>${i18n._('Projects')}</span>
               <div class="thinkt-search-projects-actions">
-                <button id="search-select-all">All</button>
-                <button id="search-select-none">None</button>
+                <button id="search-select-all">${i18n._('All')}</button>
+                <button id="search-select-none">${i18n._('None')}</button>
               </div>
             </div>
             <div class="thinkt-search-projects-list"></div>
@@ -576,13 +577,13 @@ export class SearchOverlay {
           <div class="thinkt-search-content">
             <div class="thinkt-search-empty">
               <div class="thinkt-search-empty-icon">🔍</div>
-              <div>Type to search across all indexed sessions</div>
+              <div>${i18n._('Type to search across all indexed sessions')}</div>
             </div>
           </div>
         </div>
         <div class="thinkt-search-help">
-          <span><kbd>↑</kbd><kbd>↓</kbd> to navigate <kbd>↵</kbd> to select</span>
-          <span>Search uses the indexer database</span>
+          <span><kbd>↑</kbd><kbd>↓</kbd> ${i18n._('to navigate')} <kbd>↵</kbd> ${i18n._('to select')}</span>
+          <span>${i18n._('Search uses the indexer database')}</span>
         </div>
       </div>
     `;
@@ -936,7 +937,7 @@ export class SearchOverlay {
 
     content.innerHTML = `
       <div class="thinkt-search-loading">
-        <div>Searching...</div>
+        <div>${i18n._('Searching...')}</div>
       </div>
     `;
   }
@@ -950,14 +951,14 @@ export class SearchOverlay {
     if (isIndexerError) {
       content.innerHTML = `
         <div class="thinkt-search-no-indexer">
-          <div class="thinkt-search-no-indexer-title">Indexer not available</div>
-          <div>The search feature requires the thinkt-indexer to be installed and configured.</div>
+          <div class="thinkt-search-no-indexer-title">${i18n._('Indexer not available')}</div>
+          <div>${i18n._('The search feature requires the thinkt-indexer to be installed and configured.')}</div>
         </div>
       `;
     } else {
       content.innerHTML = `
         <div class="thinkt-search-error">
-          <div>Error: ${this.escapeHtml(error.message)}</div>
+          <div>${i18n._('Error: {message}', { message: error.message })}</div>
         </div>
       `;
     }
@@ -972,15 +973,15 @@ export class SearchOverlay {
         content.innerHTML = `
           <div class="thinkt-search-empty">
             <div class="thinkt-search-empty-icon">😕</div>
-            <div>No results found</div>
+            <div>${i18n._('No results found')}</div>
           </div>
         `;
       } else {
         content.innerHTML = `
           <div class="thinkt-search-empty">
             <div class="thinkt-search-empty-icon">📁</div>
-            <div>No results for selected projects</div>
-            <div style="font-size: 11px; margin-top: 8px;">Select projects from the sidebar to filter</div>
+            <div>${i18n._('No results for selected projects')}</div>
+            <div style="font-size: 11px; margin-top: 8px;">${i18n._('Select projects from the sidebar to filter')}</div>
           </div>
         `;
       }
@@ -1020,7 +1021,7 @@ export class SearchOverlay {
         <span class="thinkt-search-result-sep">·</span>
         <span class="thinkt-search-result-session">${this.escapeHtml(this.shortenId(result.session_id))}</span>
         <span class="thinkt-search-result-source thinkt-search-result-source--${source}">${source}</span>
-        <span class="thinkt-search-result-matches">${matchCount} match${matchCount !== 1 ? 'es' : ''}</span>
+        <span class="thinkt-search-result-matches">${i18n._('{count, plural, one {# match} other {# matches}}', { count: matchCount })}</span>
       </div>
       ${previewsHtml}
     `;
