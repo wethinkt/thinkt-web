@@ -64,6 +64,10 @@ export interface SourceGroup {
   project: Project;
   /** Sessions for this source */
   sessions: SessionMeta[];
+  /** Whether sessions have been loaded from the API */
+  loaded: boolean;
+  /** Whether sessions are currently being loaded */
+  loading: boolean;
 }
 
 /** Session with source info for flat view */
@@ -332,6 +336,13 @@ const TREE_STYLES = `
   color: var(--thinkt-muted-color, #666);
 }
 
+.thinkt-tree-session--loading {
+  padding: 6px 12px 6px 48px;
+  font-size: 11px;
+  color: var(--thinkt-muted-color, #666);
+  font-style: italic;
+}
+
 /* Loading & Error */
 .thinkt-tree-loading,
 .thinkt-tree-error {
@@ -455,22 +466,21 @@ export class TreeProjectBrowser {
     try {
       // Load all projects from all sources
       const projects = await this.client.getProjects();
-      
+
       // Group projects by their underlying path
       this.projectGroups = this.groupProjectsByPath(projects);
-      
-      // Load sessions for each project
-      await this.loadAllSessions(projects);
-      
-      this.render();
-      
+
+      // Render the tree immediately with project structure
+      // (sessions load lazily when source groups are expanded)
+
       // Expand first project by default if there are few
       if (this.projectGroups.size <= 3) {
         for (const path of this.projectGroups.keys()) {
           this.expandedProjects.add(path);
         }
-        this.render();
       }
+
+      this.render();
     } catch (error) {
       const err = error instanceof Error ? error : new Error(String(error));
       this.showError(err);
@@ -514,6 +524,8 @@ export class TreeProjectBrowser {
           source,
           project,
           sessions: [],
+          loaded: false,
+          loading: false,
         });
       }
 
@@ -576,32 +588,35 @@ export class TreeProjectBrowser {
     return normalized;
   }
 
-  private async loadAllSessions(_projects: Project[]): Promise<void> {
-    for (const [, group] of this.projectGroups) {
-      for (const [, sourceGroup] of group.sources) {
-        try {
-          if (sourceGroup.project.id) {
-            const sessions = await this.client.getSessions(sourceGroup.project.id);
-            // Sort by modified date descending
-            sessions.sort((a, b) => {
-              const dateA = a.modifiedAt?.getTime() || 0;
-              const dateB = b.modifiedAt?.getTime() || 0;
-              return dateB - dateA;
-            });
-            sourceGroup.sessions = sessions;
-          }
-        } catch {
-          // Silently skip failed session loads
-          sourceGroup.sessions = [];
-        }
-      }
-      
+  private async loadSessionsForSource(group: ProjectGroup, sourceGroup: SourceGroup): Promise<void> {
+    if (sourceGroup.loaded || sourceGroup.loading || !sourceGroup.project.id) return;
+
+    sourceGroup.loading = true;
+    this.render();
+
+    try {
+      const sessions = await this.client.getSessions(sourceGroup.project.id);
+      sessions.sort((a, b) => {
+        const dateA = a.modifiedAt?.getTime() || 0;
+        const dateB = b.modifiedAt?.getTime() || 0;
+        return dateB - dateA;
+      });
+      sourceGroup.sessions = sessions;
+      sourceGroup.loaded = true;
+    } catch {
+      sourceGroup.sessions = [];
+      sourceGroup.loaded = true;
+    } finally {
+      sourceGroup.loading = false;
+
       // Update total sessions from actual loaded data
       let total = 0;
-      for (const sourceGroup of group.sources.values()) {
-        total += sourceGroup.sessions.length;
+      for (const sg of group.sources.values()) {
+        total += sg.loaded ? sg.sessions.length : (sg.project.sessionCount || 0);
       }
       group.totalSessions = total;
+
+      this.render();
     }
   }
 
@@ -701,6 +716,25 @@ export class TreeProjectBrowser {
     const sessionsContainer = document.createElement('div');
     sessionsContainer.className = 'thinkt-tree-sessions thinkt-tree-sessions--flat';
 
+    // Trigger lazy load for any unloaded sources
+    let anyLoading = false;
+    for (const sourceGroup of project.sources.values()) {
+      if (!sourceGroup.loaded && !sourceGroup.loading) {
+        void this.loadSessionsForSource(project, sourceGroup);
+      }
+      if (sourceGroup.loading) {
+        anyLoading = true;
+      }
+    }
+
+    if (anyLoading) {
+      const loadingEl = document.createElement('div');
+      loadingEl.className = 'thinkt-tree-session thinkt-tree-session--loading';
+      loadingEl.textContent = i18n._('Loading sessions…');
+      sessionsContainer.appendChild(loadingEl);
+      return sessionsContainer;
+    }
+
     // Collect all sessions from all sources
     const allSessions: SessionWithSource[] = [];
     for (const sourceGroup of project.sources.values()) {
@@ -734,14 +768,17 @@ export class TreeProjectBrowser {
     // Header
     const header = document.createElement('div');
     header.className = 'thinkt-tree-source-header';
-    
+
     const sourceIcon = this.getSourceIcon(sourceGroup.source);
-    
+    const sessionCount = sourceGroup.loaded
+      ? sourceGroup.sessions.length
+      : (sourceGroup.project.sessionCount || 0);
+
     header.innerHTML = `
       <span class="thinkt-tree-chevron ${isExpanded ? 'expanded' : ''}">▶</span>
       <span class="thinkt-tree-source-icon thinkt-tree-source-icon--${sourceGroup.source}">${sourceIcon}</span>
       <span class="thinkt-tree-source-name">${this.escapeHtml(sourceGroup.source)}</span>
-      <span class="thinkt-tree-source-count">${sourceGroup.sessions.length}</span>
+      <span class="thinkt-tree-source-count">${sessionCount}</span>
     `;
 
     header.addEventListener('click', () => {
@@ -749,6 +786,10 @@ export class TreeProjectBrowser {
         this.expandedSources.delete(sourceKey);
       } else {
         this.expandedSources.add(sourceKey);
+        // Trigger lazy load when expanding
+        if (!sourceGroup.loaded && !sourceGroup.loading) {
+          void this.loadSessionsForSource(project, sourceGroup);
+        }
       }
       this.render();
     });
@@ -760,9 +801,16 @@ export class TreeProjectBrowser {
       const sessionsContainer = document.createElement('div');
       sessionsContainer.className = 'thinkt-tree-sessions';
 
-      for (const session of sourceGroup.sessions) {
-        const sessionEl = this.renderSession(session, project);
-        sessionsContainer.appendChild(sessionEl);
+      if (sourceGroup.loading) {
+        const loadingEl = document.createElement('div');
+        loadingEl.className = 'thinkt-tree-session thinkt-tree-session--loading';
+        loadingEl.textContent = i18n._('Loading sessions…');
+        sessionsContainer.appendChild(loadingEl);
+      } else {
+        for (const session of sourceGroup.sessions) {
+          const sessionEl = this.renderSession(session, project);
+          sessionsContainer.appendChild(sessionEl);
+        }
       }
 
       container.appendChild(sessionsContainer);
