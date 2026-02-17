@@ -210,6 +210,7 @@ export class ProjectTimelinePanel {
   private isLoading = false;
   private isVisible = false;
   private stylesInjected = false;
+  private cachedProjectId: string | null = null;
 
   // Dimensions
   private readonly rowHeight = 50;
@@ -292,13 +293,22 @@ export class ProjectTimelinePanel {
   // Data Loading
   // ============================================
 
-  async loadSessions(projectId: string): Promise<void> {
+  async loadSessions(projectId: string, force = false): Promise<void> {
     if (this.isLoading) return;
+    
+    // Use cached data if same project and not forced
+    if (!force && this.cachedProjectId === projectId && this.sessions.length > 0) {
+      this.render();
+      return;
+    }
+    
     this.isLoading = true;
     this.options.projectId = projectId;
+    this.cachedProjectId = projectId;
     this.showLoading();
 
     try {
+      // Limit to recent sessions to avoid overwhelming the UI
       const sessions = await this.client.getSessions(projectId);
       
       // Process sessions with timing info
@@ -658,7 +668,8 @@ export class ProjectTimelinePanel {
       this.options.onVisibilityChange?.(true);
     }
     if (this.options.projectId) {
-      void this.loadSessions(this.options.projectId);
+      // Don't force reload - use cache if available
+      void this.loadSessions(this.options.projectId, false);
     }
   }
 
@@ -676,9 +687,20 @@ export class ProjectTimelinePanel {
   }
 
   setProject(projectId: string): void {
+    const isNewProject = this.options.projectId !== projectId;
     this.options.projectId = projectId;
     if (this.isVisible) {
-      void this.loadSessions(projectId);
+      // Only force reload if project changed
+      void this.loadSessions(projectId, isNewProject);
+    }
+  }
+
+  /**
+   * Force refresh the timeline data
+   */
+  refresh(): void {
+    if (this.options.projectId && this.isVisible) {
+      void this.loadSessions(this.options.projectId, true);
     }
   }
 
@@ -696,6 +718,9 @@ export class ProjectTimelinePanel {
       this.tooltip = null;
     }
     this.container.innerHTML = '';
+    this.sessions = [];
+    this.rows = [];
+    this.cachedProjectId = null;
   }
 }
 

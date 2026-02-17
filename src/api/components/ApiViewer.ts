@@ -58,6 +58,12 @@ export interface LoadedSession {
   entries: Entry[];
 }
 
+interface SourceCapability {
+  name: string;
+  basePath: string;
+  canResume: boolean;
+}
+
 // ============================================
 // Default Styles
 // ============================================
@@ -272,6 +278,8 @@ export class ApiViewer {
   private projectSearchQuery = '';
   private projectSource = '';
   private discoveredSources: string[] = [];
+  private sourceCapabilities: SourceCapability[] = [];
+  private resumableSources: Set<string> = new Set();
   private isLoadingSession = false;
   private boundHandlers: Array<() => void> = [];
   private disposed = false;
@@ -449,6 +457,64 @@ export class ApiViewer {
 
   private normalizeSourceName(source: string): string {
     return source.trim().toLowerCase();
+  }
+
+  private normalizePath(pathValue: string): string {
+    return pathValue.replace(/\\/g, '/').replace(/\/+/g, '/').replace(/\/$/, '').toLowerCase();
+  }
+
+  private inferSourceFromPath(pathValue: string): string | null {
+    const hiddenSourceMatch = pathValue.match(/\/\.([a-z0-9_-]+)(?:\/|$)/);
+    if (!hiddenSourceMatch) return null;
+
+    const inferred = hiddenSourceMatch[1];
+    if (!inferred || inferred === 'config' || inferred === 'cache') {
+      return null;
+    }
+    return inferred;
+  }
+
+  private detectSourceFromPaths(paths: Array<string | null | undefined>): string | null {
+    const normalizedPaths = paths
+      .filter((value): value is string => typeof value === 'string' && value.trim().length > 0)
+      .map((value) => this.normalizePath(value));
+    if (normalizedPaths.length === 0) return null;
+
+    let bestMatch: SourceCapability | null = null;
+    for (const sourceInfo of this.sourceCapabilities) {
+      if (!sourceInfo.basePath) continue;
+      const isMatch = normalizedPaths.some((pathValue) =>
+        pathValue === sourceInfo.basePath || pathValue.startsWith(`${sourceInfo.basePath}/`));
+      if (!isMatch) continue;
+      if (!bestMatch || sourceInfo.basePath.length > bestMatch.basePath.length) {
+        bestMatch = sourceInfo;
+      }
+    }
+    if (bestMatch) {
+      return bestMatch.name;
+    }
+
+    for (const pathValue of normalizedPaths) {
+      const inferred = this.inferSourceFromPath(pathValue);
+      if (inferred) return inferred;
+    }
+
+    return null;
+  }
+
+  private resolveSessionSource(session: SessionMeta): string | null {
+    const pathSource = this.detectSourceFromPaths([
+      session.fullPath,
+      session.projectPath,
+      this.currentProject?.path,
+      this.currentProject?.sourceBasePath,
+    ]);
+    if (pathSource) {
+      return pathSource;
+    }
+
+    const direct = (session.source || this.currentProject?.source || '').toString().trim().toLowerCase();
+    return direct || null;
   }
 
   private mergeDiscoveredSources(sources: string[]): void {
@@ -737,6 +803,8 @@ export class ApiViewer {
         container: this.elements.viewerContainer,
       },
       client: this.client,
+      onResumeSession: () => this.handleResumeSession(),
+      canResumeSession: () => this.isCurrentSessionResumable(),
       onToggleTimelinePanel: () => { this.handleTimelinePanelToggle(); },
       isTimelinePanelVisible: () => this.isTimelinePanelVisible(),
       canToggleTimelinePanel: () => Boolean(this.currentProject?.id),
@@ -769,6 +837,34 @@ export class ApiViewer {
   private async checkConnection(): Promise<void> {
     try {
       const sources = await this.client.getSources();
+      this.sourceCapabilities = sources
+        .map((source) => {
+          const name = this.normalizeSourceName(typeof source.name === 'string' ? source.name : '');
+          const sourceCapabilities = source as {
+            base_path?: string;
+            basePath?: string;
+            can_resume?: boolean;
+            canResume?: boolean;
+          };
+          const rawBasePath = typeof sourceCapabilities.base_path === 'string'
+            ? sourceCapabilities.base_path
+            : sourceCapabilities.basePath;
+          const basePath = rawBasePath && rawBasePath.trim().length > 0
+            ? this.normalizePath(rawBasePath)
+            : '';
+          const canResume = Boolean(sourceCapabilities.can_resume || sourceCapabilities.canResume);
+          return { name, basePath, canResume };
+        })
+        .filter((source) => source.name.length > 0);
+
+      const resumable = new Set<string>();
+      for (const sourceInfo of this.sourceCapabilities) {
+        if (sourceInfo.canResume) {
+          resumable.add(sourceInfo.name);
+        }
+      }
+      this.resumableSources = resumable;
+
       const discovered = sources
         .map((source) => source.name)
         .filter((name): name is string => typeof name === 'string' && name.trim().length > 0);
@@ -825,6 +921,65 @@ export class ApiViewer {
     this.sessionList?.refreshI18n();
     this.conversationView?.refreshI18n();
     this.projectTimelinePanel?.refreshI18n();
+  }
+
+  private isCurrentSessionResumable(): boolean {
+    const session = this.currentSession?.meta;
+    if (!session?.fullPath) {
+      return false;
+    }
+
+    // Only chunked sessions support resume (directories, not .jsonl files)
+    // Chunked session paths don't end with .jsonl
+    if (session.fullPath.endsWith('.jsonl')) {
+      return false;
+    }
+
+    const resolvedSource = this.resolveSessionSource(session);
+    if (!resolvedSource) {
+      return false;
+    }
+    return this.resumableSources.has(this.normalizeSourceName(resolvedSource));
+  }
+
+  private async handleResumeSession(): Promise<void> {
+    const sessionPath = this.currentSession?.meta.fullPath;
+    if (!sessionPath) return;
+
+    try {
+      const resume = await this.client.getResumeCommand(sessionPath);
+      const commandText = this.formatResumeCommand(
+        resume.command ?? '',
+        resume.args ?? [],
+        resume.dir
+      );
+      if (!commandText) {
+        throw new Error(i18n._('Resume command unavailable'));
+      }
+
+      await navigator.clipboard.writeText(commandText);
+      // eslint-disable-next-line no-console
+      console.log(`[THINKT] Resume command copied: ${commandText}`);
+    } catch (error) {
+      const err = error instanceof Error ? error : new Error(String(error));
+      this.handleError(err);
+    }
+  }
+
+  private formatResumeCommand(command: string, args: string[], dir?: string): string {
+    const parts = [command, ...args].filter((part) => part && part.length > 0);
+    if (parts.length === 0) return '';
+
+    const quoted = parts.map((part) => this.quoteShellArg(part)).join(' ');
+    if (!dir) return quoted;
+    return `cd ${this.quoteShellArg(dir)} && ${quoted}`;
+  }
+
+  private quoteShellArg(value: string): string {
+    if (/^[A-Za-z0-9_./:-]+$/.test(value)) {
+      return value;
+    }
+    return `'${value.replace(/'/g, `'"'"'`)}'`;
   }
 
   // ============================================
@@ -923,6 +1078,11 @@ export class ApiViewer {
 
   private async handleSessionSelect(session: SessionMeta): Promise<void> {
     if (this.isLoadingSession) return;
+
+    // Skip if already viewing this session
+    if (this.currentSession?.meta.id === session.id) {
+      return;
+    }
 
     this.isLoadingSession = true;
 

@@ -56,6 +56,7 @@ export {
   type TreeProjectBrowserOptions,
   type ProjectGroup,
   type SourceGroup,
+  type TreeViewMode,
 } from './TreeProjectBrowser';
 
 // Timeline Visualization (time-based session view)

@@ -5,10 +5,14 @@
  * Groups sessions by underlying project, combining multiple sources (claude/kimi)
  * and different working directories.
  *
- * Tree structure:
+ * Tree structure (hierarchical mode):
  * - Project (grouped by project_path)
  *   - Source/Folder (claude, kimi, or specific working dir)
  *     - Session
+ *
+ * Flat structure (flat mode):
+ * - Project (grouped by project_path)
+ *   - Session (all sources combined, time-sorted)
  */
 
 import type { Project, SessionMeta } from '@wethinkt/ts-thinkt';
@@ -18,6 +22,8 @@ import { i18n } from '@lingui/core';
 // ============================================
 // Types
 // ============================================
+
+export type TreeViewMode = 'hierarchical' | 'flat';
 
 export interface TreeProjectBrowserElements {
   /** Container element */
@@ -32,6 +38,8 @@ export interface TreeProjectBrowserOptions {
   onSessionSelect?: (session: SessionMeta, project: ProjectGroup) => void;
   /** Callback on error */
   onError?: (error: Error) => void;
+  /** Initial view mode (default: 'hierarchical') */
+  initialViewMode?: TreeViewMode;
 }
 
 /** A group of projects that share the same underlying project path */
@@ -58,6 +66,12 @@ export interface SourceGroup {
   sessions: SessionMeta[];
 }
 
+/** Session with source info for flat view */
+interface SessionWithSource {
+  session: SessionMeta;
+  source: string;
+}
+
 // ============================================
 // Styles
 // ============================================
@@ -79,6 +93,36 @@ const TREE_STYLES = `
   display: flex;
   align-items: center;
   justify-content: space-between;
+}
+
+.thinkt-tree-view-toggle {
+  display: flex;
+  gap: 2px;
+  background: var(--thinkt-bg-tertiary, #2a2a2a);
+  padding: 2px;
+  border-radius: 4px;
+}
+
+.thinkt-tree-view-btn {
+  background: transparent;
+  border: none;
+  padding: 4px 8px;
+  cursor: pointer;
+  border-radius: 3px;
+  font-size: 12px;
+  opacity: 0.6;
+  transition: all 0.15s ease;
+}
+
+.thinkt-tree-view-btn:hover {
+  opacity: 0.9;
+  background: var(--thinkt-hover-bg, #333);
+}
+
+.thinkt-tree-view-btn.active {
+  opacity: 1;
+  background: var(--thinkt-bg-secondary, #1a1a1a);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
 }
 
 .thinkt-tree-title {
@@ -229,6 +273,25 @@ const TREE_STYLES = `
   margin-left: 36px;
 }
 
+/* Flat view sessions (directly under project) */
+.thinkt-tree-sessions--flat {
+  margin-left: 20px;
+}
+
+.thinkt-tree-session-source {
+  font-size: 9px;
+  padding: 1px 4px;
+  border-radius: 3px;
+  background: var(--thinkt-bg-tertiary, #2a2a2a);
+  color: var(--thinkt-muted-color, #888);
+  text-transform: uppercase;
+  margin-left: 4px;
+}
+
+.thinkt-tree-session-source--claude { color: #d97750; }
+.thinkt-tree-session-source--kimi { color: #19c39b; }
+.thinkt-tree-session-source--gemini { color: #6366f1; }
+
 .thinkt-tree-session {
   display: flex;
   align-items: center;
@@ -302,6 +365,7 @@ export class TreeProjectBrowser {
   private client: ThinktClient;
   private container: HTMLElement;
   private contentContainer: HTMLElement;
+  private headerContainer: HTMLElement;
   private projectGroups: Map<string, ProjectGroup> = new Map();
   private expandedProjects: Set<string> = new Set();
   private expandedSources: Set<string> = new Set();
@@ -311,12 +375,15 @@ export class TreeProjectBrowser {
   private isLoading = false;
   private stylesInjected = false;
   private boundHandlers: Array<() => void> = [];
+  private viewMode: TreeViewMode = 'hierarchical';
 
   constructor(options: TreeProjectBrowserOptions) {
     this.options = options;
     this.client = options.client ?? getDefaultClient();
     this.container = options.elements.container;
     this.contentContainer = document.createElement('div');
+    this.headerContainer = document.createElement('div');
+    this.viewMode = options.initialViewMode ?? 'hierarchical';
     this.init();
   }
 
@@ -341,11 +408,34 @@ export class TreeProjectBrowser {
 
   private createStructure(): void {
     this.container.className = 'thinkt-tree-browser';
-    this.container.innerHTML = `
-      <div class="thinkt-tree-header">
-        <span class="thinkt-tree-title">${i18n._('Projects')}</span>
+    this.container.innerHTML = '';
+
+    // Header with view toggle
+    this.headerContainer.className = 'thinkt-tree-header';
+    this.headerContainer.innerHTML = `
+      <span class="thinkt-tree-title">${i18n._('Projects')}</span>
+      <div class="thinkt-tree-view-toggle">
+        <button class="thinkt-tree-view-btn ${this.viewMode === 'hierarchical' ? 'active' : ''}" 
+                data-mode="hierarchical" title="${i18n._('Group by source')}">
+          <span class="thinkt-tree-view-icon">📂</span>
+        </button>
+        <button class="thinkt-tree-view-btn ${this.viewMode === 'flat' ? 'active' : ''}" 
+                data-mode="flat" title="${i18n._('Flat list')}">
+          <span class="thinkt-tree-view-icon">📄</span>
+        </button>
       </div>
     `;
+    this.container.appendChild(this.headerContainer);
+
+    // View toggle handlers
+    this.headerContainer.querySelectorAll('.thinkt-tree-view-btn').forEach((btn) => {
+      const handler = () => {
+        const mode = (btn as HTMLElement).dataset.mode as TreeViewMode;
+        this.setViewMode(mode);
+      };
+      btn.addEventListener('click', handler);
+      this.boundHandlers.push(() => btn.removeEventListener('click', handler));
+    });
 
     this.contentContainer.className = 'thinkt-tree-content';
     this.container.appendChild(this.contentContainer);
@@ -550,13 +640,19 @@ export class TreeProjectBrowser {
     // Header
     const header = document.createElement('div');
     header.className = `thinkt-tree-project-header ${isExpanded ? 'expanded' : ''}`;
+    
+    // Show different meta info based on view mode
+    const metaInfo = this.viewMode === 'hierarchical'
+      ? `<span class="thinkt-tree-badge">${i18n._('{count, plural, one {# source} other {# sources}}', { count: project.sources.size })}</span>
+         <span class="thinkt-tree-badge">${i18n._('{count, plural, one {# session} other {# sessions}}', { count: project.totalSessions })}</span>`
+      : `<span class="thinkt-tree-badge">${i18n._('{count, plural, one {# session} other {# sessions}}', { count: project.totalSessions })}</span>`;
+    
     header.innerHTML = `
       <span class="thinkt-tree-chevron ${isExpanded ? 'expanded' : ''}">▶</span>
       <span class="thinkt-tree-folder-icon">📁</span>
       <span class="thinkt-tree-project-name" title="${this.escapeHtml(project.path)}">${this.escapeHtml(project.name)}</span>
       <span class="thinkt-tree-project-meta">
-        <span class="thinkt-tree-badge">${i18n._('{count, plural, one {# source} other {# sources}}', { count: project.sources.size })}</span>
-        <span class="thinkt-tree-badge">${i18n._('{count, plural, one {# session} other {# sessions}}', { count: project.totalSessions })}</span>
+        ${metaInfo}
       </span>
     `;
 
@@ -571,26 +667,61 @@ export class TreeProjectBrowser {
 
     container.appendChild(header);
 
-    // Sources (if expanded)
+    // Children (if expanded)
     if (isExpanded) {
-      const sourcesContainer = document.createElement('div');
-      sourcesContainer.className = 'thinkt-tree-sources';
-
-      // Sort sources: claude first, then kimi, then others
-      const sortedSources = Array.from(project.sources.values()).sort((a, b) => {
-        const order = { claude: 0, kimi: 1, gemini: 2, copilot: 3, thinkt: 4 };
-        return (order[a.source as keyof typeof order] ?? 99) - (order[b.source as keyof typeof order] ?? 99);
-      });
-
-      for (const sourceGroup of sortedSources) {
-        const sourceEl = this.renderSourceGroup(project, sourceGroup);
-        sourcesContainer.appendChild(sourceEl);
+      if (this.viewMode === 'hierarchical') {
+        container.appendChild(this.renderHierarchicalChildren(project));
+      } else {
+        container.appendChild(this.renderFlatChildren(project));
       }
-
-      container.appendChild(sourcesContainer);
     }
 
     return container;
+  }
+
+  private renderHierarchicalChildren(project: ProjectGroup): HTMLElement {
+    const sourcesContainer = document.createElement('div');
+    sourcesContainer.className = 'thinkt-tree-sources';
+
+    // Sort sources: claude first, then kimi, then others
+    const sortedSources = Array.from(project.sources.values()).sort((a, b) => {
+      const order = { claude: 0, kimi: 1, gemini: 2, copilot: 3, thinkt: 4 };
+      return (order[a.source as keyof typeof order] ?? 99) - (order[b.source as keyof typeof order] ?? 99);
+    });
+
+    for (const sourceGroup of sortedSources) {
+      const sourceEl = this.renderSourceGroup(project, sourceGroup);
+      sourcesContainer.appendChild(sourceEl);
+    }
+
+    return sourcesContainer;
+  }
+
+  private renderFlatChildren(project: ProjectGroup): HTMLElement {
+    const sessionsContainer = document.createElement('div');
+    sessionsContainer.className = 'thinkt-tree-sessions thinkt-tree-sessions--flat';
+
+    // Collect all sessions from all sources
+    const allSessions: SessionWithSource[] = [];
+    for (const sourceGroup of project.sources.values()) {
+      for (const session of sourceGroup.sessions) {
+        allSessions.push({ session, source: sourceGroup.source });
+      }
+    }
+
+    // Sort by modified date descending
+    allSessions.sort((a, b) => {
+      const dateA = a.session.modifiedAt?.getTime() || 0;
+      const dateB = b.session.modifiedAt?.getTime() || 0;
+      return dateB - dateA;
+    });
+
+    for (const { session, source } of allSessions) {
+      const sessionEl = this.renderSession(session, project, source);
+      sessionsContainer.appendChild(sessionEl);
+    }
+
+    return sessionsContainer;
   }
 
   private renderSourceGroup(project: ProjectGroup, sourceGroup: SourceGroup): HTMLElement {
@@ -640,7 +771,7 @@ export class TreeProjectBrowser {
     return container;
   }
 
-  private renderSession(session: SessionMeta, project: ProjectGroup): HTMLElement {
+  private renderSession(session: SessionMeta, project: ProjectGroup, source?: string): HTMLElement {
     const el = document.createElement('div');
     el.className = 'thinkt-tree-session';
     
@@ -656,9 +787,15 @@ export class TreeProjectBrowser {
       ? this.formatRelativeTime(session.modifiedAt)
       : '';
 
+    // Show source badge in flat view
+    const sourceBadge = source && this.viewMode === 'flat'
+      ? `<span class="thinkt-tree-session-source thinkt-tree-session-source--${source}">${this.escapeHtml(source)}</span>`
+      : '';
+
     el.innerHTML = `
       <span class="thinkt-tree-session-icon">💬</span>
       <span class="thinkt-tree-session-title" title="${this.escapeHtml(session.firstPrompt || '')}">${this.escapeHtml(title)}</span>
+      ${sourceBadge}
       ${time ? `<span class="thinkt-tree-session-time">${time}</span>` : ''}
     `;
 
@@ -832,6 +969,30 @@ export class TreeProjectBrowser {
    */
   refreshI18n(): void {
     this.createStructure();
+    this.render();
+  }
+
+  /**
+   * Get current view mode
+   */
+  getViewMode(): TreeViewMode {
+    return this.viewMode;
+  }
+
+  /**
+   * Set view mode ('hierarchical' or 'flat')
+   */
+  setViewMode(mode: TreeViewMode): void {
+    if (this.viewMode === mode) return;
+    this.viewMode = mode;
+    
+    // Update toggle buttons
+    this.headerContainer.querySelectorAll('.thinkt-tree-view-btn').forEach((btn) => {
+      const btnMode = (btn as HTMLElement).dataset.mode as TreeViewMode;
+      btn.classList.toggle('active', btnMode === mode);
+    });
+    
+    // Re-render with new view mode
     this.render();
   }
 

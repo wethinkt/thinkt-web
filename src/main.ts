@@ -244,7 +244,7 @@ function openSearchOverlay(): void {
 }
 
 async function loadSessionFromSearch(
-  result: { path: string; session_id: string; project_name: string },
+  result: { path?: string; session_id?: string; project_name?: string },
   lineNum?: number
 ): Promise<void> {
   if (!result.path) {
@@ -279,7 +279,9 @@ async function loadSessionFromSearch(
     await apiViewer?.loadSession(result.path);
 
     // Step 3: Select the session in the session list UI
-    apiViewer?.selectSessionById(result.session_id);
+    if (result.session_id) {
+      apiViewer?.selectSessionById(result.session_id);
+    }
 
     // Step 4: Scroll to the matching entry if line number is available
     if (lineNum !== undefined && lineNum > 0) {

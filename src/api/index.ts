@@ -42,7 +42,7 @@ export {
 export type {
   ThinktClientConfig,
   SessionResponse,
-  APISourceInfo,
+  SourceInfo,
   ErrorResponse,
 } from '@wethinkt/ts-thinkt/api';
 

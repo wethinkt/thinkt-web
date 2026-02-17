@@ -1017,9 +1017,9 @@ export class SearchOverlay {
 
     li.innerHTML = `
       <div class="thinkt-search-result-header">
-        <span class="thinkt-search-result-project">${this.escapeHtml(result.project_name)}</span>
+        <span class="thinkt-search-result-project">${this.escapeHtml(result.project_name ?? i18n._('Unknown'))}</span>
         <span class="thinkt-search-result-sep">·</span>
-        <span class="thinkt-search-result-session">${this.escapeHtml(this.shortenId(result.session_id))}</span>
+        <span class="thinkt-search-result-session">${this.escapeHtml(this.shortenId(result.session_id ?? ''))}</span>
         <span class="thinkt-search-result-source thinkt-search-result-source--${source}">${source}</span>
         <span class="thinkt-search-result-matches">${i18n._('{count, plural, one {# match} other {# matches}}', { count: matchCount })}</span>
       </div>

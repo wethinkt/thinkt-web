@@ -29,6 +29,10 @@ export interface ConversationViewOptions {
   elements: ConversationViewElements;
   /** API client for opening in external apps */
   client?: ThinktClient;
+  /** Resume the currently loaded session in its original CLI */
+  onResumeSession?: () => Promise<void> | void;
+  /** Whether the currently loaded session supports resume */
+  canResumeSession?: () => boolean;
   /** Toggle timeline panel visibility */
   onToggleTimelinePanel?: () => void;
   /** Whether timeline panel is visible */
@@ -60,6 +64,8 @@ export class ConversationView {
   private toolbarContainer!: HTMLElement;
   private stylesInjected = false;
   private client: ThinktClient | null = null;
+  private onResumeSession: (() => Promise<void> | void) | null = null;
+  private canResumeSession: (() => boolean) | null = null;
   private onToggleTimelinePanel: (() => void) | null = null;
   private isTimelinePanelVisible: (() => boolean) | null = null;
   private canToggleTimelinePanel: (() => boolean) | null = null;
@@ -98,6 +104,8 @@ export class ConversationView {
   constructor(options: ConversationViewOptions) {
     this.container = options.elements.container;
     this.client = options.client ?? null;
+    this.onResumeSession = options.onResumeSession ?? null;
+    this.canResumeSession = options.canResumeSession ?? null;
     this.onToggleTimelinePanel = options.onToggleTimelinePanel ?? null;
     this.isTimelinePanelVisible = options.isTimelinePanelVisible ?? null;
     this.canToggleTimelinePanel = options.canToggleTimelinePanel ?? null;
@@ -234,6 +242,10 @@ export class ConversationView {
   private renderToolbar(): void {
     const path = this.currentProjectPath ?? i18n._('No project selected');
     const entryCount = this.currentEntryCount;
+    const canResumeSession = this.canResumeSession?.() ?? false;
+    const resumeBtn = this.onResumeSession && canResumeSession
+      ? `<button class="thinkt-conversation-view__toolbar-btn" id="toolbar-resume-btn">${i18n._('Resume')}</button>`
+      : '';
     const timelineVisible = this.isTimelinePanelVisible?.() ?? false;
     const canToggleTimeline = this.canToggleTimelinePanel?.() ?? false;
     const timelineBtn = this.onToggleTimelinePanel
@@ -262,6 +274,7 @@ export class ConversationView {
           ${entryCount > 0 ? `<span>${i18n._('{count, plural, one {# entry} other {# entries}}', { count: entryCount })}</span>` : ''}
         </div>
         <div class="thinkt-conversation-view__toolbar-actions">
+          ${resumeBtn}
           <button class="thinkt-conversation-view__toolbar-btn" id="toolbar-open-btn">
             ${i18n._('Open')} \u25BC
           </button>
@@ -280,6 +293,13 @@ export class ConversationView {
   }
 
   private setupToolbarActions(): void {
+    const resumeBtn = this.toolbarContainer.querySelector('#toolbar-resume-btn') as HTMLElement | null;
+    if (resumeBtn) {
+      resumeBtn.addEventListener('click', () => {
+        void this.handleResumeAction();
+      });
+    }
+
     const timelineBtn = this.toolbarContainer.querySelector('#toolbar-timeline-btn') as HTMLElement | null;
     if (timelineBtn) {
       timelineBtn.addEventListener('click', () => {
@@ -309,6 +329,15 @@ export class ConversationView {
         dropdown.classList.remove('open');
       });
     });
+  }
+
+  private async handleResumeAction(): Promise<void> {
+    if (!this.onResumeSession) return;
+    try {
+      await this.onResumeSession();
+    } catch {
+      // Resume handler owns error reporting
+    }
   }
 
   private async handleToolbarAction(action: string): Promise<void> {

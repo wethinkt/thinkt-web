@@ -707,6 +707,10 @@ export const CONVERSATION_STYLES = `
 .thinkt-conversation-view__toolbar-actions {
   position: relative;
   flex-shrink: 0;
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 8px;
 }
 
 .thinkt-conversation-view__toolbar-btn {
