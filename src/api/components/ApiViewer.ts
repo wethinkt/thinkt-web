@@ -233,10 +233,44 @@ const DEFAULT_STYLES = `
   border-color: var(--thinkt-accent-color, #6366f1);
 }
 
+/* Sidebar toggle button (narrow viewports, inside #top-bar) */
+.thinkt-sidebar-toggle {
+  display: none;
+  width: 24px;
+  height: 24px;
+  border: none;
+  border-radius: 4px;
+  background: transparent;
+  color: var(--thinkt-text-color, #e0e0e0);
+  font-size: 16px;
+  cursor: pointer;
+  align-items: center;
+  justify-content: center;
+  line-height: 1;
+  padding: 0;
+  flex-shrink: 0;
+}
+
+.thinkt-sidebar-toggle:hover {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.thinkt-sidebar-overlay {
+  display: none;
+  position: fixed;
+  inset: 0;
+  z-index: 9;
+  background: rgba(0, 0, 0, 0.5);
+}
+
 /* Responsive */
 @media (max-width: 768px) {
+  .thinkt-sidebar-toggle {
+    display: flex;
+  }
+
   .thinkt-api-viewer__sidebar {
-    position: absolute;
+    position: fixed;
     left: 0;
     top: 0;
     bottom: 0;
@@ -248,7 +282,11 @@ const DEFAULT_STYLES = `
   .thinkt-api-viewer__sidebar--open {
     transform: translateX(0);
   }
-  
+
+  .thinkt-sidebar-overlay--open {
+    display: block;
+  }
+
   .thinkt-api-viewer__resizer {
     display: none;
   }
@@ -348,6 +386,37 @@ export class ApiViewer {
 
     container.appendChild(sidebar);
     this.syncTopBarToSidebar(sidebar);
+
+    // Sidebar toggle (for narrow viewports, injected into #top-bar)
+    const sidebarToggle = document.createElement('button');
+    sidebarToggle.className = 'thinkt-sidebar-toggle';
+    sidebarToggle.setAttribute('aria-label', 'Toggle sidebar');
+    sidebarToggle.textContent = '\u2630'; // hamburger ☰
+    const topBar = document.getElementById('top-bar');
+    if (topBar) {
+      topBar.insertBefore(sidebarToggle, topBar.firstChild);
+    }
+
+    const sidebarOverlay = document.createElement('div');
+    sidebarOverlay.className = 'thinkt-sidebar-overlay';
+    container.appendChild(sidebarOverlay);
+
+    const toggleSidebar = () => {
+      const opening = !sidebar.classList.contains('thinkt-api-viewer__sidebar--open');
+      sidebar.classList.toggle('thinkt-api-viewer__sidebar--open', opening);
+      sidebarOverlay.classList.toggle('thinkt-sidebar-overlay--open', opening);
+    };
+    const closeSidebar = () => {
+      sidebar.classList.remove('thinkt-api-viewer__sidebar--open');
+      sidebarOverlay.classList.remove('thinkt-sidebar-overlay--open');
+    };
+    sidebarToggle.addEventListener('click', toggleSidebar);
+    sidebarOverlay.addEventListener('click', closeSidebar);
+    this.boundHandlers.push(() => {
+      sidebarToggle.removeEventListener('click', toggleSidebar);
+      sidebarOverlay.removeEventListener('click', closeSidebar);
+    });
+
     const handleWindowResize = () => {
       this.syncTopBarToSidebar(sidebar);
     };
@@ -929,12 +998,6 @@ export class ApiViewer {
       return false;
     }
 
-    // Only chunked sessions support resume (directories, not .jsonl files)
-    // Chunked session paths don't end with .jsonl
-    if (session.fullPath.endsWith('.jsonl')) {
-      return false;
-    }
-
     const resolvedSource = this.resolveSessionSource(session);
     if (!resolvedSource) {
       return false;
@@ -947,39 +1010,11 @@ export class ApiViewer {
     if (!sessionPath) return;
 
     try {
-      const resume = await this.client.getResumeCommand(sessionPath);
-      const commandText = this.formatResumeCommand(
-        resume.command ?? '',
-        resume.args ?? [],
-        resume.dir
-      );
-      if (!commandText) {
-        throw new Error(i18n._('Resume command unavailable'));
-      }
-
-      await navigator.clipboard.writeText(commandText);
-      // eslint-disable-next-line no-console
-      console.log(`[THINKT] Resume command copied: ${commandText}`);
+      await this.client.execResumeSession(sessionPath);
     } catch (error) {
       const err = error instanceof Error ? error : new Error(String(error));
       this.handleError(err);
     }
-  }
-
-  private formatResumeCommand(command: string, args: string[], dir?: string): string {
-    const parts = [command, ...args].filter((part) => part && part.length > 0);
-    if (parts.length === 0) return '';
-
-    const quoted = parts.map((part) => this.quoteShellArg(part)).join(' ');
-    if (!dir) return quoted;
-    return `cd ${this.quoteShellArg(dir)} && ${quoted}`;
-  }
-
-  private quoteShellArg(value: string): string {
-    if (/^[A-Za-z0-9_./:-]+$/.test(value)) {
-      return value;
-    }
-    return `'${value.replace(/'/g, `'"'"'`)}'`;
   }
 
   // ============================================
@@ -1001,10 +1036,18 @@ export class ApiViewer {
     this.conversationView?.refreshToolbar();
   }
 
+  private closeMobileSidebar(): void {
+    const sidebar = this.elements.container.querySelector('.thinkt-api-viewer__sidebar');
+    const overlay = this.elements.container.querySelector('.thinkt-sidebar-overlay');
+    sidebar?.classList.remove('thinkt-api-viewer__sidebar--open');
+    overlay?.classList.remove('thinkt-sidebar-overlay--open');
+  }
+
   private async handleTreeSessionSelect(session: SessionMeta, project: ProjectGroup): Promise<void> {
+    this.closeMobileSidebar();
     // Update current project context
     this.conversationView?.setProjectPath(project.name, 0);
-    
+
     // Load the session
     if (session.fullPath) {
       await this.loadSession(session.fullPath);
@@ -1084,6 +1127,7 @@ export class ApiViewer {
       return;
     }
 
+    this.closeMobileSidebar();
     this.isLoadingSession = true;
 
     try {
