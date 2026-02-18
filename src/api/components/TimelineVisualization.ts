@@ -789,28 +789,49 @@ export class TimelineVisualization {
       await this.loadSourceInfos();
       const projects = await this.client.getProjects();
       const allSessions: TimelineSession[] = [];
+      const discoveredSources = new Set<string>();
+
+      // Reset current state before progressive repopulation.
+      this.allSessions = [];
+      this.sessions = [];
+      this.rows = [];
+      this.hasInitialAlignment = false;
+      this.pendingZoomAnchor = null;
 
       for (const project of projects) {
+        if (this.disposed) return;
         if (!project.id) continue;
 
         try {
           const sessions = await this.client.getSessions(project.id);
+          let didAddSessions = false;
           for (const session of sessions) {
             if (!session.modifiedAt) continue;
+            const source = this.resolveSource(session, {
+              path: project.path ?? null,
+              source: project.source ?? null,
+              sourceBasePath: project.sourceBasePath ?? null,
+            });
+            if (source.length > 0) {
+              discoveredSources.add(source.trim().toLowerCase());
+            }
             allSessions.push({
               session,
               projectId: project.id,
               projectName: project.name || 'Unknown',
               projectPath: project.path ?? null,
-              source: this.resolveSource(session, {
-                path: project.path ?? null,
-                source: project.source ?? null,
-                sourceBasePath: project.sourceBasePath ?? null,
-              }),
+              source,
               timestamp: session.modifiedAt instanceof Date
                 ? session.modifiedAt
                 : new Date(session.modifiedAt),
             });
+            didAddSessions = true;
+          }
+
+          if (didAddSessions) {
+            this.allSessions = [...allSessions];
+            this.options.onSourcesDiscovered?.(Array.from(discoveredSources));
+            this.applyFilters({ preserveAlignment: true });
           }
         } catch {
           // Skip failed project session fetches.
@@ -818,16 +839,10 @@ export class TimelineVisualization {
       }
 
       allSessions.sort((a, b) => a.timestamp.getTime() - b.timestamp.getTime());
-      const discoveredSources = Array.from(
-        new Set(
-          allSessions
-            .map((session) => session.source.trim().toLowerCase())
-            .filter((source) => source.length > 0),
-        ),
-      );
-      this.options.onSourcesDiscovered?.(discoveredSources);
+      if (this.disposed) return;
       this.allSessions = allSessions;
-      this.applyFilters();
+      this.options.onSourcesDiscovered?.(Array.from(discoveredSources));
+      this.applyFilters({ preserveAlignment: true });
     } catch (error) {
       const err = error instanceof Error ? error : new Error(String(error));
       this.showError(err);
@@ -837,7 +852,7 @@ export class TimelineVisualization {
     }
   }
 
-  private applyFilters(): void {
+  private applyFilters(options?: { preserveAlignment?: boolean }): void {
     if (this.isLoading && this.allSessions.length === 0) {
       return;
     }
@@ -859,8 +874,10 @@ export class TimelineVisualization {
     });
 
     this.processRows();
-    this.hasInitialAlignment = false;
-    this.pendingZoomAnchor = null;
+    if (!options?.preserveAlignment) {
+      this.hasInitialAlignment = false;
+      this.pendingZoomAnchor = null;
+    }
     this.render();
   }
 

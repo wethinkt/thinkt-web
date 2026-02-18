@@ -302,4 +302,45 @@ describe('TimelineVisualization', () => {
     expect(labels).toContain('copilot');
     timeline.dispose();
   });
+
+  it('renders progressively while project sessions are still loading', async () => {
+    const container = document.createElement('div');
+    document.body.appendChild(container);
+
+    let resolveSlowProject: (value: SessionMeta[]) => void = () => undefined;
+    const slowProjectPromise = new Promise<SessionMeta[]>((resolve) => {
+      resolveSlowProject = resolve;
+    });
+
+    const client = {
+      getProjects: vi.fn().mockResolvedValue([
+        { id: 'projectA', name: 'projectA', source: 'claude' },
+        { id: 'projectB', name: 'projectB', source: 'kimi' },
+      ]),
+      getSessions: vi.fn().mockImplementation(async (projectId: string) => {
+        if (projectId === 'projectA') {
+          return [createSession('a1', '2026-02-01T10:00:00Z', 'claude')];
+        }
+        return slowProjectPromise;
+      }),
+      getSources: vi.fn().mockResolvedValue([]),
+    } as unknown as ThinktClient;
+
+    const timeline = new TimelineVisualization({
+      elements: { container },
+      client,
+    });
+
+    await flush();
+
+    // projectA has resolved, projectB is still pending.
+    expect(container.querySelectorAll('.thinkt-timeline-label-item').length).toBe(1);
+
+    resolveSlowProject([createSession('b1', '2026-02-02T10:00:00Z', 'kimi')]);
+    await flush();
+
+    expect(container.querySelectorAll('.thinkt-timeline-label-item').length).toBe(2);
+
+    timeline.dispose();
+  });
 });

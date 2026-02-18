@@ -7,7 +7,7 @@
 
 /// <reference types="vite/client" />
 
-import { ApiViewer, SearchOverlay, configureDefaultClient } from './api';
+import { ApiViewer, SearchOverlay, configureDefaultClient, getDefaultClient } from './api';
 import { i18n } from '@lingui/core';
 import { getApiBaseUrl } from './config';
 import { initI18n, changeLocale, SUPPORTED_LOCALES, type SupportedLocale } from './i18n';
@@ -346,17 +346,8 @@ function setupConnectionMonitoring(): void {
 
 async function checkConnection(): Promise<void> {
   try {
-    const baseUrl = getApiBaseUrl();
-    const response = await fetch(`${baseUrl}/api/v1/sources`, {
-      method: 'GET',
-      headers: { 'Accept': 'application/json' },
-      signal: AbortSignal.timeout(5000),
-    });
-    if (response.ok) {
-      updateConnectionStatus('connected');
-    } else {
-      updateConnectionStatus('error', `HTTP ${response.status}`);
-    }
+    await getDefaultClient().getSources();
+    updateConnectionStatus('connected');
   } catch (error) {
     updateConnectionStatus('error', error instanceof Error ? error.message : i18n._('Connection failed'));
   }

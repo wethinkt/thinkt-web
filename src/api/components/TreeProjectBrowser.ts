@@ -24,6 +24,7 @@ import { i18n } from '@lingui/core';
 // ============================================
 
 export type TreeViewMode = 'hierarchical' | 'flat';
+export type TreeProjectSortMode = 'name_asc' | 'name_desc' | 'date_asc' | 'date_desc';
 
 export interface TreeProjectBrowserElements {
   /** Container element */
@@ -40,6 +41,8 @@ export interface TreeProjectBrowserOptions {
   onError?: (error: Error) => void;
   /** Initial view mode (default: 'hierarchical') */
   initialViewMode?: TreeViewMode;
+  /** Initial project sort mode (default: 'date_desc') */
+  initialSort?: TreeProjectSortMode;
 }
 
 /** A group of projects that share the same underlying project path */
@@ -387,6 +390,7 @@ export class TreeProjectBrowser {
   private stylesInjected = false;
   private boundHandlers: Array<() => void> = [];
   private viewMode: TreeViewMode = 'hierarchical';
+  private sortMode: TreeProjectSortMode = 'date_desc';
 
   constructor(options: TreeProjectBrowserOptions) {
     this.options = options;
@@ -395,6 +399,7 @@ export class TreeProjectBrowser {
     this.contentContainer = document.createElement('div');
     this.headerContainer = document.createElement('div');
     this.viewMode = options.initialViewMode ?? 'hierarchical';
+    this.sortMode = options.initialSort ?? 'date_desc';
     this.init();
   }
 
@@ -635,10 +640,7 @@ export class TreeProjectBrowser {
 
     this.contentContainer.innerHTML = '';
 
-    // Sort projects by last modified
-    const sortedProjects = filteredProjects.sort((a, b) =>
-      b.lastModified.getTime() - a.lastModified.getTime()
-    );
+    const sortedProjects = filteredProjects.sort((a, b) => this.compareProjectGroups(a, b));
 
     for (const project of sortedProjects) {
       const el = this.renderProjectGroup(project);
@@ -938,6 +940,29 @@ export class TreeProjectBrowser {
     return div.innerHTML;
   }
 
+  private compareProjectGroups(a: ProjectGroup, b: ProjectGroup): number {
+    const byNameAsc = (): number =>
+      (a.name || a.path).toLowerCase().localeCompare((b.name || b.path).toLowerCase());
+    const byDateAsc = (): number =>
+      a.lastModified.getTime() - b.lastModified.getTime();
+
+    switch (this.sortMode) {
+      case 'name_asc':
+        return byNameAsc();
+      case 'name_desc':
+        return byNameAsc() * -1;
+      case 'date_asc': {
+        const byDate = byDateAsc();
+        return byDate !== 0 ? byDate : byNameAsc();
+      }
+      case 'date_desc':
+      default: {
+        const byDate = byDateAsc() * -1;
+        return byDate !== 0 ? byDate : byNameAsc();
+      }
+    }
+  }
+
   // ============================================
   // Public API
   // ============================================
@@ -954,6 +979,13 @@ export class TreeProjectBrowser {
 
   setSourceFilter(source: string | null): void {
     this.sourceFilter = source?.trim().toLowerCase() || null;
+    if (this.isLoading) return;
+    this.render();
+  }
+
+  setSort(sort: TreeProjectSortMode): void {
+    if (this.sortMode === sort) return;
+    this.sortMode = sort;
     if (this.isLoading) return;
     this.render();
   }

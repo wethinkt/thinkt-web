@@ -13,10 +13,10 @@
 import type { Project, SessionMeta, Entry } from '@wethinkt/ts-thinkt';
 import { type ThinktClient, getDefaultClient } from '@wethinkt/ts-thinkt/api';
 import { i18n } from '@lingui/core';
-import { ProjectBrowser } from './ProjectBrowser';
+import { ProjectBrowser, type ProjectSortMode } from './ProjectBrowser';
 import { SessionList } from './SessionList';
 import { ConversationView } from './ConversationView';
-import { TreeProjectBrowser, type ProjectGroup } from './TreeProjectBrowser';
+import { TreeProjectBrowser, type ProjectGroup, type TreeProjectSortMode } from './TreeProjectBrowser';
 import { TimelineVisualization, type TimelineProjectSelection } from './TimelineVisualization';
 import { ProjectTimelinePanel } from './ProjectTimelinePanel';
 
@@ -97,7 +97,6 @@ const DEFAULT_STYLES = `
   flex: 0 0 auto;
   height: 45%;
   min-height: 150px;
-  border-bottom: 1px solid var(--thinkt-border-color, #2a2a2a);
   overflow: hidden;
   display: flex;
   flex-direction: column;
@@ -119,6 +118,24 @@ const DEFAULT_STYLES = `
 }
 
 .thinkt-api-viewer__sessions.hidden {
+  display: none;
+}
+
+.thinkt-api-viewer__sidebar-splitter {
+  height: 6px;
+  flex: 0 0 6px;
+  cursor: row-resize;
+  background: var(--thinkt-bg-secondary, #141414);
+  border-top: 1px solid var(--thinkt-border-color, #2a2a2a);
+  border-bottom: 1px solid var(--thinkt-border-color, #2a2a2a);
+}
+
+.thinkt-api-viewer__sidebar-splitter:hover,
+.thinkt-api-viewer__sidebar-splitter.resizing {
+  background: rgba(99, 102, 241, 0.2);
+}
+
+.thinkt-api-viewer__sidebar-splitter.hidden {
   display: none;
 }
 
@@ -206,15 +223,18 @@ const DEFAULT_STYLES = `
 }
 
 .thinkt-project-filter {
-  display: flex;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(82px, 92px) minmax(94px, 110px);
   gap: 6px;
+  align-items: center;
   padding: 6px 8px;
   border-bottom: 1px solid var(--thinkt-border-color, #2a2a2a);
   background: var(--thinkt-bg-secondary, #141414);
 }
 
 .thinkt-project-filter__search,
-.thinkt-project-filter__source {
+.thinkt-project-filter__source,
+.thinkt-project-filter__sort {
   border: 1px solid var(--thinkt-border-color, #333);
   border-radius: 4px;
   background: var(--thinkt-input-bg, #252525);
@@ -224,11 +244,19 @@ const DEFAULT_STYLES = `
 }
 
 .thinkt-project-filter__search {
-  flex: 1;
+  min-width: 0;
+  width: 100%;
+}
+
+.thinkt-project-filter__source,
+.thinkt-project-filter__sort {
+  width: 100%;
+  min-width: 0;
 }
 
 .thinkt-project-filter__search:focus,
-.thinkt-project-filter__source:focus {
+.thinkt-project-filter__source:focus,
+.thinkt-project-filter__sort:focus {
   outline: none;
   border-color: var(--thinkt-accent-color, #6366f1);
 }
@@ -310,11 +338,17 @@ export class ApiViewer {
   private currentProject: Project | null = null;
   private currentSession: LoadedSession | null = null;
   private currentProjectView: ProjectViewMode = 'list';
+  private sidebarProjectsSection: HTMLElement | null = null;
+  private sidebarSessionsSection: HTMLElement | null = null;
+  private sidebarSectionSplitter: HTMLElement | null = null;
   private projectFilterContainer: HTMLElement | null = null;
   private projectSearchInput: HTMLInputElement | null = null;
   private projectSourceFilter: HTMLSelectElement | null = null;
+  private projectSortFilter: HTMLSelectElement | null = null;
+  private projectPaneHeightPx: number | null = null;
   private projectSearchQuery = '';
   private projectSource = '';
+  private projectSort: ProjectSortMode = 'date_desc';
   private discoveredSources: string[] = [];
   private sourceCapabilities: SourceCapability[] = [];
   private resumableSources: Set<string> = new Set();
@@ -322,6 +356,8 @@ export class ApiViewer {
   private boundHandlers: Array<() => void> = [];
   private disposed = false;
   private stylesInjected = false;
+  private readonly minProjectPaneHeight = 150;
+  private readonly minSessionPaneHeight = 200;
 
   constructor(options: ApiViewerOptions) {
     this.elements = options.elements;
@@ -375,13 +411,24 @@ export class ApiViewer {
     projectsSection.className = 'thinkt-api-viewer__projects';
     projectsSection.id = 'projects-section';
     projectsSection.appendChild(this.elements.projectBrowserContainer);
+    this.sidebarProjectsSection = projectsSection;
     sidebar.appendChild(projectsSection);
+
+    const sectionSplitter = document.createElement('div');
+    sectionSplitter.className = 'thinkt-api-viewer__sidebar-splitter';
+    sectionSplitter.id = 'sidebar-section-splitter';
+    sectionSplitter.setAttribute('role', 'separator');
+    sectionSplitter.setAttribute('aria-orientation', 'horizontal');
+    sectionSplitter.setAttribute('aria-label', 'Resize projects and sessions');
+    this.sidebarSectionSplitter = sectionSplitter;
+    sidebar.appendChild(sectionSplitter);
 
     // Sessions section
     const sessionsSection = document.createElement('div');
     sessionsSection.className = 'thinkt-api-viewer__sessions';
     sessionsSection.id = 'sessions-section';
     sessionsSection.appendChild(this.elements.sessionListContainer);
+    this.sidebarSessionsSection = sessionsSection;
     sidebar.appendChild(sessionsSection);
 
     container.appendChild(sidebar);
@@ -419,6 +466,7 @@ export class ApiViewer {
 
     const handleWindowResize = () => {
       this.syncTopBarToSidebar(sidebar);
+      this.clampProjectPaneHeightToBounds();
     };
     window.addEventListener('resize', handleWindowResize);
     this.boundHandlers.push(() => window.removeEventListener('resize', handleWindowResize));
@@ -437,6 +485,8 @@ export class ApiViewer {
     }
     container.appendChild(this.elements.resizer);
     this.setupResizer();
+    this.setupSidebarSectionResizer();
+    this.updateSidebarSectionsForView(this.currentProjectView);
 
     // Viewer section - contains conversation and timeline panel
     const viewerSection = document.createElement('div');
@@ -465,6 +515,116 @@ export class ApiViewer {
     viewerSection.appendChild(this.elements.timelinePanelContainer);
     
     container.appendChild(viewerSection);
+  }
+
+  private getProjectPaneBounds(): { top: number; min: number; max: number } | null {
+    const projectsSection = this.sidebarProjectsSection;
+    const sessionsSection = this.sidebarSessionsSection;
+    const splitter = this.sidebarSectionSplitter;
+    if (!projectsSection || !sessionsSection || !splitter) return null;
+
+    const projectsRect = projectsSection.getBoundingClientRect();
+    const sessionsRect = sessionsSection.getBoundingClientRect();
+    const splitterHeight = splitter.getBoundingClientRect().height;
+    const available = sessionsRect.bottom - projectsRect.top - splitterHeight;
+    const min = this.minProjectPaneHeight;
+    const max = Math.max(min, available - this.minSessionPaneHeight);
+    return { top: projectsRect.top, min, max };
+  }
+
+  private clampProjectPaneHeightToBounds(): void {
+    if (this.currentProjectView !== 'list') return;
+    const projectsSection = this.sidebarProjectsSection;
+    const sessionsSection = this.sidebarSessionsSection;
+    if (!projectsSection || !sessionsSection) return;
+
+    const bounds = this.getProjectPaneBounds();
+    if (!bounds) return;
+
+    const currentHeight = this.projectPaneHeightPx ?? projectsSection.getBoundingClientRect().height;
+    const clamped = Math.min(bounds.max, Math.max(bounds.min, currentHeight));
+    this.projectPaneHeightPx = clamped;
+    projectsSection.style.height = `${Math.round(clamped)}px`;
+    projectsSection.style.flex = '0 0 auto';
+    sessionsSection.style.flex = '1 1 auto';
+  }
+
+  private setupSidebarSectionResizer(): void {
+    const splitter = this.sidebarSectionSplitter;
+    if (!splitter) return;
+
+    let isResizing = false;
+
+    const startResize = (e: MouseEvent) => {
+      if (this.currentProjectView !== 'list') return;
+      isResizing = true;
+      splitter.classList.add('resizing');
+      document.body.style.cursor = 'row-resize';
+      document.body.style.userSelect = 'none';
+      e.preventDefault();
+    };
+
+    const doResize = (e: MouseEvent) => {
+      if (!isResizing) return;
+      const bounds = this.getProjectPaneBounds();
+      if (!bounds) return;
+
+      const nextHeight = e.clientY - bounds.top;
+      const clamped = Math.min(bounds.max, Math.max(bounds.min, nextHeight));
+      this.projectPaneHeightPx = clamped;
+      this.clampProjectPaneHeightToBounds();
+    };
+
+    const stopResize = () => {
+      if (!isResizing) return;
+      isResizing = false;
+      splitter.classList.remove('resizing');
+      document.body.style.cursor = '';
+      document.body.style.userSelect = '';
+    };
+
+    splitter.addEventListener('mousedown', startResize);
+    document.addEventListener('mousemove', doResize);
+    document.addEventListener('mouseup', stopResize);
+
+    this.boundHandlers.push(() => {
+      splitter.removeEventListener('mousedown', startResize);
+      document.removeEventListener('mousemove', doResize);
+      document.removeEventListener('mouseup', stopResize);
+    });
+  }
+
+  private updateSidebarSectionsForView(mode: ProjectViewMode): void {
+    const projectsSection = this.sidebarProjectsSection;
+    const sessionsSection = this.sidebarSessionsSection;
+    const splitter = this.sidebarSectionSplitter;
+    if (!projectsSection || !sessionsSection || !splitter) return;
+
+    if (mode === 'list') {
+      projectsSection.classList.remove('full-height', 'hidden');
+      sessionsSection.classList.remove('hidden');
+      splitter.classList.remove('hidden');
+
+      if (this.projectPaneHeightPx === null) {
+        projectsSection.style.height = '45%';
+      }
+      projectsSection.style.flex = '0 0 auto';
+      sessionsSection.style.flex = '1 1 auto';
+
+      window.requestAnimationFrame(() => {
+        if (this.disposed || this.currentProjectView !== 'list') return;
+        this.clampProjectPaneHeightToBounds();
+      });
+      return;
+    }
+
+    splitter.classList.add('hidden');
+    projectsSection.classList.add('full-height');
+    projectsSection.classList.remove('hidden');
+    sessionsSection.classList.add('hidden');
+    projectsSection.style.height = '';
+    projectsSection.style.flex = '';
+    sessionsSection.style.flex = '';
   }
 
   private createViewSwitcher(): HTMLElement {
@@ -505,6 +665,11 @@ export class ApiViewer {
     this.projectSourceFilter = sourceFilter;
     this.renderSourceFilterOptions();
 
+    const sortFilter = document.createElement('select');
+    sortFilter.className = 'thinkt-project-filter__sort';
+    this.projectSortFilter = sortFilter;
+    this.renderSortFilterOptions();
+
     const handleSearchInput = () => {
       this.projectSearchQuery = searchInput.value;
       this.applyProjectFilters();
@@ -519,9 +684,29 @@ export class ApiViewer {
     sourceFilter.addEventListener('change', handleSourceChange);
     this.boundHandlers.push(() => sourceFilter.removeEventListener('change', handleSourceChange));
 
+    const handleSortChange = () => {
+      this.projectSort = this.normalizeProjectSort(sortFilter.value);
+      this.applyProjectFilters();
+    };
+    sortFilter.addEventListener('change', handleSortChange);
+    this.boundHandlers.push(() => sortFilter.removeEventListener('change', handleSortChange));
+
     container.appendChild(searchInput);
     container.appendChild(sourceFilter);
+    container.appendChild(sortFilter);
     return container;
+  }
+
+  private normalizeProjectSort(sort: string): ProjectSortMode {
+    switch (sort) {
+      case 'name_asc':
+      case 'name_desc':
+      case 'date_asc':
+      case 'date_desc':
+        return sort;
+      default:
+        return 'date_desc';
+    }
   }
 
   private normalizeSourceName(source: string): string {
@@ -627,6 +812,31 @@ export class ApiViewer {
     this.projectSource = sourceFilter.value;
   }
 
+  private renderSortFilterOptions(): void {
+    if (!this.projectSortFilter) return;
+
+    const sortFilter = this.projectSortFilter;
+    const selected = this.normalizeProjectSort(sortFilter.value || this.projectSort);
+    sortFilter.innerHTML = '';
+
+    const options: Array<{ value: ProjectSortMode; label: string }> = [
+      { value: 'date_desc', label: i18n._('Newest') },
+      { value: 'date_asc', label: i18n._('Oldest') },
+      { value: 'name_asc', label: i18n._('Name A-Z') },
+      { value: 'name_desc', label: i18n._('Name Z-A') },
+    ];
+
+    options.forEach(({ value, label }) => {
+      const option = document.createElement('option');
+      option.value = value;
+      option.textContent = label;
+      sortFilter.appendChild(option);
+    });
+
+    sortFilter.value = selected;
+    this.projectSort = selected;
+  }
+
   private async discoverSourcesFromProjects(): Promise<void> {
     try {
       const projects = await this.client.getProjects();
@@ -642,18 +852,23 @@ export class ApiViewer {
   private applyProjectFilters(): void {
     const query = this.projectSearchInput?.value ?? this.projectSearchQuery;
     const source = this.projectSourceFilter?.value || this.projectSource;
+    const sort = this.projectSortFilter?.value || this.projectSort;
+    const normalizedSort = this.normalizeProjectSort(sort);
     this.projectSearchQuery = query;
     this.projectSource = source;
+    this.projectSort = normalizedSort;
     const normalizedSource = source || null;
 
     switch (this.currentProjectView) {
       case 'list':
         this.projectBrowser?.setSearch(query);
         this.projectBrowser?.setSourceFilter(normalizedSource);
+        this.projectBrowser?.setSort(normalizedSort);
         break;
       case 'tree':
         this.treeProjectBrowser?.setSearch(query);
         this.treeProjectBrowser?.setSourceFilter(normalizedSource);
+        this.treeProjectBrowser?.setSort(normalizedSort as TreeProjectSortMode);
         break;
       case 'timeline':
         this.timelineVisualization?.setSearch(query);
@@ -745,14 +960,11 @@ export class ApiViewer {
     this.timelineVisualization = null;
 
     // Show/hide sessions section based on view mode
-    const projectsSection = document.getElementById('projects-section');
-    const sessionsSection = document.getElementById('sessions-section');
+    this.updateSidebarSectionsForView(mode);
 
     switch (mode) {
       case 'list':
         // List view: normal layout with projects and sessions
-        projectsSection?.classList.remove('full-height', 'hidden');
-        sessionsSection?.classList.remove('hidden');
         void this.initListView();
         // Show timeline panel if a project is selected
         if (this.currentProject) {
@@ -766,18 +978,12 @@ export class ApiViewer {
       
       case 'tree':
         // Tree view: projects take full height (sessions are in the tree)
-        projectsSection?.classList.add('full-height');
-        projectsSection?.classList.remove('hidden');
-        sessionsSection?.classList.add('hidden');
         this.hideProjectTimelinePanel();
         void this.initTreeView();
         break;
       
       case 'timeline':
         // Timeline view: full height, no separate sessions list
-        projectsSection?.classList.add('full-height');
-        projectsSection?.classList.remove('hidden');
-        sessionsSection?.classList.add('hidden');
         this.hideProjectTimelinePanel();
         void this.initTimelineView();
         break;
@@ -983,6 +1189,7 @@ export class ApiViewer {
       this.projectSearchInput.placeholder = i18n._('Filter projects...');
     }
     this.renderSourceFilterOptions();
+    this.renderSortFilterOptions();
 
     this.projectBrowser?.refreshI18n();
     this.treeProjectBrowser?.refreshI18n();
@@ -1337,6 +1544,10 @@ export class ApiViewer {
     this.projectFilterContainer = null;
     this.projectSearchInput = null;
     this.projectSourceFilter = null;
+    this.projectSortFilter = null;
+    this.sidebarProjectsSection = null;
+    this.sidebarSessionsSection = null;
+    this.sidebarSectionSplitter = null;
 
     this.disposed = true;
   }

@@ -40,6 +40,8 @@ export interface ProjectBrowserOptions {
   projectRenderer?: (project: Project, index: number) => HTMLElement;
   /** Initial source filter */
   initialSource?: string;
+  /** Initial project sort mode */
+  initialSort?: ProjectSortMode;
   /** Enable search filtering */
   enableSearch?: boolean;
   /** Enable source filtering */
@@ -47,6 +49,8 @@ export interface ProjectBrowserOptions {
   /** Custom CSS class prefix */
   classPrefix?: string;
 }
+
+export type ProjectSortMode = 'name_asc' | 'name_desc' | 'date_asc' | 'date_desc';
 
 export interface ProjectItemState {
   project: Project;
@@ -259,6 +263,7 @@ export class ProjectBrowser {
   private discoveredSources: string[] = [];
   private searchQuery = '';
   private currentSourceFilter: string | null = null;
+  private sortMode: ProjectSortMode = 'date_desc';
   private selectedIndex = -1;
   private isLoading = false;
   private itemElements: Map<string, HTMLElement> = new Map();
@@ -276,6 +281,7 @@ export class ProjectBrowser {
       classPrefix: options.classPrefix ?? 'thinkt-project-browser',
     };
     this.currentSourceFilter = options.initialSource ?? null;
+    this.sortMode = options.initialSort ?? 'date_desc';
 
     // Get client (either provided or default)
     this.client = options.client ?? getDefaultClient();
@@ -541,9 +547,41 @@ export class ProjectBrowser {
 
       return matchesSearch;
     });
+    this.filteredProjects.sort((a, b) => this.compareProjects(a, b));
 
     this.selectedIndex = -1;
     this.render();
+  }
+
+  private projectSortName(project: Project): string {
+    return (project.name ?? project.displayPath ?? project.path ?? '').toLowerCase();
+  }
+
+  private projectSortTime(project: Project): number {
+    if (!project.lastModified) return 0;
+    const value = project.lastModified instanceof Date ? project.lastModified : new Date(project.lastModified);
+    return Number.isNaN(value.getTime()) ? 0 : value.getTime();
+  }
+
+  private compareProjects(a: Project, b: Project): number {
+    const byNameAsc = (): number => this.projectSortName(a).localeCompare(this.projectSortName(b));
+    const byDateAsc = (): number => this.projectSortTime(a) - this.projectSortTime(b);
+
+    switch (this.sortMode) {
+      case 'name_asc':
+        return byNameAsc();
+      case 'name_desc':
+        return byNameAsc() * -1;
+      case 'date_asc': {
+        const byDate = byDateAsc();
+        return byDate !== 0 ? byDate : byNameAsc();
+      }
+      case 'date_desc':
+      default: {
+        const byDate = byDateAsc() * -1;
+        return byDate !== 0 ? byDate : byNameAsc();
+      }
+    }
   }
 
   private renderSourceFilterOptions(): void {
@@ -776,6 +814,16 @@ export class ProjectBrowser {
       this.elements.sourceFilter.value = normalized ?? '';
     }
     void this.loadProjects(normalized ?? undefined);
+  }
+
+  /**
+   * Set project sort mode
+   */
+  setSort(sort: ProjectSortMode): void {
+    if (this.sortMode === sort) return;
+    this.sortMode = sort;
+    if (this.isLoading) return;
+    this.filterProjects();
   }
 
   /**

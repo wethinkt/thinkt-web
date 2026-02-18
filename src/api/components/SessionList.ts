@@ -18,6 +18,8 @@ export interface SessionListElements {
   container: HTMLElement;
   /** Search input (optional) */
   searchInput?: HTMLInputElement;
+  /** Sort select (optional) */
+  sortSelect?: HTMLSelectElement;
   /** Loading indicator (optional) */
   loadingIndicator?: HTMLElement;
   /** Error display (optional) */
@@ -52,6 +54,8 @@ export interface SessionListOptions {
   showModel?: boolean;
 }
 
+export type SessionSortMode = 'date_desc' | 'date_asc';
+
 // ============================================
 // Default Styles
 // ============================================
@@ -72,8 +76,15 @@ const DEFAULT_STYLES = `
   flex-shrink: 0;
 }
 
+.thinkt-session-list__controls {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+}
+
 .thinkt-session-list__search {
-  width: 100%;
+  flex: 1;
+  min-width: 0;
   padding: 6px 10px;
   border: 1px solid var(--thinkt-border-color, #333);
   border-radius: 4px;
@@ -90,6 +101,23 @@ const DEFAULT_STYLES = `
 
 .thinkt-session-list__search::placeholder {
   color: var(--thinkt-muted-color, #666);
+}
+
+.thinkt-session-list__sort {
+  min-width: 88px;
+  max-width: 104px;
+  width: 100%;
+  padding: 6px 8px;
+  border: 1px solid var(--thinkt-border-color, #333);
+  border-radius: 4px;
+  background: var(--thinkt-input-bg, #252525);
+  color: inherit;
+  font-size: 12px;
+}
+
+.thinkt-session-list__sort:focus {
+  outline: none;
+  border-color: var(--thinkt-accent-color, #6366f1);
 }
 
 .thinkt-session-list__stats {
@@ -290,6 +318,7 @@ export class SessionList {
   private client: ThinktClient;
   private sessions: SessionMeta[] = [];
   private filteredSessions: SessionMeta[] = [];
+  private sortMode: SessionSortMode = 'date_desc';
   private selectedIndex = -1;
   private isLoading = false;
   private itemElements: Map<string, HTMLElement> = new Map();
@@ -354,6 +383,9 @@ export class SessionList {
     header.className = `${classPrefix}__header`;
 
     if (this.options.enableSearch) {
+      const controls = document.createElement('div');
+      controls.className = `${classPrefix}__controls`;
+
       const searchInput = this.elements.searchInput ?? document.createElement('input');
       searchInput.className = `${classPrefix}__search`;
       searchInput.type = 'text';
@@ -361,7 +393,17 @@ export class SessionList {
       if (!this.elements.searchInput) {
         this.elements.searchInput = searchInput;
       }
-      header.appendChild(searchInput);
+
+      const sortSelect = this.elements.sortSelect ?? document.createElement('select');
+      sortSelect.className = `${classPrefix}__sort`;
+      if (!this.elements.sortSelect) {
+        this.elements.sortSelect = sortSelect;
+      }
+      this.renderSortOptions();
+
+      controls.appendChild(searchInput);
+      controls.appendChild(sortSelect);
+      header.appendChild(controls);
     }
 
     const stats = document.createElement('div');
@@ -402,12 +444,21 @@ export class SessionList {
   // ============================================
 
   private attachListeners(): void {
-    const { searchInput, container } = this.elements;
+    const { searchInput, sortSelect, container } = this.elements;
 
     if (searchInput) {
       const handleSearch = () => this.filterSessions();
       searchInput.addEventListener('input', handleSearch);
       this.boundHandlers.push(() => searchInput.removeEventListener('input', handleSearch));
+    }
+
+    if (sortSelect) {
+      const handleSort = () => {
+        this.sortMode = this.normalizeSortMode(sortSelect.value);
+        this.filterSessions();
+      };
+      sortSelect.addEventListener('change', handleSort);
+      this.boundHandlers.push(() => sortSelect.removeEventListener('change', handleSort));
     }
 
     const handleKeydown = (e: KeyboardEvent) => this.handleKeydown(e);
@@ -463,14 +514,7 @@ export class SessionList {
 
     try {
       this.sessions = await this.client.getSessions(projectId);
-      // Sort by modified date descending
-      this.sessions.sort((a, b) => {
-        const dateA = a.modifiedAt?.getTime() ?? 0;
-        const dateB = b.modifiedAt?.getTime() ?? 0;
-        return dateB - dateA;
-      });
-      this.filteredSessions = [...this.sessions];
-      this.render();
+      this.filterSessions();
       void Promise.resolve(this.options.onSessionsLoaded?.(this.sessions));
     } catch (error) {
       const err = error instanceof Error ? error : new Error(String(error));
@@ -543,9 +587,51 @@ export class SessionList {
         field?.toLowerCase().includes(searchTerm)
       );
     });
+    this.filteredSessions.sort((a, b) => this.compareSessions(a, b));
 
     this.selectedIndex = -1;
     this.render();
+  }
+
+  private normalizeSortMode(value: string): SessionSortMode {
+    return value === 'date_asc' ? 'date_asc' : 'date_desc';
+  }
+
+  private sessionTime(session: SessionMeta): number {
+    if (!session.modifiedAt) return 0;
+    const d = session.modifiedAt instanceof Date ? session.modifiedAt : new Date(session.modifiedAt);
+    return Number.isNaN(d.getTime()) ? 0 : d.getTime();
+  }
+
+  private compareSessions(a: SessionMeta, b: SessionMeta): number {
+    const byDateAsc = this.sessionTime(a) - this.sessionTime(b);
+    if (byDateAsc !== 0) {
+      return this.sortMode === 'date_asc' ? byDateAsc : byDateAsc * -1;
+    }
+
+    const aLabel = (a.firstPrompt ?? a.id ?? '').toLowerCase();
+    const bLabel = (b.firstPrompt ?? b.id ?? '').toLowerCase();
+    return aLabel.localeCompare(bLabel);
+  }
+
+  private renderSortOptions(): void {
+    const sortSelect = this.elements.sortSelect;
+    if (!sortSelect) return;
+
+    sortSelect.innerHTML = '';
+    const options: Array<{ value: SessionSortMode; label: string }> = [
+      { value: 'date_desc', label: i18n._('Newest') },
+      { value: 'date_asc', label: i18n._('Oldest') },
+    ];
+
+    options.forEach(({ value, label }) => {
+      const option = document.createElement('option');
+      option.value = value;
+      option.textContent = label;
+      sortSelect.appendChild(option);
+    });
+
+    sortSelect.value = this.sortMode;
   }
 
   // ============================================
@@ -787,6 +873,19 @@ export class SessionList {
   }
 
   /**
+   * Set session sort mode
+   */
+  setSort(sort: SessionSortMode): void {
+    const normalized = this.normalizeSortMode(sort);
+    if (this.sortMode === normalized) return;
+    this.sortMode = normalized;
+    if (this.elements.sortSelect) {
+      this.elements.sortSelect.value = normalized;
+    }
+    this.filterSessions();
+  }
+
+  /**
    * Set the project ID and load sessions
    */
   setProjectId(projectId: string): Promise<void> {
@@ -807,6 +906,7 @@ export class SessionList {
     if (this.elements.searchInput) {
       this.elements.searchInput.placeholder = i18n._('Filter sessions...');
     }
+    this.renderSortOptions();
     if (this.elements.loadingIndicator) {
       this.elements.loadingIndicator.textContent = i18n._('Loading sessions...');
     }
