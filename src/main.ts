@@ -22,6 +22,7 @@ let apiViewer: ApiViewer | null = null;
 let searchOverlay: SearchOverlay | null = null;
 let connectionIntervalId: ReturnType<typeof setInterval> | null = null;
 let languageSelector: LanguageSelector<SupportedLocale> | null = null;
+let removeGlobalSearchButtonListener: (() => void) | null = null;
 let currentSessionTitle: string | null = null;
 let currentConnectionStatus: { status: 'connected' | 'error' | 'connecting'; message?: string } = {
   status: 'connecting',
@@ -36,6 +37,7 @@ async function init(): Promise<void> {
   const currentLocale = await initI18n();
   document.documentElement.lang = currentLocale;
   setupLanguageSelector(currentLocale);
+  setupGlobalSearchButton();
   updateConnectionStatus('connecting');
 
   // Configure API client
@@ -134,6 +136,41 @@ function hideLoadingScreen(): void {
 
 function updateWindowTitle(sessionTitle: string): void {
   document.title = i18n._('{sessionTitle} - THINKT', { sessionTitle });
+}
+
+function getSearchShortcutLabel(): string {
+  const platform = navigator.platform.toLowerCase();
+  const isApplePlatform = platform.includes('mac') || platform.includes('iphone') || platform.includes('ipad');
+  return isApplePlatform ? 'Cmd+K' : 'Ctrl+K';
+}
+
+function updateSearchButtonTooltip(): void {
+  const button = document.getElementById('global-search-button');
+  if (!(button instanceof HTMLButtonElement)) return;
+
+  const shortcut = getSearchShortcutLabel();
+  const tooltip = i18n._('Open search dialog ({shortcut})', { shortcut });
+  button.title = tooltip;
+  button.setAttribute('aria-label', tooltip);
+}
+
+function setupGlobalSearchButton(): void {
+  removeGlobalSearchButtonListener?.();
+  removeGlobalSearchButtonListener = null;
+
+  const button = document.getElementById('global-search-button');
+  if (!(button instanceof HTMLButtonElement)) return;
+
+  const handleClick = (): void => {
+    openSearchOverlay();
+  };
+
+  button.addEventListener('click', handleClick);
+  removeGlobalSearchButtonListener = () => {
+    button.removeEventListener('click', handleClick);
+  };
+
+  updateSearchButtonTooltip();
 }
 
 function updateConnectionStatus(status: 'connected' | 'error' | 'connecting', message?: string): void {
@@ -329,6 +366,7 @@ function refreshLocalizedTopBarText(): void {
   if (currentSessionTitle) {
     updateWindowTitle(currentSessionTitle);
   }
+  updateSearchButtonTooltip();
   updateConnectionStatus(currentConnectionStatus.status, currentConnectionStatus.message);
 }
 
@@ -343,6 +381,8 @@ function dispose(): void {
   }
   languageSelector?.dispose();
   languageSelector = null;
+  removeGlobalSearchButtonListener?.();
+  removeGlobalSearchButtonListener = null;
   apiViewer?.dispose();
   apiViewer = null;
   searchOverlay?.dispose();
