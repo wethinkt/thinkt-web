@@ -32,6 +32,8 @@ export interface SessionListOptions {
   client?: ThinktClient;
   /** Project ID to load sessions from */
   projectId?: string;
+  /** Source for source-scoped project lookups */
+  projectSource?: string;
   /** Callback when a session is selected */
   onSessionSelect?: (session: SessionMeta) => void;
   /** Callback when sessions are loaded */
@@ -354,7 +356,7 @@ export class SessionList {
     this.attachListeners();
 
     if (this.options.projectId) {
-      await this.loadSessions(this.options.projectId);
+      await this.loadSessions(this.options.projectId, this.options.projectSource);
     }
   }
 
@@ -500,10 +502,11 @@ export class SessionList {
   // Data Loading
   // ============================================
 
-  async loadSessions(projectId: string): Promise<void> {
+  async loadSessions(projectId: string, source?: string): Promise<void> {
     if (this.isLoading) return;
 
     this.options.projectId = projectId;
+    this.options.projectSource = source?.trim().toLowerCase() || undefined;
     this.isLoading = true;
     this.showLoading(true);
     this.showError(null);
@@ -513,7 +516,7 @@ export class SessionList {
     this.render();
 
     try {
-      this.sessions = await this.client.getSessions(projectId);
+      this.sessions = await this.client.getSessions(projectId, this.options.projectSource);
       this.filterSessions();
       void Promise.resolve(this.options.onSessionsLoaded?.(this.sessions));
     } catch (error) {
@@ -553,7 +556,7 @@ export class SessionList {
         retryBtn.textContent = i18n._('Retry');
         retryBtn.addEventListener('click', () => {
           if (this.options.projectId) {
-            void this.loadSessions(this.options.projectId);
+            void this.loadSessions(this.options.projectId, this.options.projectSource);
           }
         });
         this.elements.errorDisplay.appendChild(retryBtn);
@@ -857,7 +860,7 @@ export class SessionList {
    */
   refresh(): Promise<void> {
     if (this.options.projectId) {
-      return this.loadSessions(this.options.projectId);
+      return this.loadSessions(this.options.projectId, this.options.projectSource);
     }
     return Promise.resolve();
   }
@@ -888,8 +891,8 @@ export class SessionList {
   /**
    * Set the project ID and load sessions
    */
-  setProjectId(projectId: string): Promise<void> {
-    return this.loadSessions(projectId);
+  setProjectId(projectId: string, source?: string): Promise<void> {
+    return this.loadSessions(projectId, source);
   }
 
   /**

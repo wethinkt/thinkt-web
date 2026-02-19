@@ -263,6 +263,81 @@ describe('TimelineVisualization', () => {
     timeline.dispose();
   });
 
+  it('aligns source mode to upper-left on initial render', async () => {
+    const container = document.createElement('div');
+    document.body.appendChild(container);
+
+    const rafCallbacks: FrameRequestCallback[] = [];
+    vi.spyOn(window, 'requestAnimationFrame').mockImplementation((callback: FrameRequestCallback) => {
+      rafCallbacks.push(callback);
+      return rafCallbacks.length;
+    });
+
+    const client = createClient(
+      {
+        projectA: [
+          createSession('a-old', '2026-02-01T10:00:00Z', 'claude'),
+          createSession('a-new', '2026-02-03T10:00:00Z', 'claude'),
+        ],
+        projectB: [
+          createSession('b1', '2026-02-02T10:00:00Z', 'kimi'),
+        ],
+      },
+      { projectA: 'claude', projectB: 'kimi' },
+    );
+
+    const timeline = new TimelineVisualization({
+      elements: { container },
+      client,
+      groupBy: 'source',
+    });
+
+    await flush();
+
+    const scrollArea = container.querySelector('.thinkt-timeline-scroll') as HTMLElement;
+    let scrollLeftValue = 450;
+    let scrollTopValue = 320;
+    Object.defineProperty(scrollArea, 'clientWidth', {
+      configurable: true,
+      get: () => 400,
+    });
+    Object.defineProperty(scrollArea, 'scrollWidth', {
+      configurable: true,
+      get: () => 2000,
+    });
+    Object.defineProperty(scrollArea, 'clientHeight', {
+      configurable: true,
+      get: () => 300,
+    });
+    Object.defineProperty(scrollArea, 'scrollHeight', {
+      configurable: true,
+      get: () => 1800,
+    });
+    Object.defineProperty(scrollArea, 'scrollLeft', {
+      configurable: true,
+      get: () => scrollLeftValue,
+      set: (value: number) => {
+        scrollLeftValue = value;
+      },
+    });
+    Object.defineProperty(scrollArea, 'scrollTop', {
+      configurable: true,
+      get: () => scrollTopValue,
+      set: (value: number) => {
+        scrollTopValue = value;
+      },
+    });
+
+    const firstAlign = rafCallbacks.shift();
+    expect(firstAlign).toBeTruthy();
+    firstAlign?.(0);
+
+    expect(scrollLeftValue).toBe(0);
+    expect(scrollTopValue).toBe(0);
+
+    timeline.dispose();
+  });
+
   it('infers copilot in source mode from source base paths', async () => {
     const container = document.createElement('div');
     document.body.appendChild(container);
@@ -340,6 +415,347 @@ describe('TimelineVisualization', () => {
     await flush();
 
     expect(container.querySelectorAll('.thinkt-timeline-label-item').length).toBe(2);
+
+    timeline.dispose();
+  });
+
+  it('loads project sessions in parallel so a later fast project can render first', async () => {
+    const container = document.createElement('div');
+    document.body.appendChild(container);
+
+    let resolveSlowProject: (value: SessionMeta[]) => void = () => undefined;
+    const slowProjectPromise = new Promise<SessionMeta[]>((resolve) => {
+      resolveSlowProject = resolve;
+    });
+
+    const client = {
+      getProjects: vi.fn().mockResolvedValue([
+        { id: 'projectSlow', name: 'projectSlow', source: 'claude' },
+        { id: 'projectFast', name: 'projectFast', source: 'kimi' },
+      ]),
+      getSessions: vi.fn().mockImplementation(async (projectId: string) => {
+        if (projectId === 'projectSlow') {
+          return slowProjectPromise;
+        }
+        return [createSession('fast-1', '2026-02-01T10:00:00Z', 'kimi')];
+      }),
+      getSources: vi.fn().mockResolvedValue([]),
+    } as unknown as ThinktClient;
+
+    const timeline = new TimelineVisualization({
+      elements: { container },
+      client,
+    });
+
+    await flush();
+
+    expect(client.getSessions).toHaveBeenCalledTimes(2);
+    expect(container.querySelectorAll('.thinkt-timeline-label-item').length).toBe(1);
+
+    resolveSlowProject([createSession('slow-1', '2026-02-02T10:00:00Z', 'claude')]);
+    await flush();
+
+    expect(container.querySelectorAll('.thinkt-timeline-label-item').length).toBe(2);
+
+    timeline.dispose();
+  });
+
+  it('auto-follows timeline edge during progressive loading until user navigates', async () => {
+    const container = document.createElement('div');
+    document.body.appendChild(container);
+
+    let resolveSlowProject: (value: SessionMeta[]) => void = () => undefined;
+    const slowProjectPromise = new Promise<SessionMeta[]>((resolve) => {
+      resolveSlowProject = resolve;
+    });
+
+    const client = {
+      getProjects: vi.fn().mockResolvedValue([
+        { id: 'projectFast', name: 'projectFast', source: 'claude' },
+        { id: 'projectSlow', name: 'projectSlow', source: 'kimi' },
+      ]),
+      getSessions: vi.fn().mockImplementation(async (projectId: string) => {
+        if (projectId === 'projectSlow') {
+          return slowProjectPromise;
+        }
+        return [createSession('fast-1', '2026-02-10T10:00:00Z', 'claude')];
+      }),
+      getSources: vi.fn().mockResolvedValue([]),
+    } as unknown as ThinktClient;
+
+    const timeline = new TimelineVisualization({
+      elements: { container },
+      client,
+    });
+    await flush();
+
+    const scrollArea = container.querySelector('.thinkt-timeline-scroll') as HTMLElement;
+    const scrollLeftAssignments: number[] = [];
+    let scrollLeftValue = 0;
+    Object.defineProperty(scrollArea, 'scrollLeft', {
+      configurable: true,
+      get: () => scrollLeftValue,
+      set: (value: number) => {
+        scrollLeftValue = value;
+        scrollLeftAssignments.push(value);
+      },
+    });
+
+    resolveSlowProject([createSession('slow-1', '2026-01-01T10:00:00Z', 'kimi')]);
+    await flush();
+
+    expect(scrollLeftAssignments.length).toBeGreaterThan(0);
+
+    timeline.dispose();
+  });
+
+  it('stops auto-following progressive updates after user scroll interaction', async () => {
+    const container = document.createElement('div');
+    document.body.appendChild(container);
+
+    let resolveSlowProject: (value: SessionMeta[]) => void = () => undefined;
+    const slowProjectPromise = new Promise<SessionMeta[]>((resolve) => {
+      resolveSlowProject = resolve;
+    });
+
+    const client = {
+      getProjects: vi.fn().mockResolvedValue([
+        { id: 'projectFast', name: 'projectFast', source: 'claude' },
+        { id: 'projectSlow', name: 'projectSlow', source: 'kimi' },
+      ]),
+      getSessions: vi.fn().mockImplementation(async (projectId: string) => {
+        if (projectId === 'projectSlow') {
+          return slowProjectPromise;
+        }
+        return [createSession('fast-1', '2026-02-10T10:00:00Z', 'claude')];
+      }),
+      getSources: vi.fn().mockResolvedValue([]),
+    } as unknown as ThinktClient;
+
+    const timeline = new TimelineVisualization({
+      elements: { container },
+      client,
+    });
+    await flush();
+
+    const scrollArea = container.querySelector('.thinkt-timeline-scroll') as HTMLElement;
+    const scrollLeftAssignments: number[] = [];
+    let scrollLeftValue = 0;
+    Object.defineProperty(scrollArea, 'scrollLeft', {
+      configurable: true,
+      get: () => scrollLeftValue,
+      set: (value: number) => {
+        scrollLeftValue = value;
+        scrollLeftAssignments.push(value);
+      },
+    });
+
+    scrollLeftValue = 250;
+    scrollArea.dispatchEvent(new Event('scroll'));
+    resolveSlowProject([createSession('slow-1', '2026-01-01T10:00:00Z', 'kimi')]);
+    await flush();
+
+    expect(scrollLeftAssignments.length).toBe(0);
+
+    timeline.dispose();
+  });
+
+  it('pins project timeline to top during progressive auto-follow', async () => {
+    const container = document.createElement('div');
+    document.body.appendChild(container);
+
+    let resolveSlowProject: (value: SessionMeta[]) => void = () => undefined;
+    const slowProjectPromise = new Promise<SessionMeta[]>((resolve) => {
+      resolveSlowProject = resolve;
+    });
+
+    const client = {
+      getProjects: vi.fn().mockResolvedValue([
+        { id: 'projectFast', name: 'projectFast', source: 'claude' },
+        { id: 'projectSlow', name: 'projectSlow', source: 'kimi' },
+      ]),
+      getSessions: vi.fn().mockImplementation(async (projectId: string) => {
+        if (projectId === 'projectSlow') {
+          return slowProjectPromise;
+        }
+        return [createSession('fast-1', '2026-02-10T10:00:00Z', 'claude')];
+      }),
+      getSources: vi.fn().mockResolvedValue([]),
+    } as unknown as ThinktClient;
+
+    const timeline = new TimelineVisualization({
+      elements: { container },
+      client,
+      groupBy: 'project',
+    });
+    await flush();
+
+    const scrollArea = container.querySelector('.thinkt-timeline-scroll') as HTMLElement;
+    let scrollTopValue = 0;
+    Object.defineProperty(scrollArea, 'scrollTop', {
+      configurable: true,
+      get: () => scrollTopValue,
+      set: (value: number) => {
+        scrollTopValue = value;
+      },
+    });
+
+    scrollTopValue = 420;
+    resolveSlowProject([createSession('slow-1', '2026-01-01T10:00:00Z', 'kimi')]);
+    await flush();
+
+    expect(scrollTopValue).toBe(0);
+
+    timeline.dispose();
+  });
+
+  it('keeps auto-follow active when a render-driven scroll event fires between progressive renders', async () => {
+    const container = document.createElement('div');
+    document.body.appendChild(container);
+
+    let resolveSlowProject: (value: SessionMeta[]) => void = () => undefined;
+    const slowProjectPromise = new Promise<SessionMeta[]>((resolve) => {
+      resolveSlowProject = resolve;
+    });
+
+    const rafCallbacks: FrameRequestCallback[] = [];
+    vi.spyOn(window, 'requestAnimationFrame').mockImplementation((callback: FrameRequestCallback) => {
+      rafCallbacks.push(callback);
+      return rafCallbacks.length;
+    });
+
+    const client = {
+      getProjects: vi.fn().mockResolvedValue([
+        { id: 'projectFast', name: 'projectFast', source: 'claude' },
+        { id: 'projectSlow', name: 'projectSlow', source: 'kimi' },
+      ]),
+      getSessions: vi.fn().mockImplementation(async (projectId: string) => {
+        if (projectId === 'projectSlow') {
+          return slowProjectPromise;
+        }
+        return [createSession('fast-1', '2026-02-10T10:00:00Z', 'claude')];
+      }),
+      getSources: vi.fn().mockResolvedValue([]),
+    } as unknown as ThinktClient;
+
+    const timeline = new TimelineVisualization({
+      elements: { container },
+      client,
+      groupBy: 'project',
+    });
+    await flush();
+
+    const scrollArea = container.querySelector('.thinkt-timeline-scroll') as HTMLElement;
+    let scrollLeftValue = 0;
+    let scrollWidthValue = 1600;
+    const scrollLeftAssignments: number[] = [];
+    Object.defineProperty(scrollArea, 'clientWidth', {
+      configurable: true,
+      get: () => 400,
+    });
+    Object.defineProperty(scrollArea, 'scrollWidth', {
+      configurable: true,
+      get: () => scrollWidthValue,
+    });
+    Object.defineProperty(scrollArea, 'scrollLeft', {
+      configurable: true,
+      get: () => scrollLeftValue,
+      set: (value: number) => {
+        scrollLeftValue = value;
+        scrollLeftAssignments.push(value);
+      },
+    });
+
+    const firstAlign = rafCallbacks.shift();
+    expect(firstAlign).toBeTruthy();
+    firstAlign?.(0);
+    scrollLeftAssignments.length = 0;
+
+    resolveSlowProject([createSession('slow-1', '2026-01-01T10:00:00Z', 'kimi')]);
+    await flush();
+
+    scrollWidthValue = 2000;
+    scrollLeftValue = 0;
+    scrollArea.dispatchEvent(new Event('scroll'));
+
+    const secondAlign = rafCallbacks.shift();
+    expect(secondAlign).toBeTruthy();
+    secondAlign?.(0);
+
+    expect(scrollLeftAssignments.length).toBeGreaterThan(0);
+    expect(scrollLeftValue).toBe(1600);
+
+    timeline.dispose();
+  });
+
+  it('anchors project timeline right edge to current time', async () => {
+    const container = document.createElement('div');
+    document.body.appendChild(container);
+
+    vi.spyOn(Date, 'now').mockReturnValue(new Date('2026-02-20T00:00:00Z').getTime());
+
+    const client = createClient(
+      {
+        projectA: [createSession('a1', '2026-02-01T10:00:00Z', 'claude')],
+      },
+      { projectA: 'claude' },
+    );
+
+    const timeline = new TimelineVisualization({
+      elements: { container },
+      client,
+      groupBy: 'project',
+    });
+
+    await flush();
+
+    const content = container.querySelector('.thinkt-timeline-chart-content') as HTMLElement;
+    const width = Number.parseInt(content.style.width, 10);
+    expect(width).toBeGreaterThan(3000);
+
+    timeline.dispose();
+  });
+
+  it('keeps newest project rows at the top as older projects stream in', async () => {
+    const container = document.createElement('div');
+    document.body.appendChild(container);
+
+    let resolveSlowProject: (value: SessionMeta[]) => void = () => undefined;
+    const slowProjectPromise = new Promise<SessionMeta[]>((resolve) => {
+      resolveSlowProject = resolve;
+    });
+
+    const client = {
+      getProjects: vi.fn().mockResolvedValue([
+        { id: 'projectFast', name: 'projectFast', source: 'claude' },
+        { id: 'projectSlow', name: 'projectSlow', source: 'kimi' },
+      ]),
+      getSessions: vi.fn().mockImplementation(async (projectId: string) => {
+        if (projectId === 'projectSlow') {
+          return slowProjectPromise;
+        }
+        return [createSession('fast-1', '2026-02-10T10:00:00Z', 'claude')];
+      }),
+      getSources: vi.fn().mockResolvedValue([]),
+    } as unknown as ThinktClient;
+
+    const timeline = new TimelineVisualization({
+      elements: { container },
+      client,
+      groupBy: 'project',
+    });
+    await flush();
+
+    const labelsBefore = Array.from(container.querySelectorAll('.thinkt-timeline-label-item'))
+      .map((el) => (el.textContent ?? '').trim().toLowerCase());
+    expect(labelsBefore).toEqual(['projectfast']);
+
+    resolveSlowProject([createSession('slow-1', '2026-01-01T10:00:00Z', 'kimi')]);
+    await flush();
+
+    const labelsAfter = Array.from(container.querySelectorAll('.thinkt-timeline-label-item'))
+      .map((el) => (el.textContent ?? '').trim().toLowerCase());
+    expect(labelsAfter).toEqual(['projectfast', 'projectslow']);
 
     timeline.dispose();
   });

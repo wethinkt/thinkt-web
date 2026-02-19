@@ -969,7 +969,7 @@ export class ApiViewer {
         // Show timeline panel if a project is selected
         if (this.currentProject) {
           if (this.currentProject.id) {
-            this.showProjectTimelinePanel(this.currentProject.id);
+            this.showProjectTimelinePanel(this.currentProject.id, this.currentProject.source);
           } else {
             this.hideProjectTimelinePanel();
           }
@@ -1231,14 +1231,14 @@ export class ApiViewer {
   private handleProjectSelect(project: Project): void {
     this.currentProject = project;
     if (project.id) {
-      void this.sessionList?.setProjectId(project.id);
+      void this.sessionList?.setProjectId(project.id, project.source);
     }
     // Update project path in conversation view toolbar
     this.conversationView?.setProjectPath(project.path ?? project.name ?? null, 0);
     
     // Show timeline panel for this project
     if (this.currentProjectView === 'list' && project.id) {
-      this.showProjectTimelinePanel(project.id);
+      this.showProjectTimelinePanel(project.id, project.source);
     }
     this.conversationView?.refreshToolbar();
   }
@@ -1275,7 +1275,7 @@ export class ApiViewer {
 
   private handleTimelineProjectSelect(project: TimelineProjectSelection): void {
     const isSameProject = this.currentProject?.id === project.projectId;
-    this.showProjectTimelinePanel(project.projectId);
+    this.showProjectTimelinePanel(project.projectId, project.projectSource);
     if (isSameProject && this.currentSession) {
       this.conversationView?.refreshToolbar();
       return;
@@ -1285,6 +1285,7 @@ export class ApiViewer {
       id: project.projectId,
       name: project.projectName,
       path: project.projectPath ?? undefined,
+      source: (project.projectSource ?? this.currentProject?.source ?? 'claude') as Project['source'],
     } as Project;
     this.currentSession = null;
     this.conversationView?.setProjectPath(project.projectPath ?? project.projectName, 0);
@@ -1292,8 +1293,8 @@ export class ApiViewer {
     this.conversationView?.refreshToolbar();
   }
 
-  private showProjectTimelinePanel(projectId: string): void {
-    this.projectTimelinePanel?.setProject(projectId);
+  private showProjectTimelinePanel(projectId: string, source?: string): void {
+    this.projectTimelinePanel?.setProject(projectId, source);
     this.projectTimelinePanel?.show();
     this.elements.timelinePanelContainer?.classList.add('visible');
     this.conversationView?.refreshToolbar();
@@ -1322,7 +1323,7 @@ export class ApiViewer {
     if (this.isTimelinePanelVisible()) {
       this.hideProjectTimelinePanel();
     } else {
-      this.showProjectTimelinePanel(this.currentProject.id);
+      this.showProjectTimelinePanel(this.currentProject.id, this.currentProject.source);
     }
   }
 
@@ -1352,6 +1353,8 @@ export class ApiViewer {
 
       // Load into conversation view
       this.conversationView?.displayEntries(entries);
+      // Scroll to top for new session
+      this.conversationView?.scrollToTop?.();
 
       void Promise.resolve(this.options.onSessionLoaded?.(session, entries));
     } catch (error) {

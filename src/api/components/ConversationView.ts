@@ -598,7 +598,7 @@ export class ConversationView {
     this.renderFilterBar();
     this.setupFilters();
     this.applyFilters();
-    this.contentContainer.scrollTop = 0;
+    // Note: Caller decides scroll position (preserves scroll by default)
   }
 
   /**
@@ -627,7 +627,7 @@ export class ConversationView {
     this.renderFilterBar();
     this.setupFilters();
     this.applyFilters();
-    this.contentContainer.scrollTop = 0;
+    // Note: Caller decides scroll position (preserves scroll by default)
   }
 
   // ============================================
@@ -892,7 +892,10 @@ export class ConversationView {
 
     const scrollTop = this.contentContainer.scrollTop;
     this.displayEntries(this.currentEntries);
-    this.contentContainer.scrollTop = scrollTop;
+    // Restore scroll after DOM settles
+    requestAnimationFrame(() => {
+      this.contentContainer.scrollTop = scrollTop;
+    });
   }
 
   /**
@@ -908,6 +911,13 @@ export class ConversationView {
         element.classList.remove('thinkt-conversation-entry--highlighted');
       }, 2000);
     }
+  }
+
+  /**
+   * Scroll to the top of the conversation
+   */
+  scrollToTop(): void {
+    this.contentContainer.scrollTop = 0;
   }
 
   /**

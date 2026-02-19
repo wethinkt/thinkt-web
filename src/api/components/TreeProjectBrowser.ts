@@ -600,7 +600,7 @@ export class TreeProjectBrowser {
     this.render();
 
     try {
-      const sessions = await this.client.getSessions(sourceGroup.project.id);
+      const sessions = await this.client.getSessions(sourceGroup.project.id, sourceGroup.source);
       sessions.sort((a, b) => {
         const dateA = a.modifiedAt?.getTime() || 0;
         const dateB = b.modifiedAt?.getTime() || 0;

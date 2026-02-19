@@ -24,6 +24,8 @@ export interface ProjectTimelinePanelOptions {
   client?: ThinktClient;
   /** Project ID to load sessions for */
   projectId?: string;
+  /** Source for source-scoped project lookups */
+  projectSource?: string;
   /** Callback when a session is selected */
   onSessionSelect?: (session: SessionMeta) => void;
   /** Callback when panel visibility changes */
@@ -210,7 +212,7 @@ export class ProjectTimelinePanel {
   private isLoading = false;
   private isVisible = false;
   private stylesInjected = false;
-  private cachedProjectId: string | null = null;
+  private cachedProjectKey: string | null = null;
 
   // Dimensions
   private readonly rowHeight = 50;
@@ -237,7 +239,7 @@ export class ProjectTimelinePanel {
     document.body.appendChild(this.tooltip);
 
     if (this.options.projectId) {
-      void this.loadSessions(this.options.projectId);
+      void this.loadSessions(this.options.projectId, this.options.projectSource);
     }
   }
 
@@ -293,23 +295,26 @@ export class ProjectTimelinePanel {
   // Data Loading
   // ============================================
 
-  async loadSessions(projectId: string, force = false): Promise<void> {
+  async loadSessions(projectId: string, source?: string, force = false): Promise<void> {
     if (this.isLoading) return;
-    
+    const normalizedSource = source?.trim().toLowerCase() || undefined;
+    const projectKey = `${normalizedSource ?? ''}::${projectId}`;
+
     // Use cached data if same project and not forced
-    if (!force && this.cachedProjectId === projectId && this.sessions.length > 0) {
+    if (!force && this.cachedProjectKey === projectKey && this.sessions.length > 0) {
       this.render();
       return;
     }
-    
+
     this.isLoading = true;
     this.options.projectId = projectId;
-    this.cachedProjectId = projectId;
+    this.options.projectSource = normalizedSource;
+    this.cachedProjectKey = projectKey;
     this.showLoading();
 
     try {
       // Limit to recent sessions to avoid overwhelming the UI
-      const sessions = await this.client.getSessions(projectId);
+      const sessions = await this.client.getSessions(projectId, this.options.projectSource);
       
       // Process sessions with timing info
       this.sessions = sessions
@@ -669,7 +674,7 @@ export class ProjectTimelinePanel {
     }
     if (this.options.projectId) {
       // Don't force reload - use cache if available
-      void this.loadSessions(this.options.projectId, false);
+      void this.loadSessions(this.options.projectId, this.options.projectSource, false);
     }
   }
 
@@ -686,12 +691,14 @@ export class ProjectTimelinePanel {
     return this.isVisible;
   }
 
-  setProject(projectId: string): void {
-    const isNewProject = this.options.projectId !== projectId;
+  setProject(projectId: string, source?: string): void {
+    const normalizedSource = source?.trim().toLowerCase() || undefined;
+    const isNewProject = this.options.projectId !== projectId || this.options.projectSource !== normalizedSource;
     this.options.projectId = projectId;
+    this.options.projectSource = normalizedSource;
     if (this.isVisible) {
       // Only force reload if project changed
-      void this.loadSessions(projectId, isNewProject);
+      void this.loadSessions(projectId, this.options.projectSource, isNewProject);
     }
   }
 
@@ -700,7 +707,7 @@ export class ProjectTimelinePanel {
    */
   refresh(): void {
     if (this.options.projectId && this.isVisible) {
-      void this.loadSessions(this.options.projectId, true);
+      void this.loadSessions(this.options.projectId, this.options.projectSource, true);
     }
   }
 
@@ -720,7 +727,7 @@ export class ProjectTimelinePanel {
     this.container.innerHTML = '';
     this.sessions = [];
     this.rows = [];
-    this.cachedProjectId = null;
+    this.cachedProjectKey = null;
   }
 }
 

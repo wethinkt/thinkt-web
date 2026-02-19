@@ -39,6 +39,7 @@ export interface TimelineProjectSelection {
   projectId: string;
   projectName: string;
   projectPath: string | null;
+  projectSource?: string;
 }
 
 interface TimelineSession {
@@ -58,6 +59,7 @@ interface TimelineSourceInfo {
 interface TimelineRow {
   projectId: string | null;
   projectPath: string | null;
+  projectSource: string | null;
   label: string;
   sessions: TimelineSession[];
   color: string;
@@ -393,6 +395,11 @@ export class TimelineVisualization {
   private disposed = false;
   private rafScrollSync = 0;
   private hasInitialAlignment = false;
+  private hasUserNavigated = false;
+  private autoFollowUntilMs = 0;
+  private expectedScrollLeft: number | null = null;
+  private expectedScrollTop: number | null = null;
+  private suppressUserNavigationDetection = false;
   private pendingZoomAnchor:
     | { timeMs: number; viewportCoord: number; axis: 'x' | 'y' }
     | null = null;
@@ -411,6 +418,10 @@ export class TimelineVisualization {
   private readonly defaultMsPerPixel = 7 * 60 * 1000; // 7 min per px
   private readonly minMsPerPixel = 30 * 1000; // 30 sec / px
   private readonly maxMsPerPixel = 24 * 60 * 60 * 1000; // 1 day / px
+  private readonly maxConcurrentSessionFetches = 6;
+  private readonly progressiveCommitDelayMs = 80;
+  private readonly autoFollowGraceMs = 3000;
+  private readonly userScrollEpsilonPx = 6;
   private zoomMsPerPixel = this.defaultMsPerPixel;
 
   constructor(options: TimelineVisualizationOptions) {
@@ -502,6 +513,20 @@ export class TimelineVisualization {
   }
 
   private handleScroll = (): void => {
+    if (!this.hasUserNavigated && !this.suppressUserNavigationDetection) {
+      const expectedLeft = this.expectedScrollLeft;
+      const expectedTop = this.expectedScrollTop;
+      const leftDiff = expectedLeft === null
+        ? 0
+        : Math.abs(this.scrollArea.scrollLeft - expectedLeft);
+      const topDiff = expectedTop === null
+        ? 0
+        : Math.abs(this.scrollArea.scrollTop - expectedTop);
+      if (leftDiff > this.userScrollEpsilonPx || topDiff > this.userScrollEpsilonPx) {
+        this.markUserNavigated();
+      }
+    }
+
     if (this.groupBy !== 'project') return;
     if (this.rafScrollSync !== 0) return;
     this.rafScrollSync = window.requestAnimationFrame(() => {
@@ -509,6 +534,24 @@ export class TimelineVisualization {
       this.updateLabelTrackPosition();
     });
   };
+
+  private markUserNavigated(): void {
+    this.hasUserNavigated = true;
+    this.autoFollowUntilMs = 0;
+    this.expectedScrollLeft = null;
+    this.expectedScrollTop = null;
+    this.suppressUserNavigationDetection = false;
+  }
+
+  private beginProgrammaticAlignment(): void {
+    this.suppressUserNavigationDetection = true;
+    this.expectedScrollLeft = null;
+    this.expectedScrollTop = null;
+  }
+
+  private endProgrammaticAlignment(): void {
+    this.suppressUserNavigationDetection = false;
+  }
 
   private updateLabelTrackPosition(): void {
     if (this.groupBy !== 'project') return;
@@ -518,6 +561,7 @@ export class TimelineVisualization {
 
   private handleWheel = (event: WheelEvent): void => {
     if (!(event.ctrlKey || event.metaKey)) return;
+    this.markUserNavigated();
     event.preventDefault();
 
     const factor = Math.exp(event.deltaY * 0.0015);
@@ -531,6 +575,20 @@ export class TimelineVisualization {
 
   private handleKeyDown = (event: KeyboardEvent): void => {
     if (this.isEditableTarget(event.target)) return;
+
+    if ([
+      'ArrowLeft',
+      'ArrowRight',
+      'ArrowUp',
+      'ArrowDown',
+      'PageUp',
+      'PageDown',
+      'Home',
+      'End',
+      ' ',
+    ].includes(event.key)) {
+      this.markUserNavigated();
+    }
 
     const viewportCenterCoord = this.groupBy === 'project'
       ? this.scrollArea.clientWidth / 2
@@ -602,6 +660,7 @@ export class TimelineVisualization {
     if (this.sessions.length === 0) return;
     const nextZoom = this.clampZoom(msPerPixel);
     if (Math.abs(nextZoom - this.zoomMsPerPixel) < 0.0001) return;
+    this.markUserNavigated();
 
     if (this.groupBy === 'project') {
       const layout = this.computeLayout(this.zoomMsPerPixel);
@@ -635,13 +694,12 @@ export class TimelineVisualization {
   private computeLayout(msPerPixel: number): TimelineLayout {
     const timeRange = this.getTimeRange();
     const totalDuration = Math.max(1, timeRange.end.getTime() - timeRange.start.getTime());
-    const latestSessionTime = Math.max(...this.sessions.map((session) => session.timestamp.getTime()));
 
     const viewportWidth = this.scrollArea.clientWidth || this.minChartWidth;
     const timelineWidth = Math.max(this.minChartWidth, Math.ceil(totalDuration / msPerPixel));
     const timelineStartX = this.labelWidth + this.labelPadding;
     const pxPerMs = timelineWidth / totalDuration;
-    const latestX = timelineStartX + ((latestSessionTime - timeRange.start.getTime()) * pxPerMs);
+    const latestX = timelineStartX + timelineWidth;
     const chartWidth = Math.max(
       viewportWidth + this.rightPadding,
       Math.ceil(latestX + this.rightPadding),
@@ -697,6 +755,11 @@ export class TimelineVisualization {
 
   private normalizePath(value: string): string {
     return value.replace(/\\/g, '/').replace(/\/+$/, '').toLowerCase();
+  }
+
+  private toTimestampMs(date: Date): number {
+    const time = date.getTime();
+    return Number.isFinite(time) ? time : 0;
   }
 
   private inferSourceFromPath(pathValue: string): string | null {
@@ -783,77 +846,140 @@ export class TimelineVisualization {
   private async loadData(): Promise<void> {
     if (this.isLoading || this.disposed) return;
     this.isLoading = true;
+    this.autoFollowUntilMs = Date.now() + this.autoFollowGraceMs;
     this.showLoading();
 
+    let progressiveCommitTimer: number | null = null;
+
     try {
-      await this.loadSourceInfos();
-      const projects = await this.client.getProjects();
+      const [projects] = await Promise.all([
+        this.client.getProjects(),
+        this.loadSourceInfos(),
+      ]);
       const allSessions: TimelineSession[] = [];
       const discoveredSources = new Set<string>();
+      let hasPendingCommit = false;
+      let hasCommittedInitialBatch = false;
 
       // Reset current state before progressive repopulation.
       this.allSessions = [];
       this.sessions = [];
       this.rows = [];
       this.hasInitialAlignment = false;
+      this.hasUserNavigated = false;
+      this.expectedScrollLeft = null;
+      this.expectedScrollTop = null;
       this.pendingZoomAnchor = null;
 
-      for (const project of projects) {
+      const commitProgressiveState = (): void => {
         if (this.disposed) return;
-        if (!project.id) continue;
+        this.allSessions = allSessions;
+        this.options.onSourcesDiscovered?.(Array.from(discoveredSources));
+        this.applyFilters({ preserveAlignment: true });
+      };
 
-        try {
-          const sessions = await this.client.getSessions(project.id);
-          let didAddSessions = false;
-          for (const session of sessions) {
-            if (!session.modifiedAt) continue;
-            const source = this.resolveSource(session, {
-              path: project.path ?? null,
-              source: project.source ?? null,
-              sourceBasePath: project.sourceBasePath ?? null,
-            });
-            if (source.length > 0) {
-              discoveredSources.add(source.trim().toLowerCase());
-            }
-            allSessions.push({
-              session,
-              projectId: project.id,
-              projectName: project.name || 'Unknown',
-              projectPath: project.path ?? null,
-              source,
-              timestamp: session.modifiedAt instanceof Date
-                ? session.modifiedAt
-                : new Date(session.modifiedAt),
-            });
-            didAddSessions = true;
-          }
-
-          if (didAddSessions) {
-            this.allSessions = [...allSessions];
-            this.options.onSourcesDiscovered?.(Array.from(discoveredSources));
-            this.applyFilters({ preserveAlignment: true });
-          }
-        } catch {
-          // Skip failed project session fetches.
+      const scheduleProgressiveCommit = (): void => {
+        if (this.disposed) return;
+        if (!hasCommittedInitialBatch) {
+          hasCommittedInitialBatch = true;
+          commitProgressiveState();
+          return;
         }
-      }
+        if (hasPendingCommit) return;
+        hasPendingCommit = true;
+        progressiveCommitTimer = window.setTimeout(() => {
+          hasPendingCommit = false;
+          progressiveCommitTimer = null;
+          commitProgressiveState();
+        }, this.progressiveCommitDelayMs);
+      };
 
-      allSessions.sort((a, b) => a.timestamp.getTime() - b.timestamp.getTime());
+      const flushProgressiveCommit = (): void => {
+        if (progressiveCommitTimer !== null) {
+          window.clearTimeout(progressiveCommitTimer);
+          progressiveCommitTimer = null;
+        }
+        hasPendingCommit = false;
+        commitProgressiveState();
+      };
+
+      const validProjects = projects.filter((project) => Boolean(project.id));
+      let projectIndex = 0;
+      const workerCount = Math.max(
+        1,
+        Math.min(this.maxConcurrentSessionFetches, validProjects.length),
+      );
+
+      const loadProjectSessions = async (): Promise<void> => {
+        while (!this.disposed) {
+          const project = validProjects[projectIndex];
+          projectIndex += 1;
+          if (!project || !project.id) {
+            return;
+          }
+
+          try {
+            const sessions = await this.client.getSessions(project.id, project.source ?? undefined);
+            let didAddSessions = false;
+            for (const session of sessions) {
+              if (!session.modifiedAt) continue;
+              const source = this.resolveSource(session, {
+                path: project.path ?? null,
+                source: project.source ?? null,
+                sourceBasePath: project.sourceBasePath ?? null,
+              });
+              if (source.length > 0) {
+                discoveredSources.add(source.trim().toLowerCase());
+              }
+              allSessions.push({
+                session,
+                projectId: project.id,
+                projectName: project.name || 'Unknown',
+                projectPath: project.path ?? null,
+                source,
+                timestamp: session.modifiedAt instanceof Date
+                  ? session.modifiedAt
+                  : new Date(session.modifiedAt),
+              });
+              const timestamp = allSessions[allSessions.length - 1].timestamp;
+              if (!Number.isFinite(timestamp.getTime())) {
+                allSessions.pop();
+                continue;
+              }
+              didAddSessions = true;
+            }
+
+            if (didAddSessions) {
+              scheduleProgressiveCommit();
+            }
+          } catch {
+            // Skip failed project session fetches.
+          }
+        }
+      };
+
+      await Promise.all(Array.from({ length: workerCount }, () => loadProjectSessions()));
+
+      allSessions.sort((a, b) => this.toTimestampMs(a.timestamp) - this.toTimestampMs(b.timestamp));
       if (this.disposed) return;
+      flushProgressiveCommit();
       this.allSessions = allSessions;
       this.options.onSourcesDiscovered?.(Array.from(discoveredSources));
-      this.applyFilters({ preserveAlignment: true });
+      this.applyFilters({ preserveAlignment: true, force: true });
     } catch (error) {
       const err = error instanceof Error ? error : new Error(String(error));
       this.showError(err);
       this.options.onError?.(err);
     } finally {
+      if (progressiveCommitTimer !== null) {
+        window.clearTimeout(progressiveCommitTimer);
+      }
       this.isLoading = false;
     }
   }
 
-  private applyFilters(options?: { preserveAlignment?: boolean }): void {
-    if (this.isLoading && this.allSessions.length === 0) {
+  private applyFilters(options?: { preserveAlignment?: boolean; force?: boolean }): void {
+    if (!options?.force && this.isLoading && this.allSessions.length === 0) {
       return;
     }
 
@@ -881,12 +1007,29 @@ export class TimelineVisualization {
     this.render();
   }
 
+  private shouldAutoFollow(): boolean {
+    if (this.hasUserNavigated) return false;
+    if (this.isLoading) return true;
+    return Date.now() <= this.autoFollowUntilMs;
+  }
+
+  private setProgrammaticScrollPosition(axis: 'x' | 'y', value: number): void {
+    if (axis === 'x') {
+      this.scrollArea.scrollLeft = Math.max(0, value);
+      this.expectedScrollLeft = this.scrollArea.scrollLeft;
+    } else {
+      this.scrollArea.scrollTop = Math.max(0, value);
+      this.expectedScrollTop = this.scrollArea.scrollTop;
+    }
+  }
+
   private processRows(): void {
     const grouped = new Map<
       string,
       {
         projectId: string | null;
         projectPath: string | null;
+        projectSource: string | null;
         label: string;
         sessions: TimelineSession[];
       }
@@ -900,6 +1043,7 @@ export class TimelineVisualization {
         grouped.set(key, {
           projectId: this.groupBy === 'project' ? session.projectId : null,
           projectPath: this.groupBy === 'project' ? session.projectPath : null,
+          projectSource: this.groupBy === 'project' ? session.source : null,
           label: this.groupBy === 'project' ? session.projectName : session.source,
           sessions: [],
         });
@@ -910,17 +1054,25 @@ export class TimelineVisualization {
     this.rows = Array.from(grouped.values()).map((group) => ({
       projectId: group.projectId,
       projectPath: group.projectPath,
+      projectSource: group.projectSource,
       label: group.label,
-      sessions: group.sessions.sort((a, b) => a.timestamp.getTime() - b.timestamp.getTime()),
+      sessions: group.sessions.sort((a, b) => this.toTimestampMs(a.timestamp) - this.toTimestampMs(b.timestamp)),
       color: this.groupBy === 'source'
         ? this.getSourceColor(group.label)
         : this.getDefaultColor(group.label),
     }));
 
     this.rows.sort((a, b) => {
-      const aLast = a.sessions[a.sessions.length - 1]?.timestamp.getTime() || 0;
-      const bLast = b.sessions[b.sessions.length - 1]?.timestamp.getTime() || 0;
-      return bLast - aLast;
+      const aLast = a.sessions[a.sessions.length - 1]
+        ? this.toTimestampMs(a.sessions[a.sessions.length - 1].timestamp)
+        : 0;
+      const bLast = b.sessions[b.sessions.length - 1]
+        ? this.toTimestampMs(b.sessions[b.sessions.length - 1].timestamp)
+        : 0;
+      if (bLast !== aLast) {
+        return bLast - aLast;
+      }
+      return a.label.localeCompare(b.label);
     });
   }
 
@@ -962,6 +1114,13 @@ export class TimelineVisualization {
 
   private renderHorizontalProjectTimeline(): void {
     const layout = this.computeLayout(this.zoomMsPerPixel);
+    const shouldAlignToAnchor = this.pendingZoomAnchor?.axis === 'x';
+    const shouldAlignToEdge = !this.hasInitialAlignment || this.shouldAutoFollow();
+    const shouldApplyProgrammaticAlignment = shouldAlignToAnchor || shouldAlignToEdge;
+
+    if (shouldApplyProgrammaticAlignment) {
+      this.beginProgrammaticAlignment();
+    }
 
     const timeScale = (time: Date): number => {
       const elapsed = time.getTime() - layout.timeRange.start.getTime();
@@ -1062,23 +1221,37 @@ export class TimelineVisualization {
 
     window.requestAnimationFrame(() => {
       if (this.disposed) return;
-      if (this.pendingZoomAnchor?.axis === 'x') {
-        const anchorX = layout.timelineStartX
-          + (this.pendingZoomAnchor.timeMs - layout.timeRange.start.getTime()) * layout.pxPerMs;
-        this.scrollArea.scrollLeft = Math.max(0, anchorX - this.pendingZoomAnchor.viewportCoord);
-        this.pendingZoomAnchor = null;
-        this.hasInitialAlignment = true;
-      } else if (!this.hasInitialAlignment) {
-        this.scrollArea.scrollLeft = Math.max(0, this.scrollArea.scrollWidth - this.scrollArea.clientWidth);
-        this.hasInitialAlignment = true;
-      } else if (this.pendingZoomAnchor) {
-        this.pendingZoomAnchor = null;
+      try {
+        if (this.pendingZoomAnchor?.axis === 'x') {
+          const anchorX = layout.timelineStartX
+            + (this.pendingZoomAnchor.timeMs - layout.timeRange.start.getTime()) * layout.pxPerMs;
+          this.setProgrammaticScrollPosition('x', anchorX - this.pendingZoomAnchor.viewportCoord);
+          this.pendingZoomAnchor = null;
+          this.hasInitialAlignment = true;
+        } else if (!this.hasInitialAlignment || this.shouldAutoFollow()) {
+          this.setProgrammaticScrollPosition('x', this.scrollArea.scrollWidth - this.scrollArea.clientWidth);
+          this.setProgrammaticScrollPosition('y', 0);
+          this.hasInitialAlignment = true;
+        } else if (this.pendingZoomAnchor) {
+          this.pendingZoomAnchor = null;
+        }
+      } finally {
+        if (shouldApplyProgrammaticAlignment) {
+          this.endProgrammaticAlignment();
+        }
       }
     });
   }
 
   private renderVerticalSourceTimeline(): void {
     const layout = this.computeVerticalLayout(this.zoomMsPerPixel);
+    const shouldAlignToAnchor = this.pendingZoomAnchor?.axis === 'y';
+    const shouldAlignToEdge = !this.hasInitialAlignment || this.shouldAutoFollow();
+    const shouldApplyProgrammaticAlignment = shouldAlignToAnchor || shouldAlignToEdge;
+
+    if (shouldApplyProgrammaticAlignment) {
+      this.beginProgrammaticAlignment();
+    }
 
     const timeScaleY = (time: Date): number => {
       const elapsed = layout.timeRange.end.getTime() - time.getTime();
@@ -1222,17 +1395,24 @@ export class TimelineVisualization {
 
     window.requestAnimationFrame(() => {
       if (this.disposed) return;
-      if (this.pendingZoomAnchor?.axis === 'y') {
-        const anchorY = layout.timelineStartY
-          + (layout.timeRange.end.getTime() - this.pendingZoomAnchor.timeMs) * layout.pxPerMs;
-        this.scrollArea.scrollTop = Math.max(0, anchorY - this.pendingZoomAnchor.viewportCoord);
-        this.pendingZoomAnchor = null;
-        this.hasInitialAlignment = true;
-      } else if (!this.hasInitialAlignment) {
-        this.scrollArea.scrollTop = 0;
-        this.hasInitialAlignment = true;
-      } else if (this.pendingZoomAnchor) {
-        this.pendingZoomAnchor = null;
+      try {
+        if (this.pendingZoomAnchor?.axis === 'y') {
+          const anchorY = layout.timelineStartY
+            + (layout.timeRange.end.getTime() - this.pendingZoomAnchor.timeMs) * layout.pxPerMs;
+          this.setProgrammaticScrollPosition('y', anchorY - this.pendingZoomAnchor.viewportCoord);
+          this.pendingZoomAnchor = null;
+          this.hasInitialAlignment = true;
+        } else if (!this.hasInitialAlignment || this.shouldAutoFollow()) {
+          this.setProgrammaticScrollPosition('x', 0);
+          this.setProgrammaticScrollPosition('y', 0);
+          this.hasInitialAlignment = true;
+        } else if (this.pendingZoomAnchor) {
+          this.pendingZoomAnchor = null;
+        }
+      } finally {
+        if (shouldApplyProgrammaticAlignment) {
+          this.endProgrammaticAlignment();
+        }
       }
     });
   }
@@ -1252,6 +1432,7 @@ export class TimelineVisualization {
             projectId: row.projectId!,
             projectName: row.label,
             projectPath: row.projectPath,
+            projectSource: row.projectSource ?? undefined,
           });
         });
       }
@@ -1263,10 +1444,11 @@ export class TimelineVisualization {
     const times = this.sessions.map((session) => session.timestamp.getTime());
     const min = Math.min(...times);
     const max = Math.max(...times);
-    const leftPadding = (max - min) * 0.02 || 60_000;
+    const endTime = this.groupBy === 'project' ? Math.max(max, Date.now()) : max;
+    const leftPadding = (endTime - min) * 0.02 || 60_000;
     return {
       start: new Date(min - leftPadding),
-      end: new Date(max),
+      end: new Date(endTime),
     };
   }
 
@@ -1344,6 +1526,9 @@ export class TimelineVisualization {
     this.groupBy = groupBy;
     this.processRows();
     this.hasInitialAlignment = false;
+    this.hasUserNavigated = false;
+    this.expectedScrollLeft = null;
+    this.expectedScrollTop = null;
     this.pendingZoomAnchor = null;
     this.render();
   }
