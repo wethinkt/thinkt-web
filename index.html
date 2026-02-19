@@ -89,6 +89,33 @@
       gap: 8px;
     }
 
+    #global-search-button {
+      width: 24px;
+      height: 24px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      background: rgba(10, 10, 10, 0.8);
+      border: 1px solid #333;
+      border-radius: 4px;
+      color: #e0e0e0;
+      cursor: pointer;
+      backdrop-filter: blur(4px);
+      font-size: 12px;
+      line-height: 1;
+    }
+
+    #global-search-button:hover {
+      border-color: #444;
+      color: #f0f0f0;
+    }
+
+    #global-search-button:focus {
+      outline: none;
+      border-color: #6366f1;
+      box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.2);
+    }
+
     #lang-select {
       background: rgba(10, 10, 10, 0.8);
       border: 1px solid #333;
@@ -165,6 +192,14 @@
       <span class="brand-name">thinkt</span>
     </a>
     <div id="top-bar-right">
+      <button
+        id="global-search-button"
+        type="button"
+        title="Open search dialog (Cmd/Ctrl+K)"
+        aria-label="Open search dialog (Cmd/Ctrl+K)"
+      >
+        🔍
+      </button>
       <div id="lang-select-container"></div>
       <div id="global-status">
         <span class="status-dot"></span>
