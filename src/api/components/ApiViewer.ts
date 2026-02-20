@@ -85,7 +85,6 @@ const DEFAULT_STYLES = `
   max-width: 500px;
   border-right: 1px solid var(--thinkt-border-color, #2a2a2a);
   background: var(--thinkt-sidebar-bg, #141414);
-  padding-top: 40px; /* Space for fixed header (brand/status) */
 }
 
 .thinkt-project-browser,
@@ -224,7 +223,7 @@ const DEFAULT_STYLES = `
 
 .thinkt-project-filter {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(82px, 92px) minmax(94px, 110px);
+  grid-template-columns: minmax(0, 1fr) minmax(82px, 92px) minmax(94px, 110px) auto;
   gap: 6px;
   align-items: center;
   padding: 6px 8px;
@@ -259,6 +258,20 @@ const DEFAULT_STYLES = `
 .thinkt-project-filter__sort:focus {
   outline: none;
   border-color: var(--thinkt-accent-color, #6366f1);
+}
+
+.thinkt-project-filter__toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  color: var(--thinkt-text-secondary, #a0a0a0);
+  user-select: none;
+  white-space: nowrap;
+}
+
+.thinkt-project-filter__toggle input {
+  margin: 0;
 }
 
 /* Sidebar toggle button (narrow viewports, inside #top-bar) */
@@ -345,10 +358,13 @@ export class ApiViewer {
   private projectSearchInput: HTMLInputElement | null = null;
   private projectSourceFilter: HTMLSelectElement | null = null;
   private projectSortFilter: HTMLSelectElement | null = null;
+  private projectIncludeDeletedToggle: HTMLInputElement | null = null;
+  private projectIncludeDeletedLabel: HTMLSpanElement | null = null;
   private projectPaneHeightPx: number | null = null;
   private projectSearchQuery = '';
   private projectSource = '';
   private projectSort: ProjectSortMode = 'date_desc';
+  private projectIncludeDeleted = false;
   private discoveredSources: string[] = [];
   private sourceCapabilities: SourceCapability[] = [];
   private resumableSources: Set<string> = new Set();
@@ -398,6 +414,12 @@ export class ApiViewer {
     const sidebar = document.createElement('div');
     sidebar.className = 'thinkt-api-viewer__sidebar';
 
+    // Move #top-bar into sidebar
+    const topBar = document.getElementById('top-bar');
+    if (topBar) {
+      sidebar.appendChild(topBar);
+    }
+
     // View switcher
     const viewSwitcher = this.createViewSwitcher();
     sidebar.appendChild(viewSwitcher);
@@ -432,14 +454,12 @@ export class ApiViewer {
     sidebar.appendChild(sessionsSection);
 
     container.appendChild(sidebar);
-    this.syncTopBarToSidebar(sidebar);
 
     // Sidebar toggle (for narrow viewports, injected into #top-bar)
     const sidebarToggle = document.createElement('button');
     sidebarToggle.className = 'thinkt-sidebar-toggle';
     sidebarToggle.setAttribute('aria-label', 'Toggle sidebar');
     sidebarToggle.textContent = '\u2630'; // hamburger ☰
-    const topBar = document.getElementById('top-bar');
     if (topBar) {
       topBar.insertBefore(sidebarToggle, topBar.firstChild);
     }
@@ -465,7 +485,6 @@ export class ApiViewer {
     });
 
     const handleWindowResize = () => {
-      this.syncTopBarToSidebar(sidebar);
       this.clampProjectPaneHeightToBounds();
     };
     window.addEventListener('resize', handleWindowResize);
@@ -491,7 +510,7 @@ export class ApiViewer {
     // Viewer section - contains conversation and timeline panel
     const viewerSection = document.createElement('div');
     viewerSection.className = 'thinkt-api-viewer__viewer';
-    
+
     // Create timeline panel container if not provided
     if (!this.elements.timelinePanelContainer) {
       this.elements.timelinePanelContainer = document.createElement('div');
@@ -500,20 +519,20 @@ export class ApiViewer {
       this.elements.timelinePanelContainer.style.height = '200px';
       this.elements.timelinePanelContainer.style.flexShrink = '0';
     }
-    
+
     // Conversation container (flex: 1 to take remaining space)
     const conversationContainer = document.createElement('div');
     conversationContainer.className = 'thinkt-api-viewer__conversation';
     conversationContainer.style.flex = '1';
     conversationContainer.style.overflow = 'hidden';
     conversationContainer.appendChild(this.elements.viewerContainer);
-    
+
     // Assemble viewer section with flex column layout
     viewerSection.style.display = 'flex';
     viewerSection.style.flexDirection = 'column';
     viewerSection.appendChild(conversationContainer);
     viewerSection.appendChild(this.elements.timelinePanelContainer);
-    
+
     container.appendChild(viewerSection);
   }
 
@@ -630,7 +649,7 @@ export class ApiViewer {
   private createViewSwitcher(): HTMLElement {
     const switcher = document.createElement('div');
     switcher.className = 'thinkt-view-switcher';
-    
+
     const views: { id: ProjectViewMode; label: string; icon: string }[] = [
       { id: 'list', label: i18n._('List'), icon: '☰' },
       { id: 'tree', label: i18n._('Tree'), icon: '🌳' },
@@ -670,6 +689,20 @@ export class ApiViewer {
     this.projectSortFilter = sortFilter;
     this.renderSortFilterOptions();
 
+    const includeDeletedToggle = document.createElement('input');
+    includeDeletedToggle.type = 'checkbox';
+    includeDeletedToggle.checked = this.projectIncludeDeleted;
+    this.projectIncludeDeletedToggle = includeDeletedToggle;
+
+    const includeDeletedLabelText = document.createElement('span');
+    includeDeletedLabelText.textContent = i18n._('Include Deleted');
+    this.projectIncludeDeletedLabel = includeDeletedLabelText;
+
+    const includeDeletedLabel = document.createElement('label');
+    includeDeletedLabel.className = 'thinkt-project-filter__toggle';
+    includeDeletedLabel.appendChild(includeDeletedToggle);
+    includeDeletedLabel.appendChild(includeDeletedLabelText);
+
     const handleSearchInput = () => {
       this.projectSearchQuery = searchInput.value;
       this.applyProjectFilters();
@@ -691,9 +724,17 @@ export class ApiViewer {
     sortFilter.addEventListener('change', handleSortChange);
     this.boundHandlers.push(() => sortFilter.removeEventListener('change', handleSortChange));
 
+    const handleIncludeDeletedChange = () => {
+      this.projectIncludeDeleted = includeDeletedToggle.checked;
+      this.applyProjectFilters();
+    };
+    includeDeletedToggle.addEventListener('change', handleIncludeDeletedChange);
+    this.boundHandlers.push(() => includeDeletedToggle.removeEventListener('change', handleIncludeDeletedChange));
+
     container.appendChild(searchInput);
     container.appendChild(sourceFilter);
     container.appendChild(sortFilter);
+    container.appendChild(includeDeletedLabel);
     return container;
   }
 
@@ -839,7 +880,9 @@ export class ApiViewer {
 
   private async discoverSourcesFromProjects(): Promise<void> {
     try {
-      const projects = await this.client.getProjects();
+      const projects = await this.client.getProjects(undefined, {
+        includeDeleted: this.projectIncludeDeleted,
+      });
       const discovered = projects
         .map((project) => (typeof project.source === 'string' ? project.source.trim() : ''))
         .filter((source) => source.length > 0);
@@ -853,42 +896,33 @@ export class ApiViewer {
     const query = this.projectSearchInput?.value ?? this.projectSearchQuery;
     const source = this.projectSourceFilter?.value || this.projectSource;
     const sort = this.projectSortFilter?.value || this.projectSort;
+    const includeDeleted = this.projectIncludeDeletedToggle?.checked ?? this.projectIncludeDeleted;
     const normalizedSort = this.normalizeProjectSort(sort);
     this.projectSearchQuery = query;
     this.projectSource = source;
     this.projectSort = normalizedSort;
+    this.projectIncludeDeleted = includeDeleted;
     const normalizedSource = source || null;
 
     switch (this.currentProjectView) {
       case 'list':
+        this.projectBrowser?.setIncludeDeleted(includeDeleted);
         this.projectBrowser?.setSearch(query);
         this.projectBrowser?.setSourceFilter(normalizedSource);
         this.projectBrowser?.setSort(normalizedSort);
         break;
       case 'tree':
+        this.treeProjectBrowser?.setIncludeDeleted(includeDeleted);
         this.treeProjectBrowser?.setSearch(query);
         this.treeProjectBrowser?.setSourceFilter(normalizedSource);
         this.treeProjectBrowser?.setSort(normalizedSort as TreeProjectSortMode);
         break;
       case 'timeline':
+        this.timelineVisualization?.setIncludeDeleted(includeDeleted);
         this.timelineVisualization?.setSearch(query);
         this.timelineVisualization?.setSourceFilter(normalizedSource);
         break;
     }
-  }
-
-  private syncTopBarToSidebar(sidebar: HTMLElement): void {
-    const topBar = document.getElementById('top-bar');
-    if (!topBar) return;
-
-    const inset = 12;
-    const sidebarWidth = Math.round(sidebar.getBoundingClientRect().width);
-    if (sidebarWidth <= 0) return;
-
-    const width = Math.max(220, sidebarWidth - (inset * 2));
-    topBar.style.left = `${inset}px`;
-    topBar.style.right = 'auto';
-    topBar.style.width = `${width}px`;
   }
 
   private setupResizer(): void {
@@ -897,7 +931,6 @@ export class ApiViewer {
 
     const sidebar = container.querySelector('.thinkt-api-viewer__sidebar') as HTMLElement;
     if (!sidebar) return;
-    this.syncTopBarToSidebar(sidebar);
 
     let isResizing = false;
 
@@ -912,7 +945,6 @@ export class ApiViewer {
       const newWidth = e.clientX;
       if (newWidth >= 250 && newWidth <= 600) {
         sidebar.style.width = `${newWidth}px`;
-        this.syncTopBarToSidebar(sidebar);
       }
     };
 
@@ -938,7 +970,7 @@ export class ApiViewer {
 
   private switchProjectView(mode: ProjectViewMode): void {
     if (this.currentProjectView === mode) return;
-    
+
     this.currentProjectView = mode;
 
     // Update button states
@@ -950,7 +982,7 @@ export class ApiViewer {
 
     // Clear current view
     this.elements.projectBrowserContainer.innerHTML = '';
-    
+
     // Dispose old views
     this.projectBrowser?.dispose();
     this.projectBrowser = null;
@@ -975,13 +1007,13 @@ export class ApiViewer {
           }
         }
         break;
-      
+
       case 'tree':
         // Tree view: projects take full height (sessions are in the tree)
         this.hideProjectTimelinePanel();
         void this.initTreeView();
         break;
-      
+
       case 'timeline':
         // Timeline view: full height, no separate sessions list
         this.hideProjectTimelinePanel();
@@ -998,6 +1030,7 @@ export class ApiViewer {
       client: this.client,
       enableSearch: false,
       enableSourceFilter: false,
+      initialIncludeDeleted: this.projectIncludeDeleted,
       onProjectSelect: (project) => { this.handleProjectSelect(project); },
       onError: (error) => { this.handleError(error); },
     });
@@ -1010,7 +1043,8 @@ export class ApiViewer {
         container: this.elements.projectBrowserContainer,
       },
       client: this.client,
-      onSessionSelect: (session, project) => { 
+      initialIncludeDeleted: this.projectIncludeDeleted,
+      onSessionSelect: (session, project) => {
         void this.handleTreeSessionSelect(session, project);
       },
       onError: (error) => { this.handleError(error); },
@@ -1024,10 +1058,11 @@ export class ApiViewer {
         container: this.elements.projectBrowserContainer,
       },
       client: this.client,
+      includeDeletedProjects: this.projectIncludeDeleted,
       onProjectSelect: (project) => {
         this.handleTimelineProjectSelect(project);
       },
-      onSessionSelect: (session) => { 
+      onSessionSelect: (session) => {
         void this.handleTimelineSessionSelect(session);
       },
       onSourcesDiscovered: (sources) => {
@@ -1045,7 +1080,7 @@ export class ApiViewer {
   private async initializeComponentsAsync(): Promise<void> {
     // Check connection first
     await this.checkConnection();
-    
+
     // Initialize current project view
     switch (this.currentProjectView) {
       case 'list':
@@ -1188,6 +1223,9 @@ export class ApiViewer {
     if (this.projectSearchInput) {
       this.projectSearchInput.placeholder = i18n._('Filter projects...');
     }
+    if (this.projectIncludeDeletedLabel) {
+      this.projectIncludeDeletedLabel.textContent = i18n._('Include Deleted');
+    }
     this.renderSourceFilterOptions();
     this.renderSortFilterOptions();
 
@@ -1235,7 +1273,7 @@ export class ApiViewer {
     }
     // Update project path in conversation view toolbar
     this.conversationView?.setProjectPath(project.path ?? project.name ?? null, 0);
-    
+
     // Show timeline panel for this project
     if (this.currentProjectView === 'list' && project.id) {
       this.showProjectTimelinePanel(project.id, project.source);
@@ -1265,7 +1303,7 @@ export class ApiViewer {
   private async handleTimelineSessionSelect(session: SessionMeta): Promise<void> {
     // Update project path from session metadata
     this.conversationView?.setProjectPath(session.projectPath ?? null, 0);
-    
+
     // Load the session
     if (session.fullPath) {
       await this.loadSession(session.fullPath);
@@ -1392,8 +1430,16 @@ export class ApiViewer {
    * Load a specific session by path
    */
   async loadSession(sessionPath: string): Promise<void> {
-    const session = await this.client.getSession(sessionPath);
-    await this.handleSessionSelect(session.meta);
+    const metadata = await this.client.getSessionMetadata(sessionPath, {
+      summaryOnly: true,
+      limit: 1,
+    });
+    const meta = metadata.meta;
+    await this.handleSessionSelect({
+      ...meta,
+      fullPath: meta.fullPath ?? sessionPath,
+      entryCount: metadata.totalEntries || meta.entryCount,
+    });
   }
 
   /**
@@ -1548,6 +1594,8 @@ export class ApiViewer {
     this.projectSearchInput = null;
     this.projectSourceFilter = null;
     this.projectSortFilter = null;
+    this.projectIncludeDeletedToggle = null;
+    this.projectIncludeDeletedLabel = null;
     this.sidebarProjectsSection = null;
     this.sidebarSessionsSection = null;
     this.sidebarSectionSplitter = null;

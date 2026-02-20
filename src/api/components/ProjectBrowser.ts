@@ -40,6 +40,8 @@ export interface ProjectBrowserOptions {
   projectRenderer?: (project: Project, index: number) => HTMLElement;
   /** Initial source filter */
   initialSource?: string;
+  /** Include projects whose paths no longer exist */
+  initialIncludeDeleted?: boolean;
   /** Initial project sort mode */
   initialSort?: ProjectSortMode;
   /** Enable search filtering */
@@ -263,6 +265,7 @@ export class ProjectBrowser {
   private discoveredSources: string[] = [];
   private searchQuery = '';
   private currentSourceFilter: string | null = null;
+  private includeDeletedProjects = false;
   private sortMode: ProjectSortMode = 'date_desc';
   private selectedIndex = -1;
   private isLoading = false;
@@ -281,6 +284,7 @@ export class ProjectBrowser {
       classPrefix: options.classPrefix ?? 'thinkt-project-browser',
     };
     this.currentSourceFilter = options.initialSource ?? null;
+    this.includeDeletedProjects = options.initialIncludeDeleted ?? false;
     this.sortMode = options.initialSort ?? 'date_desc';
 
     // Get client (either provided or default)
@@ -473,7 +477,9 @@ export class ProjectBrowser {
     this.showError(null);
 
     try {
-      this.projects = await this.client.getProjects(activeSource);
+      this.projects = await this.client.getProjects(activeSource, {
+        includeDeleted: this.includeDeletedProjects,
+      });
       const seen = new Set(this.discoveredSources);
       this.projects.forEach((project) => {
         if (typeof project.source === 'string' && project.source.trim().length > 0) {
@@ -814,6 +820,17 @@ export class ProjectBrowser {
       this.elements.sourceFilter.value = normalized ?? '';
     }
     void this.loadProjects(normalized ?? undefined);
+  }
+
+  /**
+   * Include or exclude projects whose paths no longer exist.
+   */
+  setIncludeDeleted(includeDeleted: boolean): void {
+    if (this.includeDeletedProjects === includeDeleted) {
+      return;
+    }
+    this.includeDeletedProjects = includeDeleted;
+    void this.loadProjects(this.currentSourceFilter ?? undefined);
   }
 
   /**

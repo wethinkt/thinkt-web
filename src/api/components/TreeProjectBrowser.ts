@@ -43,6 +43,8 @@ export interface TreeProjectBrowserOptions {
   initialViewMode?: TreeViewMode;
   /** Initial project sort mode (default: 'date_desc') */
   initialSort?: TreeProjectSortMode;
+  /** Include projects whose paths no longer exist */
+  initialIncludeDeleted?: boolean;
 }
 
 /** A group of projects that share the same underlying project path */
@@ -391,6 +393,7 @@ export class TreeProjectBrowser {
   private boundHandlers: Array<() => void> = [];
   private viewMode: TreeViewMode = 'hierarchical';
   private sortMode: TreeProjectSortMode = 'date_desc';
+  private includeDeletedProjects = false;
 
   constructor(options: TreeProjectBrowserOptions) {
     this.options = options;
@@ -400,6 +403,7 @@ export class TreeProjectBrowser {
     this.headerContainer = document.createElement('div');
     this.viewMode = options.initialViewMode ?? 'hierarchical';
     this.sortMode = options.initialSort ?? 'date_desc';
+    this.includeDeletedProjects = options.initialIncludeDeleted ?? false;
     this.init();
   }
 
@@ -470,7 +474,9 @@ export class TreeProjectBrowser {
 
     try {
       // Load all projects from all sources
-      const projects = await this.client.getProjects();
+      const projects = await this.client.getProjects(undefined, {
+        includeDeleted: this.includeDeletedProjects,
+      });
 
       // Group projects by their underlying path
       this.projectGroups = this.groupProjectsByPath(projects);
@@ -988,6 +994,12 @@ export class TreeProjectBrowser {
     this.sortMode = sort;
     if (this.isLoading) return;
     this.render();
+  }
+
+  setIncludeDeleted(includeDeleted: boolean): void {
+    if (this.includeDeletedProjects === includeDeleted) return;
+    this.includeDeletedProjects = includeDeleted;
+    void this.loadData();
   }
 
   private hasActiveFilters(): boolean {

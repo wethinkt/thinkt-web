@@ -10,43 +10,46 @@
 
 :root {
   /* Colors */
-  --bg-primary: #0a0a0a;
-  --bg-secondary: #141414;
-  --bg-tertiary: #1a1a1a;
-  --bg-hover: #252525;
-  --bg-selected: rgba(99, 102, 241, 0.15);
+  --bg-primary: #09090b;
+  --bg-secondary: #0f1115;
+  --bg-tertiary: #181a1f;
+  --bg-hover: rgba(255, 255, 255, 0.04);
+  --bg-selected: rgba(139, 92, 246, 0.15);
 
-  --text-primary: #f0f0f0;
-  --text-secondary: #a0a0a0;
-  --text-muted: #666666;
+  --text-primary: #f8fafc;
+  --text-secondary: #94a3b8;
+  --text-muted: #64748b;
 
-  --border-color: #2a2a2a;
-  --border-color-light: #333333;
+  --border-color: rgba(255, 255, 255, 0.08);
+  /* glass */
+  --border-color-light: rgba(255, 255, 255, 0.12);
 
-  --accent-primary: #6366f1;
-  --accent-primary-hover: #818cf8;
-  --accent-secondary: #d97750;
+  --accent-primary: #8b5cf6;
+  --accent-primary-hover: #a78bfa;
+  --accent-secondary: #d946ef;
+  --accent-gradient: linear-gradient(135deg, #6366f1, #8b5cf6);
   --accent-kimi: #19c39b;
   --accent-gemini: #6366f1;
 
-  --status-success: #22c55e;
+  --status-success: #10b981;
   --status-error: #ef4444;
   --status-warning: #f59e0b;
 
   /* Spacing */
-  --spacing-xs: 4px;
-  --spacing-sm: 8px;
-  --spacing-md: 12px;
-  --spacing-lg: 16px;
-  --spacing-xl: 24px;
+  --spacing-xs: 6px;
+  --spacing-sm: 10px;
+  --spacing-md: 16px;
+  --spacing-lg: 20px;
+  --spacing-xl: 32px;
 
   /* Border Radius */
-  --radius-sm: 4px;
-  --radius-md: 6px;
-  --radius-lg: 8px;
+  --radius-sm: 6px;
+  --radius-md: 10px;
+  --radius-lg: 14px;
 
   /* Typography */
-  --font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+  --font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  --font-heading: 'Outfit', var(--font-family);
   --font-mono: 'SF Mono', Monaco, 'Cascadia Code', monospace;
 
   /* Sidebar */
@@ -66,7 +69,8 @@
   box-sizing: border-box;
 }
 
-html, body {
+html,
+body {
   height: 100%;
   width: 100%;
   overflow: hidden;
@@ -150,21 +154,14 @@ body {
    ============================================ */
 
 #top-bar {
-  position: fixed;
-  top: 8px;
-  left: 12px;
-  right: auto;
-  width: min(356px, calc(100vw - 24px));
-  z-index: 1000;
+  flex: 0 0 auto;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 12px;
-  padding: 2px 10px;
-  background: rgba(20, 20, 20, 0.9);
-  border-radius: 4px;
-  border: 1px solid #2f2a2a;
-  backdrop-filter: blur(4px);
+  padding: 12px 16px;
+  background: var(--bg-secondary, #0f1115);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  width: 100%;
 }
 
 #brand-link {
@@ -172,11 +169,14 @@ body {
 }
 
 #brand-link .brand-name {
-  font-size: 13px;
-  font-weight: 600;
-  color: var(--accent-primary);
+  font-size: 14px;
+  font-weight: 700;
+  font-family: var(--font-heading);
+  background: var(--accent-gradient);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
   letter-spacing: 0.5px;
-  font-family: var(--font-mono);
   text-transform: lowercase;
 }
 
@@ -188,31 +188,47 @@ body {
 }
 
 #lang-select {
-  background: transparent;
-  border: 1px solid #333;
-  border-radius: 4px;
-  color: var(--text-secondary);
-  font-size: 11px;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  color: var(--text-primary);
+  font-size: 12px;
   padding: 4px 8px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-family: var(--font-family);
+}
+
+#lang-select:hover {
+  background: rgba(255, 255, 255, 0.08);
+  border-color: var(--border-color-light);
+}
+
+#lang-select:focus {
+  outline: none;
+  border-color: var(--accent-primary);
+  box-shadow: 0 0 0 2px rgba(139, 92, 246, 0.25);
 }
 
 #global-status {
-  font-size: 11px;
+  font-size: 12px;
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: 8px;
   padding: 4px 10px;
-  background: transparent;
-  border-radius: 4px;
-  border: 1px solid #333;
-  color: #888;
+  background: rgba(255, 255, 255, 0.03);
+  border-radius: 8px;
+  border: 1px solid var(--border-color);
+  color: var(--text-secondary);
+  font-family: var(--font-family);
+  transition: all 0.3s ease;
 }
 
 #global-status .status-dot {
   width: 6px;
   height: 6px;
   border-radius: 50%;
-  background: #666;
+  background: var(--text-muted);
 }
 
 #global-status.connected .status-dot {
@@ -225,7 +241,7 @@ body {
 
 #global-status.connected {
   color: var(--status-success);
-  border-color: rgba(34, 197, 94, 0.3);
+  border-color: rgba(16, 185, 129, 0.3);
 }
 
 #global-status.error {
@@ -234,8 +250,15 @@ body {
 }
 
 @keyframes pulse {
-  0%, 100% { opacity: 1; }
-  50% { opacity: 0.5; }
+
+  0%,
+  100% {
+    opacity: 1;
+  }
+
+  50% {
+    opacity: 0.5;
+  }
 }
 
 #global-status.connecting .status-dot {
@@ -247,8 +270,8 @@ body {
    ============================================ */
 
 ::-webkit-scrollbar {
-  width: 8px;
-  height: 8px;
+  width: 6px;
+  height: 6px;
 }
 
 ::-webkit-scrollbar-track {
@@ -256,12 +279,12 @@ body {
 }
 
 ::-webkit-scrollbar-thumb {
-  background: var(--border-color-light);
-  border-radius: var(--radius-md);
+  background: var(--border-color);
+  border-radius: var(--radius-lg);
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: var(--text-muted);
+  background: var(--border-color-light);
 }
 
 /* ============================================
@@ -312,7 +335,9 @@ body {
 }
 
 @keyframes spin {
-  to { transform: rotate(360deg); }
+  to {
+    transform: rotate(360deg);
+  }
 }
 
 /* ============================================
@@ -374,10 +399,103 @@ body {
 }
 
 /* ============================================
+   THINKT Component Mappings & Overrides
+   ============================================ */
+
+:root {
+  --thinkt-font-family: var(--font-family);
+  --thinkt-text-color: var(--text-primary);
+  --thinkt-bg-color: transparent;
+  --thinkt-border-color: var(--border-color);
+  --thinkt-input-bg: rgba(255, 255, 255, 0.03);
+  --thinkt-accent-color: var(--accent-primary);
+  --thinkt-muted-color: var(--text-muted);
+  --thinkt-hover-bg: var(--bg-hover);
+  --thinkt-selected-bg: var(--bg-selected);
+  --thinkt-bg-secondary: rgba(255, 255, 255, 0.02);
+}
+
+/* Component Geometry & Glassmorphism Overrides */
+.thinkt-project-browser,
+.thinkt-session-list,
+.thinkt-conversation-view {
+  background: transparent !important;
+}
+
+.thinkt-project-browser__search,
+.thinkt-project-browser__filter,
+.thinkt-session-list__search,
+.thinkt-session-list__sort {
+  border-radius: var(--radius-md) !important;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1) !important;
+}
+
+.thinkt-project-browser__search:focus,
+.thinkt-project-browser__filter:focus,
+.thinkt-session-list__search:focus,
+.thinkt-session-list__sort:focus {
+  border-color: var(--accent-primary) !important;
+  box-shadow: 0 0 0 2px rgba(139, 92, 246, 0.25) !important;
+  background: rgba(255, 255, 255, 0.06) !important;
+}
+
+.thinkt-project-browser__item,
+.thinkt-session-list__item {
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1) !important;
+  margin: 2px 8px;
+  border-radius: var(--radius-sm) !important;
+  border-bottom: none !important;
+}
+
+.thinkt-project-browser__item:hover,
+.thinkt-session-list__item:hover {
+  transform: translateX(4px);
+  background: var(--bg-hover) !important;
+}
+
+.thinkt-project-browser__icon {
+  border-radius: 8px !important;
+}
+
+.thinkt-session-list__badge {
+  border-radius: 4px !important;
+  padding: 2px 6px !important;
+}
+
+/* Conversation View Overrides */
+.thinkt-conversation-entry {
+  border-radius: 12px !important;
+  border: 1px solid var(--border-color) !important;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  transition: transform 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.thinkt-conversation-entry:hover {
+  transform: translateY(-2px);
+  border-color: var(--border-color-light) !important;
+}
+
+.thinkt-conversation-entry__header {
+  border-bottom: 1px solid var(--border-color) !important;
+  background: rgba(255, 255, 255, 0.02) !important;
+}
+
+.thinkt-conversation-view__filter-btn {
+  border-radius: 8px !important;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1) !important;
+}
+
+.thinkt-conversation-view__filter-btn:hover {
+  background: rgba(255, 255, 255, 0.06) !important;
+  transform: translateY(-1px);
+}
+
+/* ============================================
    Print Styles
    ============================================ */
 
 @media print {
+
   #sidebar,
   #resizer {
     display: none;

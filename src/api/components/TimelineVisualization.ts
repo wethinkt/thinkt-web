@@ -33,6 +33,8 @@ export interface TimelineVisualizationOptions {
   onError?: (error: Error) => void;
   /** Grouping mode: 'project' | 'source' */
   groupBy?: 'project' | 'source';
+  /** Include projects whose paths no longer exist */
+  includeDeletedProjects?: boolean;
 }
 
 export interface TimelineProjectSelection {
@@ -388,6 +390,7 @@ export class TimelineVisualization {
   private sourceInfos: TimelineSourceInfo[] = [];
   private searchQuery = '';
   private sourceFilter: string | null = null;
+  private includeDeletedProjects = false;
   private tooltip: HTMLElement | null = null;
   private isLoading = false;
   private stylesInjected = false;
@@ -428,6 +431,7 @@ export class TimelineVisualization {
     this.options = options;
     this.client = options.client ?? getDefaultClient();
     this.groupBy = options.groupBy ?? 'project';
+    this.includeDeletedProjects = options.includeDeletedProjects ?? false;
     this.container = options.elements.container;
     this.viewport = document.createElement('div');
     this.scrollArea = document.createElement('div');
@@ -853,7 +857,9 @@ export class TimelineVisualization {
 
     try {
       const [projects] = await Promise.all([
-        this.client.getProjects(),
+        this.client.getProjects(undefined, {
+          includeDeleted: this.includeDeletedProjects,
+        }),
         this.loadSourceInfos(),
       ]);
       const allSessions: TimelineSession[] = [];
@@ -1541,6 +1547,12 @@ export class TimelineVisualization {
   setSourceFilter(source: string | null): void {
     this.sourceFilter = source?.trim().toLowerCase() || null;
     this.applyFilters();
+  }
+
+  setIncludeDeleted(includeDeleted: boolean): void {
+    if (this.includeDeletedProjects === includeDeleted) return;
+    this.includeDeletedProjects = includeDeleted;
+    void this.loadData();
   }
 
   refresh(): Promise<void> {
