@@ -1,9 +1,15 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>THINKT - Project Browser</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link
+    href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Outfit:wght@500;600;700&display=swap"
+    rel="stylesheet">
   <style>
     /* Critical CSS - prevent flash of unstyled content */
     * {
@@ -12,16 +18,17 @@
       box-sizing: border-box;
     }
 
-    html, body {
+    html,
+    body {
       height: 100%;
       width: 100%;
       overflow: hidden;
     }
 
     body {
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
-      background: #0a0a0a;
-      color: #e0e0e0;
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+      background: #09090b;
+      color: #f8fafc;
     }
 
     #loading {
@@ -49,25 +56,23 @@
     }
 
     @keyframes spin {
-      to { transform: rotate(360deg); }
+      to {
+        transform: rotate(360deg);
+      }
     }
 
     /* Top bar */
     #top-bar {
-      position: fixed;
-      top: 8px;
-      left: 12px;
-      right: auto;
-      width: min(356px, calc(100vw - 24px));
-      z-index: 1000;
+      /* Replaced absolute/fixed positioning with natural flex layout */
+      flex: 0 0 auto;
       display: flex;
       align-items: center;
       justify-content: space-between;
-      padding: 6px 10px;
-      background: rgba(10, 10, 10, 0.8);
-      border-radius: 4px;
-      border: 1px solid #333;
-      backdrop-filter: blur(4px);
+      padding: 12px 16px;
+      background: var(--bg-secondary, #0f1115);
+      border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+      /* Keeping some shadow for depth, but no blur since it's not floating over content anymore */
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
     }
 
     #brand-link {
@@ -75,11 +80,14 @@
     }
 
     #brand-link .brand-name {
-      font-size: 13px;
-      font-weight: 600;
-      color: #6366f1;
+      font-size: 14px;
+      font-weight: 700;
+      font-family: 'Outfit', sans-serif;
+      background: linear-gradient(135deg, #6366f1, #8b5cf6);
+      -webkit-background-clip: text;
+      background-clip: text;
+      -webkit-text-fill-color: transparent;
       letter-spacing: 0.5px;
-      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace;
       text-transform: lowercase;
     }
 
@@ -90,54 +98,63 @@
     }
 
     #global-search-button {
-      width: 24px;
-      height: 24px;
+      width: 28px;
+      height: 28px;
       display: inline-flex;
       align-items: center;
       justify-content: center;
-      background: rgba(10, 10, 10, 0.8);
-      border: 1px solid #333;
-      border-radius: 4px;
+      background: rgba(255, 255, 255, 0.03);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 8px;
       color: #e0e0e0;
       cursor: pointer;
-      backdrop-filter: blur(4px);
-      font-size: 12px;
+      font-size: 13px;
       line-height: 1;
+      transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
     }
 
     #global-search-button:hover {
-      border-color: #444;
-      color: #f0f0f0;
+      background: rgba(255, 255, 255, 0.08);
+      border-color: rgba(255, 255, 255, 0.15);
+      color: #fff;
+      transform: translateY(-1px);
+    }
+
+    #global-search-button:active {
+      transform: translateY(0) scale(0.96);
     }
 
     #global-search-button:focus {
       outline: none;
-      border-color: #6366f1;
-      box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.2);
+      border-color: #8b5cf6;
+      box-shadow: 0 0 0 2px rgba(139, 92, 246, 0.25);
     }
 
     #lang-select {
-      background: rgba(10, 10, 10, 0.8);
-      border: 1px solid #333;
-      border-radius: 4px;
+      background: rgba(255, 255, 255, 0.03);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 8px;
       color: #e0e0e0;
-      font-size: 11px;
+      font-size: 12px;
       padding: 4px 8px;
       cursor: pointer;
-      backdrop-filter: blur(4px);
+      transition: all 0.2s ease;
+      font-family: 'Inter', sans-serif;
     }
 
     #lang-select:hover {
-      border-color: #444;
+      background: rgba(255, 255, 255, 0.08);
+      border-color: rgba(255, 255, 255, 0.15);
     }
 
     #lang-select:focus {
       outline: none;
-      border-color: #6366f1;
+      border-color: #8b5cf6;
+      box-shadow: 0 0 0 2px rgba(139, 92, 246, 0.25);
     }
 
     #lang-select option {
-      background: #1a1a1a;
+      background: #181a1f;
       color: #e0e0e0;
     }
 
@@ -147,11 +164,12 @@
       align-items: center;
       gap: 6px;
       padding: 4px 10px;
-      background: rgba(10, 10, 10, 0.8);
-      border-radius: 4px;
-      border: 1px solid #333;
-      backdrop-filter: blur(4px);
-      font-size: 11px;
+      background: rgba(255, 255, 255, 0.03);
+      border-radius: 8px;
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      font-size: 12px;
+      font-family: 'Inter', sans-serif;
+      transition: all 0.3s ease;
     }
 
     #global-status .status-dot {
@@ -182,6 +200,7 @@
   <script type="module" crossorigin src="/assets/main.js"></script>
   <link rel="stylesheet" crossorigin href="/assets/styles/main.css">
 </head>
+
 <body>
   <div id="loading">
     <div class="spinner"></div>
@@ -192,12 +211,8 @@
       <span class="brand-name">thinkt</span>
     </a>
     <div id="top-bar-right">
-      <button
-        id="global-search-button"
-        type="button"
-        title="Open search dialog (Cmd/Ctrl+K)"
-        aria-label="Open search dialog (Cmd/Ctrl+K)"
-      >
+      <button id="global-search-button" type="button" title="Open search dialog (Cmd/Ctrl+K)"
+        aria-label="Open search dialog (Cmd/Ctrl+K)">
         🔍
       </button>
       <div id="lang-select-container"></div>
@@ -220,4 +235,5 @@
   </div>
 
 </body>
+
 </html>
