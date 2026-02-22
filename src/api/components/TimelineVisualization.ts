@@ -389,7 +389,7 @@ export class TimelineVisualization {
   private rows: TimelineRow[] = [];
   private sourceInfos: TimelineSourceInfo[] = [];
   private searchQuery = '';
-  private sourceFilter: string | null = null;
+  private sourceFilters: Set<string> | null = null;
   private includeDeletedProjects = false;
   private tooltip: HTMLElement | null = null;
   private isLoading = false;
@@ -990,9 +990,9 @@ export class TimelineVisualization {
     }
 
     const query = this.searchQuery.trim();
-    const sourceFilter = this.sourceFilter;
+    const sourceFilters = this.sourceFilters;
     this.sessions = this.allSessions.filter((session) => {
-      if (sourceFilter && session.source.toLowerCase() !== sourceFilter) {
+      if (sourceFilters && sourceFilters.size > 0 && !sourceFilters.has(session.source.toLowerCase())) {
         return false;
       }
 
@@ -1146,7 +1146,7 @@ export class TimelineVisualization {
     for (let i = 0; i <= labelCount; i++) {
       const t = new Date(
         layout.timeRange.start.getTime()
-          + ((layout.timeRange.end.getTime() - layout.timeRange.start.getTime()) * i) / labelCount,
+        + ((layout.timeRange.end.getTime() - layout.timeRange.start.getTime()) * i) / labelCount,
       );
       const label = document.createElement('span');
       label.className = 'thinkt-timeline-time-label';
@@ -1303,7 +1303,7 @@ export class TimelineVisualization {
     for (let i = 0; i <= labelCount; i++) {
       const t = new Date(
         layout.timeRange.end.getTime()
-          - ((layout.timeRange.end.getTime() - layout.timeRange.start.getTime()) * i) / labelCount,
+        - ((layout.timeRange.end.getTime() - layout.timeRange.start.getTime()) * i) / labelCount,
       );
       const y = timeScaleY(t);
 
@@ -1331,7 +1331,7 @@ export class TimelineVisualization {
     for (let i = 0; i <= labelCount; i++) {
       const t = new Date(
         layout.timeRange.end.getTime()
-          - ((layout.timeRange.end.getTime() - layout.timeRange.start.getTime()) * i) / labelCount,
+        - ((layout.timeRange.end.getTime() - layout.timeRange.start.getTime()) * i) / labelCount,
       );
       const y = timeScaleY(t);
       const gridLine = document.createElementNS('http://www.w3.org/2000/svg', 'line');
@@ -1544,8 +1544,12 @@ export class TimelineVisualization {
     this.applyFilters();
   }
 
-  setSourceFilter(source: string | null): void {
-    this.sourceFilter = source?.trim().toLowerCase() || null;
+  setSourceFilter(sources: Set<string> | string[] | null): void {
+    if (sources === null || (Array.isArray(sources) && sources.length === 0) || (sources instanceof Set && sources.size === 0)) {
+      this.sourceFilters = null;
+    } else {
+      this.sourceFilters = new Set(sources);
+    }
     this.applyFilters();
   }
 

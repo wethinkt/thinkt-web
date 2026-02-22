@@ -38,9 +38,9 @@ export interface ProjectBrowserOptions {
   onError?: (error: Error) => void;
   /** Custom renderer for project items */
   projectRenderer?: (project: Project, index: number) => HTMLElement;
-  /** Initial source filter */
-  initialSource?: string;
-  /** Include projects whose paths no longer exist */
+  /** Initial sources filter */
+  initialSources?: string[];
+  /** Whether to show deleted projects initially (default: false) */
   initialIncludeDeleted?: boolean;
   /** Initial project sort mode */
   initialSort?: ProjectSortMode;
@@ -264,7 +264,7 @@ export class ProjectBrowser {
   private filteredProjects: Project[] = [];
   private discoveredSources: string[] = [];
   private searchQuery = '';
-  private currentSourceFilter: string | null = null;
+  private currentSourceFilters: Set<string> | null = null;
   private includeDeletedProjects = false;
   private sortMode: ProjectSortMode = 'date_desc';
   private selectedIndex = -1;
@@ -283,16 +283,18 @@ export class ProjectBrowser {
       enableSourceFilter: options.enableSourceFilter ?? true,
       classPrefix: options.classPrefix ?? 'thinkt-project-browser',
     };
-    this.currentSourceFilter = options.initialSource ?? null;
+    if (options.initialSources && options.initialSources.length > 0) {
+      this.currentSourceFilters = new Set(options.initialSources);
+    }
     this.includeDeletedProjects = options.initialIncludeDeleted ?? false;
     this.sortMode = options.initialSort ?? 'date_desc';
 
     // Get client (either provided or default)
     this.client = options.client ?? getDefaultClient();
     this.init();
-    
+
     // Load projects after initialization
-    void this.loadProjects(this.currentSourceFilter ?? undefined);
+    void this.loadProjects();
   }
 
   // ============================================
@@ -402,7 +404,7 @@ export class ProjectBrowser {
   // ============================================
 
   private attachListeners(): void {
-    const { searchInput, sourceFilter, container } = this.elements;
+    const { searchInput, container } = this.elements;
 
     // Search input
     if (searchInput) {
@@ -414,15 +416,7 @@ export class ProjectBrowser {
       this.boundHandlers.push(() => searchInput.removeEventListener('input', handleSearch));
     }
 
-    // Source filter
-    if (sourceFilter) {
-      const handleFilter = () => {
-        this.currentSourceFilter = sourceFilter.value || null;
-        void this.loadProjects(this.currentSourceFilter ?? undefined);
-      };
-      sourceFilter.addEventListener('change', handleFilter);
-      this.boundHandlers.push(() => sourceFilter.removeEventListener('change', handleFilter));
-    }
+    // Native source filter removed; managed externally by ApiViewer
 
     // Keyboard navigation
     const handleKeydown = (e: KeyboardEvent) => this.handleKeydown(e);
@@ -465,19 +459,16 @@ export class ProjectBrowser {
   // Data Loading
   // ============================================
 
-  async loadProjects(source?: string): Promise<void> {
+  async loadProjects(): Promise<void> {
     if (this.isLoading) return;
-    if (typeof source === 'string') {
-      this.currentSourceFilter = source || null;
-    }
-    const activeSource = this.currentSourceFilter ?? undefined;
 
     this.isLoading = true;
     this.showLoading(true);
     this.showError(null);
 
     try {
-      this.projects = await this.client.getProjects(activeSource, {
+      // Fetch all projects regardless of source, we filter locally
+      this.projects = await this.client.getProjects(undefined, {
         includeDeleted: this.includeDeletedProjects,
       });
       const seen = new Set(this.discoveredSources);
@@ -497,10 +488,6 @@ export class ProjectBrowser {
     } finally {
       this.isLoading = false;
       this.showLoading(false);
-      const latestSource = this.currentSourceFilter ?? undefined;
-      if (latestSource !== activeSource) {
-        void this.loadProjects(latestSource);
-      }
     }
   }
 
@@ -529,7 +516,7 @@ export class ProjectBrowser {
       retryBtn.className = `${this.options.classPrefix}__retry`;
       retryBtn.textContent = i18n._('Retry');
       retryBtn.addEventListener('click', () => {
-        void this.loadProjects(this.currentSourceFilter ?? undefined);
+        void this.loadProjects();
       });
       this.elements.errorDisplay.appendChild(retryBtn);
 
@@ -551,7 +538,11 @@ export class ProjectBrowser {
         project.name?.toLowerCase().includes(searchTerm) ||
         project.path?.toLowerCase().includes(searchTerm);
 
-      return matchesSearch;
+      const matchesSource = !this.currentSourceFilters ||
+        this.currentSourceFilters.size === 0 ||
+        (typeof project.source === 'string' && this.currentSourceFilters.has(project.source.trim().toLowerCase()));
+
+      return matchesSearch && matchesSource;
     });
     this.filteredProjects.sort((a, b) => this.compareProjects(a, b));
 
@@ -591,30 +582,7 @@ export class ProjectBrowser {
   }
 
   private renderSourceFilterOptions(): void {
-    if (!this.elements.sourceFilter) return;
-
-    const sourceFilter = this.elements.sourceFilter;
-    const selected = this.currentSourceFilter ?? '';
-    const discovered = [...this.discoveredSources];
-
-    sourceFilter.innerHTML = '';
-    const allOption = document.createElement('option');
-    allOption.value = '';
-    allOption.textContent = i18n._('All Sources');
-    sourceFilter.appendChild(allOption);
-
-    if (selected && !discovered.includes(selected)) {
-      discovered.push(selected);
-    }
-
-    discovered.forEach((source) => {
-      const option = document.createElement('option');
-      option.value = source;
-      option.textContent = source.charAt(0).toUpperCase() + source.slice(1);
-      sourceFilter.appendChild(option);
-    });
-
-    sourceFilter.value = selected;
+    // Native source option rendering removed; dropdown managed by ApiViewer
   }
 
   // ============================================
@@ -792,7 +760,7 @@ export class ProjectBrowser {
    * Refresh the project list
    */
   refresh(): void {
-    void this.loadProjects(this.currentSourceFilter ?? undefined);
+    void this.loadProjects();
   }
 
   /**
@@ -810,16 +778,17 @@ export class ProjectBrowser {
   /**
    * Set the source filter
    */
-  setSourceFilter(source: string | null): void {
-    const normalized = source && source.length > 0 ? source : null;
-    if (this.currentSourceFilter === normalized) {
-      return;
+  setSourceFilter(sources: Set<string> | string[] | null): void {
+    if (sources === null || (Array.isArray(sources) && sources.length === 0) || (sources instanceof Set && sources.size === 0)) {
+      this.currentSourceFilters = null;
+    } else {
+      this.currentSourceFilters = new Set(sources);
     }
-    this.currentSourceFilter = normalized;
-    if (this.elements.sourceFilter) {
-      this.elements.sourceFilter.value = normalized ?? '';
+
+    // We don't need to reload from API, just apply local filter
+    if (!this.isLoading) {
+      this.filterProjects();
     }
-    void this.loadProjects(normalized ?? undefined);
   }
 
   /**
@@ -830,7 +799,7 @@ export class ProjectBrowser {
       return;
     }
     this.includeDeletedProjects = includeDeleted;
-    void this.loadProjects(this.currentSourceFilter ?? undefined);
+    void this.loadProjects();
   }
 
   /**

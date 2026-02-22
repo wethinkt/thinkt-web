@@ -223,7 +223,7 @@ const DEFAULT_STYLES = `
 
 .thinkt-project-filter {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(82px, 92px) minmax(94px, 110px) auto;
+  grid-template-columns: minmax(0, 1fr) minmax(110px, auto) minmax(94px, 110px);
   gap: 6px;
   align-items: center;
   padding: 6px 8px;
@@ -232,7 +232,6 @@ const DEFAULT_STYLES = `
 }
 
 .thinkt-project-filter__search,
-.thinkt-project-filter__source,
 .thinkt-project-filter__sort {
   border: 1px solid var(--thinkt-border-color, #333);
   border-radius: 4px;
@@ -247,31 +246,128 @@ const DEFAULT_STYLES = `
   width: 100%;
 }
 
-.thinkt-project-filter__source,
 .thinkt-project-filter__sort {
   width: 100%;
   min-width: 0;
 }
 
 .thinkt-project-filter__search:focus,
-.thinkt-project-filter__source:focus,
 .thinkt-project-filter__sort:focus {
   outline: none;
   border-color: var(--thinkt-accent-color, #6366f1);
 }
 
-.thinkt-project-filter__toggle {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  font-size: 12px;
-  color: var(--thinkt-text-secondary, #a0a0a0);
-  user-select: none;
-  white-space: nowrap;
+.thinkt-source-dropdown {
+  position: relative;
+  width: 100%;
+  min-width: 0;
 }
 
-.thinkt-project-filter__toggle input {
+.thinkt-source-dropdown__btn {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  border: 1px solid var(--thinkt-border-color, #333);
+  border-radius: 4px;
+  background: var(--thinkt-input-bg, #252525);
+  color: var(--thinkt-text-color, #e0e0e0);
+  font-size: 12px;
+  padding: 6px 8px;
+  cursor: pointer;
+  text-align: left;
+  transition: all 0.15s ease;
+  white-space: nowrap;
+  overflow: hidden;
+}
+
+.thinkt-source-dropdown__btn:hover {
+  border-color: var(--thinkt-accent-color, #6366f1);
+}
+
+.thinkt-source-dropdown__btn.active {
+  background: var(--thinkt-hover-bg, #333);
+  border-color: var(--thinkt-accent-color, #6366f1);
+}
+
+.thinkt-source-dropdown__btn span:first-child {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  margin-right: 8px;
+}
+
+.thinkt-source-dropdown__icon {
+  font-size: 8px;
+  color: var(--thinkt-muted-color, #666);
+  transition: transform 0.2s ease;
+}
+
+.thinkt-source-dropdown__btn.active .thinkt-source-dropdown__icon {
+  transform: rotate(180deg);
+}
+
+.thinkt-source-dropdown__menu {
+  position: absolute;
+  top: calc(100% + 4px);
+  right: 0;
+  min-width: 160px;
+  background: var(--thinkt-dropdown-bg, #1a1a1a);
+  border: 1px solid var(--thinkt-border-color, #333);
+  border-radius: 6px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
+  padding: 4px;
+  z-index: 100;
+  display: none;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.thinkt-source-dropdown__menu.open {
+  display: flex;
+  animation: dropdownFadeIn 0.15s ease;
+}
+
+@keyframes dropdownFadeIn {
+  from { opacity: 0; transform: translateY(-4px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.thinkt-source-dropdown__list {
+  max-height: 200px;
+  overflow-y: auto;
+}
+
+.thinkt-source-option {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 8px;
+  font-size: 12px;
+  color: var(--thinkt-text-color, #e0e0e0);
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background 0.1s ease;
+  user-select: none;
+}
+
+.thinkt-source-option:hover {
+  background: var(--thinkt-hover-bg, #2a2a2a);
+}
+
+.thinkt-source-option input[type="checkbox"] {
   margin: 0;
+  accent-color: var(--thinkt-accent-color, #6366f1);
+  cursor: pointer;
+}
+
+.thinkt-source-dropdown__divider {
+  height: 1px;
+  background: var(--thinkt-border-color, #333);
+  margin: 4px 0;
+}
+
+.thinkt-source-option--toggle {
+  color: var(--thinkt-text-secondary, #a0a0a0);
 }
 
 /* Sidebar toggle button (narrow viewports, inside #top-bar) */
@@ -356,13 +452,15 @@ export class ApiViewer {
   private sidebarSectionSplitter: HTMLElement | null = null;
   private projectFilterContainer: HTMLElement | null = null;
   private projectSearchInput: HTMLInputElement | null = null;
-  private projectSourceFilter: HTMLSelectElement | null = null;
+  private projectSourceDropdownBtn: HTMLButtonElement | null = null;
+  private projectSourceDropdownMenu: HTMLDivElement | null = null;
+  private isSourceDropdownOpen = false;
   private projectSortFilter: HTMLSelectElement | null = null;
   private projectIncludeDeletedToggle: HTMLInputElement | null = null;
   private projectIncludeDeletedLabel: HTMLSpanElement | null = null;
   private projectPaneHeightPx: number | null = null;
   private projectSearchQuery = '';
-  private projectSource = '';
+  private projectSources = new Set<string>();
   private projectSort: ProjectSortMode = 'date_desc';
   private projectIncludeDeleted = false;
   private discoveredSources: string[] = [];
@@ -679,10 +777,43 @@ export class ApiViewer {
     searchInput.value = this.projectSearchQuery;
     this.projectSearchInput = searchInput;
 
-    const sourceFilter = document.createElement('select');
-    sourceFilter.className = 'thinkt-project-filter__source';
-    this.projectSourceFilter = sourceFilter;
-    this.renderSourceFilterOptions();
+    const sourceDropdownContainer = document.createElement('div');
+    sourceDropdownContainer.className = 'thinkt-source-dropdown';
+
+    const sourceBtn = document.createElement('button');
+    sourceBtn.className = 'thinkt-source-dropdown__btn';
+    sourceBtn.innerHTML = `<span>${i18n._('All Sources')}</span><span class="thinkt-source-dropdown__icon">▼</span>`;
+    this.projectSourceDropdownBtn = sourceBtn;
+
+    const sourceMenu = document.createElement('div');
+    sourceMenu.className = 'thinkt-source-dropdown__menu';
+    this.projectSourceDropdownMenu = sourceMenu;
+
+    sourceDropdownContainer.appendChild(sourceBtn);
+    sourceDropdownContainer.appendChild(sourceMenu);
+
+    const toggleDropdown = (e: Event) => {
+      e.stopPropagation();
+      this.isSourceDropdownOpen = !this.isSourceDropdownOpen;
+      if (this.isSourceDropdownOpen) {
+        sourceMenu.classList.add('open');
+        sourceBtn.classList.add('active');
+        const closeMenu = (ev: Event) => {
+          if (!sourceDropdownContainer.contains(ev.target as Node)) {
+            this.isSourceDropdownOpen = false;
+            sourceMenu.classList.remove('open');
+            sourceBtn.classList.remove('active');
+            document.removeEventListener('click', closeMenu);
+          }
+        };
+        document.addEventListener('click', closeMenu);
+      } else {
+        sourceMenu.classList.remove('open');
+        sourceBtn.classList.remove('active');
+      }
+    };
+    sourceBtn.addEventListener('click', toggleDropdown);
+    this.boundHandlers.push(() => sourceBtn.removeEventListener('click', toggleDropdown));
 
     const sortFilter = document.createElement('select');
     sortFilter.className = 'thinkt-project-filter__sort';
@@ -699,7 +830,7 @@ export class ApiViewer {
     this.projectIncludeDeletedLabel = includeDeletedLabelText;
 
     const includeDeletedLabel = document.createElement('label');
-    includeDeletedLabel.className = 'thinkt-project-filter__toggle';
+    includeDeletedLabel.className = 'thinkt-source-option thinkt-source-option--toggle';
     includeDeletedLabel.appendChild(includeDeletedToggle);
     includeDeletedLabel.appendChild(includeDeletedLabelText);
 
@@ -709,13 +840,6 @@ export class ApiViewer {
     };
     searchInput.addEventListener('input', handleSearchInput);
     this.boundHandlers.push(() => searchInput.removeEventListener('input', handleSearchInput));
-
-    const handleSourceChange = () => {
-      this.projectSource = sourceFilter.value;
-      this.applyProjectFilters();
-    };
-    sourceFilter.addEventListener('change', handleSourceChange);
-    this.boundHandlers.push(() => sourceFilter.removeEventListener('change', handleSourceChange));
 
     const handleSortChange = () => {
       this.projectSort = this.normalizeProjectSort(sortFilter.value);
@@ -731,10 +855,11 @@ export class ApiViewer {
     includeDeletedToggle.addEventListener('change', handleIncludeDeletedChange);
     this.boundHandlers.push(() => includeDeletedToggle.removeEventListener('change', handleIncludeDeletedChange));
 
+    this.renderSourceFilterOptions();
+
     container.appendChild(searchInput);
-    container.appendChild(sourceFilter);
+    container.appendChild(sourceDropdownContainer);
     container.appendChild(sortFilter);
-    container.appendChild(includeDeletedLabel);
     return container;
   }
 
@@ -825,32 +950,74 @@ export class ApiViewer {
   }
 
   private renderSourceFilterOptions(): void {
-    if (!this.projectSourceFilter) return;
+    if (!this.projectSourceDropdownMenu || !this.projectSourceDropdownBtn) return;
 
-    const sourceFilter = this.projectSourceFilter;
-    const selected = this.normalizeSourceName(sourceFilter.value || this.projectSource || '');
-    sourceFilter.innerHTML = '';
+    const menu = this.projectSourceDropdownMenu;
+    const toggleElement = this.projectIncludeDeletedLabel?.parentElement;
 
-    const allOption = document.createElement('option');
-    allOption.value = '';
-    allOption.textContent = i18n._('All Sources');
-    sourceFilter.appendChild(allOption);
+    menu.innerHTML = '';
+
+    const listContainer = document.createElement('div');
+    listContainer.className = 'thinkt-source-dropdown__list';
 
     const optionSources = [...this.discoveredSources];
-    if (selected && !optionSources.includes(selected)) {
-      optionSources.push(selected);
-    }
-
     optionSources.sort((a, b) => a.localeCompare(b));
+
     optionSources.forEach((source) => {
-      const option = document.createElement('option');
-      option.value = source;
-      option.textContent = source.charAt(0).toUpperCase() + source.slice(1);
-      sourceFilter.appendChild(option);
+      const label = document.createElement('label');
+      label.className = 'thinkt-source-option';
+
+      const checkbox = document.createElement('input');
+      checkbox.type = 'checkbox';
+      checkbox.value = source;
+      checkbox.checked = this.projectSources.has(source);
+
+      const text = document.createElement('span');
+      text.textContent = source.charAt(0).toUpperCase() + source.slice(1);
+
+      label.appendChild(checkbox);
+      label.appendChild(text);
+      listContainer.appendChild(label);
+
+      checkbox.addEventListener('change', () => {
+        if (checkbox.checked) {
+          this.projectSources.add(source);
+        } else {
+          this.projectSources.delete(source);
+        }
+        this.updateSourceDropdownButton();
+        this.applyProjectFilters();
+      });
     });
 
-    sourceFilter.value = selected;
-    this.projectSource = sourceFilter.value;
+    menu.appendChild(listContainer);
+
+    if (optionSources.length > 0 && toggleElement) {
+      const divider = document.createElement('div');
+      divider.className = 'thinkt-source-dropdown__divider';
+      menu.appendChild(divider);
+    }
+
+    if (toggleElement) {
+      menu.appendChild(toggleElement);
+    }
+
+    this.updateSourceDropdownButton();
+  }
+
+  private updateSourceDropdownButton(): void {
+    if (!this.projectSourceDropdownBtn) return;
+    const btnText = this.projectSourceDropdownBtn.querySelector('span:first-child');
+    if (btnText) {
+      if (this.projectSources.size === 0) {
+        btnText.textContent = i18n._('All Sources');
+      } else if (this.projectSources.size === 1) {
+        const source = Array.from(this.projectSources)[0];
+        btnText.textContent = source.charAt(0).toUpperCase() + source.slice(1);
+      } else {
+        btnText.textContent = i18n._('{count} Sources', { count: this.projectSources.size });
+      }
+    }
   }
 
   private renderSortFilterOptions(): void {
@@ -894,33 +1061,30 @@ export class ApiViewer {
 
   private applyProjectFilters(): void {
     const query = this.projectSearchInput?.value ?? this.projectSearchQuery;
-    const source = this.projectSourceFilter?.value || this.projectSource;
     const sort = this.projectSortFilter?.value || this.projectSort;
     const includeDeleted = this.projectIncludeDeletedToggle?.checked ?? this.projectIncludeDeleted;
     const normalizedSort = this.normalizeProjectSort(sort);
     this.projectSearchQuery = query;
-    this.projectSource = source;
     this.projectSort = normalizedSort;
     this.projectIncludeDeleted = includeDeleted;
-    const normalizedSource = source || null;
 
     switch (this.currentProjectView) {
       case 'list':
         this.projectBrowser?.setIncludeDeleted(includeDeleted);
         this.projectBrowser?.setSearch(query);
-        this.projectBrowser?.setSourceFilter(normalizedSource);
+        this.projectBrowser?.setSourceFilter(this.projectSources);
         this.projectBrowser?.setSort(normalizedSort);
         break;
       case 'tree':
         this.treeProjectBrowser?.setIncludeDeleted(includeDeleted);
         this.treeProjectBrowser?.setSearch(query);
-        this.treeProjectBrowser?.setSourceFilter(normalizedSource);
+        this.treeProjectBrowser?.setSourceFilter(this.projectSources);
         this.treeProjectBrowser?.setSort(normalizedSort as TreeProjectSortMode);
         break;
       case 'timeline':
         this.timelineVisualization?.setIncludeDeleted(includeDeleted);
         this.timelineVisualization?.setSearch(query);
-        this.timelineVisualization?.setSourceFilter(normalizedSource);
+        this.timelineVisualization?.setSourceFilter(this.projectSources);
         break;
     }
   }
@@ -1592,7 +1756,8 @@ export class ApiViewer {
     this.currentSession = null;
     this.projectFilterContainer = null;
     this.projectSearchInput = null;
-    this.projectSourceFilter = null;
+    this.projectSourceDropdownBtn = null;
+    this.projectSourceDropdownMenu = null;
     this.projectSortFilter = null;
     this.projectIncludeDeletedToggle = null;
     this.projectIncludeDeletedLabel = null;

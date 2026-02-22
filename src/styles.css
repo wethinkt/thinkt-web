@@ -413,6 +413,7 @@ body {
   --thinkt-hover-bg: var(--bg-hover);
   --thinkt-selected-bg: var(--bg-selected);
   --thinkt-bg-secondary: rgba(255, 255, 255, 0.02);
+  --thinkt-dropdown-bg: var(--bg-tertiary);
 }
 
 /* Component Geometry & Glassmorphism Overrides */

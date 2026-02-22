@@ -387,7 +387,7 @@ export class TreeProjectBrowser {
   private expandedSources: Set<string> = new Set();
   private selectedSessionId: string | null = null;
   private searchQuery = '';
-  private sourceFilter: string | null = null;
+  private sourceFilters: Set<string> | null = null;
   private isLoading = false;
   private stylesInjected = false;
   private boundHandlers: Array<() => void> = [];
@@ -512,7 +512,7 @@ export class TreeProjectBrowser {
       // we want to group by "my-app"
       const projectPath = project.displayPath || project.path;
       const projectName = project.name || this.extractProjectName(projectPath);
-      
+
       // Use the displayPath or the parent directory as the grouping key
       const groupKey = this.normalizeProjectPath(projectPath);
 
@@ -558,25 +558,25 @@ export class TreeProjectBrowser {
     // ~/.claude/projects/my-app -> my-app
     // /home/user/workspace/project -> project
     const parts = path.split(/[/\\]/).filter(p => p && p !== '.' && p !== '..');
-    
+
     // Remove common parent directories
     while (parts.length > 1) {
       const last = parts[parts.length - 1];
       const parent = parts[parts.length - 2];
-      
+
       // Skip if parent is a common container
       if (['projects', 'workspaces', 'repos', 'src'].includes(parent)) {
         return last;
       }
-      
+
       // Check if this looks like a project name (not a hidden folder)
       if (!last.startsWith('.') && last.length > 2) {
         return last;
       }
-      
+
       parts.pop();
     }
-    
+
     return parts[parts.length - 1] || 'Unknown';
   }
 
@@ -584,18 +584,18 @@ export class TreeProjectBrowser {
     // Normalize path for grouping
     // Remove home directory and common source prefixes
     let normalized = path.replace(/^~\//, '/').replace(/\\/g, '/');
-    
+
     // Remove common source prefixes
     const sourcePatterns = [
       /\.claude\/projects\//,
       /\.kimi\/projects\//,
       /\.thinkt\/projects\//,
     ];
-    
+
     for (const pattern of sourcePatterns) {
       normalized = normalized.replace(pattern, '');
     }
-    
+
     return normalized;
   }
 
@@ -656,20 +656,20 @@ export class TreeProjectBrowser {
 
   private renderProjectGroup(project: ProjectGroup): HTMLElement {
     const isExpanded = this.expandedProjects.has(project.path);
-    
+
     const container = document.createElement('div');
     container.className = 'thinkt-tree-project';
 
     // Header
     const header = document.createElement('div');
     header.className = `thinkt-tree-project-header ${isExpanded ? 'expanded' : ''}`;
-    
+
     // Show different meta info based on view mode
     const metaInfo = this.viewMode === 'hierarchical'
       ? `<span class="thinkt-tree-badge">${i18n._('{count, plural, one {# source} other {# sources}}', { count: project.sources.size })}</span>
          <span class="thinkt-tree-badge">${i18n._('{count, plural, one {# session} other {# sessions}}', { count: project.totalSessions })}</span>`
       : `<span class="thinkt-tree-badge">${i18n._('{count, plural, one {# session} other {# sessions}}', { count: project.totalSessions })}</span>`;
-    
+
     header.innerHTML = `
       <span class="thinkt-tree-chevron ${isExpanded ? 'expanded' : ''}">▶</span>
       <span class="thinkt-tree-folder-icon">📁</span>
@@ -830,16 +830,16 @@ export class TreeProjectBrowser {
   private renderSession(session: SessionMeta, project: ProjectGroup, source?: string): HTMLElement {
     const el = document.createElement('div');
     el.className = 'thinkt-tree-session';
-    
+
     if (session.id === this.selectedSessionId) {
       el.classList.add('selected');
     }
 
-    const title = session.firstPrompt 
+    const title = session.firstPrompt
       ? session.firstPrompt.slice(0, 50) + (session.firstPrompt.length > 50 ? '...' : '')
       : session.id?.slice(0, 8) || 'Unknown';
 
-    const time = session.modifiedAt 
+    const time = session.modifiedAt
       ? this.formatRelativeTime(session.modifiedAt)
       : '';
 
@@ -983,8 +983,12 @@ export class TreeProjectBrowser {
     this.render();
   }
 
-  setSourceFilter(source: string | null): void {
-    this.sourceFilter = source?.trim().toLowerCase() || null;
+  setSourceFilter(sources: Set<string> | string[] | null): void {
+    if (sources === null || (Array.isArray(sources) && sources.length === 0) || (sources instanceof Set && sources.size === 0)) {
+      this.sourceFilters = null;
+    } else {
+      this.sourceFilters = new Set(sources);
+    }
     if (this.isLoading) return;
     this.render();
   }
@@ -1003,18 +1007,18 @@ export class TreeProjectBrowser {
   }
 
   private hasActiveFilters(): boolean {
-    return this.searchQuery.length > 0 || this.sourceFilter !== null;
+    return this.searchQuery.length > 0 || this.sourceFilters !== null;
   }
 
   private getFilteredProjectGroups(): ProjectGroup[] {
     const query = this.searchQuery;
-    const sourceFilter = this.sourceFilter;
+    const sourceFilters = this.sourceFilters;
     const result: ProjectGroup[] = [];
 
     for (const group of this.projectGroups.values()) {
       const matchingSources = new Map<string, SourceGroup>();
       for (const [sourceKey, sourceGroup] of group.sources) {
-        if (sourceFilter && sourceKey.toLowerCase() !== sourceFilter) {
+        if (sourceFilters && sourceFilters.size > 0 && !sourceFilters.has(sourceKey.toLowerCase())) {
           continue;
         }
         matchingSources.set(sourceKey, sourceGroup);
@@ -1077,13 +1081,13 @@ export class TreeProjectBrowser {
   setViewMode(mode: TreeViewMode): void {
     if (this.viewMode === mode) return;
     this.viewMode = mode;
-    
+
     // Update toggle buttons
     this.headerContainer.querySelectorAll('.thinkt-tree-view-btn').forEach((btn) => {
       const btnMode = (btn as HTMLElement).dataset.mode as TreeViewMode;
       btn.classList.toggle('active', btnMode === mode);
     });
-    
+
     // Re-render with new view mode
     this.render();
   }
