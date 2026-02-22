@@ -59,6 +59,11 @@ export default defineConfig({
       '/api': {
         target: 'http://localhost:8784',
         changeOrigin: true,
+        headers: {
+          ...(process.env.THINKT_API_TOKEN
+            ? { Authorization: `Bearer ${process.env.THINKT_API_TOKEN}` }
+            : {}),
+        },
       },
     },
   },

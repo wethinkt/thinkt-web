@@ -9,7 +9,7 @@
 
 import { ApiViewer, SearchOverlay, configureDefaultClient, getDefaultClient } from './api';
 import { i18n } from '@lingui/core';
-import { getApiBaseUrl } from './config';
+import { getApiBaseUrl, getApiToken } from './config';
 import { initI18n, changeLocale, SUPPORTED_LOCALES, type SupportedLocale } from './i18n';
 import { LanguageSelector } from './components/LanguageSelector';
 import './styles.css';
@@ -42,14 +42,10 @@ async function init(): Promise<void> {
 
   // Configure API client
   const baseUrl = getApiBaseUrl();
-  configureDefaultClient({ baseUrl });
-
+  const token = getApiToken();
+  configureDefaultClient({ baseUrl, ...(token ? { token } : {}) });
   // eslint-disable-next-line no-console
-  console.log('[THINKT] API App initializing...');
-  // eslint-disable-next-line no-console
-  console.log(`[THINKT] API base URL: ${baseUrl}`);
-  // eslint-disable-next-line no-console
-  console.log(`[THINKT] Language: ${currentLocale}`);
+  console.log(`[THINKT] Initializing (API: ${baseUrl}, auth: ${token ? 'token' : 'none'}, lang: ${currentLocale})`);
 
   // Get DOM elements
   const elements = {

@@ -4,7 +4,7 @@
   "description": "THINKT API web application - project and session browser",
   "type": "module",
   "scripts": {
-    "dev": "vite",
+    "dev": "THINKT_API_TOKEN=$(thinkt server token 2>/dev/null) vite",
     "build": "npm run lint && tsc && vite build",
     "build:fast": "tsc && vite build",
     "preview": "vite preview",
