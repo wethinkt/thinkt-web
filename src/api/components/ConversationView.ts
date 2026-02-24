@@ -12,7 +12,7 @@
 import type { ThinktClient, AppInfo } from '@wethinkt/ts-thinkt/api';
 import type { Entry, ToolResultBlock } from '@wethinkt/ts-thinkt';
 import { i18n } from '@lingui/core';
-import { CONVERSATION_STYLES } from './conversation-styles';
+import CONVERSATION_STYLES from './conversation-styles.css?inline';
 import { escapeHtml, formatToolSummary, renderMarkdown, formatDuration } from './conversation-renderers';
 import { injectStyleSheet } from './style-manager';
 import { exportAsHtml, exportAsMarkdown, downloadFile, getSafeFilename } from './export';

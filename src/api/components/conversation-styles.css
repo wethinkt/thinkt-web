@@ -1,16 +1,15 @@
-/**
- * Styles for ConversationView
- *
- * Contains all CSS for the conversation view including:
- * - Base layout and filter bar
- * - Entry cards (user, assistant, system)
- * - Markdown rendering
- * - Compact tool calls with inline status
- * - Collapsible thinking blocks
- * - Copy buttons
- */
+/* ============================================
+   ConversationView Styles
 
-export const CONVERSATION_STYLES = `
+   Contains all CSS for the conversation view including:
+   - Base layout and filter bar
+   - Entry cards (user, assistant, system)
+   - Markdown rendering
+   - Compact tool calls with inline status
+   - Collapsible thinking blocks
+   - Copy buttons
+   ============================================ */
+
 /* ============================================
    Layout
    ============================================ */
@@ -847,4 +846,3 @@ export const CONVERSATION_STYLES = `
 .thinkt-conversation-view__export-dropdown-item:hover {
   background: rgba(255, 255, 255, 0.05);
 }
-`;

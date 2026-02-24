@@ -97,8 +97,8 @@ describe('SourceResolver', () => {
     const baseSession = {
       id: 'sess-1',
       entryCount: 5,
-      source: '' as string,
-    } as SessionMeta;
+      source: '',
+    } as unknown as SessionMeta;
 
     it('resolves from session.fullPath', () => {
       const session = { ...baseSession, fullPath: '/home/user/.claude/projects/foo/session.jsonl' };
@@ -111,12 +111,12 @@ describe('SourceResolver', () => {
     });
 
     it('resolves from project.path', () => {
-      const project = { id: 'p1', name: 'test', path: '/home/user/.claude/projects/baz', sessionCount: 1, source: '' } as Project;
+      const project = { id: 'p1', name: 'test', path: '/home/user/.claude/projects/baz', sessionCount: 1, source: '' } as unknown as Project;
       expect(SourceResolver.resolveSessionSource(baseSession, project, capabilities)).toBe('claude');
     });
 
     it('resolves from project.sourceBasePath', () => {
-      const project = { id: 'p1', name: 'test', path: '/other', sourceBasePath: '/home/user/.claude', sessionCount: 1, source: '' } as Project;
+      const project = { id: 'p1', name: 'test', path: '/other', sourceBasePath: '/home/user/.claude', sessionCount: 1, source: '' } as unknown as Project;
       expect(SourceResolver.resolveSessionSource(baseSession, project, capabilities)).toBe('claude');
     });
 
@@ -126,7 +126,7 @@ describe('SourceResolver', () => {
     });
 
     it('falls back to project.source string', () => {
-      const project = { id: 'p1', name: 'test', path: '/other', sessionCount: 1, source: 'Kimi' } as Project;
+      const project = { id: 'p1', name: 'test', path: '/other', sessionCount: 1, source: 'Kimi' } as unknown as Project;
       expect(SourceResolver.resolveSessionSource(baseSession, project, [])).toBe('kimi');
     });
 
