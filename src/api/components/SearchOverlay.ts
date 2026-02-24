@@ -5,7 +5,8 @@
  * Features a project filter sidebar on the left for isolating results.
  */
 
-import type { SearchSessionResult, SearchMatch, SearchOptions } from '@wethinkt/ts-thinkt/api';
+// @ts-ignore — SemanticSearchResponse and SemanticSearchOptions will be used in upcoming semantic search tasks
+import type { SearchSessionResult, SearchMatch, SearchOptions, SemanticSearchResult, SemanticSearchResponse, SemanticSearchOptions } from '@wethinkt/ts-thinkt/api';
 import { type ThinktClient, getDefaultClient } from '@wethinkt/ts-thinkt/api';
 import { i18n } from '@lingui/core';
 
@@ -22,8 +23,11 @@ export interface SearchOverlayOptions {
   elements: SearchOverlayElements;
   /** API client instance (defaults to getDefaultClient()) */
   client?: ThinktClient;
-  /** Callback when a session is selected (can be async). lineNum is the first match line number for scrolling */
-  onSessionSelect?: (result: SearchSessionResult, lineNum?: number) => void | Promise<void>;
+  /** Callback when a session is selected. For text search: SearchSessionResult + lineNum. For semantic: SemanticSearchResult. */
+  onSessionSelect?: (
+    result: SearchSessionResult | SemanticSearchResult,
+    lineNum?: number,
+  ) => void | Promise<void>;
   /** Callback when the overlay is closed */
   onClose?: () => void;
   /** Callback on error */
@@ -439,6 +443,87 @@ const OVERLAY_STYLES = `
   color: var(--text-secondary, #a0a0a0);
   margin-bottom: 8px;
 }
+
+.thinkt-search-mode-toggle {
+  display: flex;
+  gap: 0;
+  background: var(--bg-tertiary, #1a1a1a);
+  border: 1px solid var(--border-color-light, #333);
+  border-radius: var(--radius-md, 6px);
+  overflow: hidden;
+  font-size: 12px;
+}
+
+.thinkt-search-mode-btn {
+  padding: 6px 14px;
+  background: none;
+  border: none;
+  color: var(--text-muted, #666);
+  cursor: pointer;
+  transition: all 0.15s ease;
+  font-size: 12px;
+  white-space: nowrap;
+}
+
+.thinkt-search-mode-btn:hover {
+  color: var(--text-secondary, #a0a0a0);
+}
+
+.thinkt-search-mode-btn.active {
+  background: var(--accent-primary, #6366f1);
+  color: #fff;
+}
+
+.thinkt-search-semantic-hint {
+  font-size: 11px;
+  color: var(--text-muted, #666);
+  font-style: italic;
+  padding: 0 4px;
+}
+
+.thinkt-search-result-relevance {
+  font-size: 10px;
+  padding: 2px 6px;
+  border-radius: var(--radius-sm, 4px);
+  font-weight: 600;
+  background: rgba(34, 197, 94, 0.15);
+  color: #22c55e;
+  margin-left: auto;
+  flex-shrink: 0;
+}
+
+.thinkt-search-result-relevance.medium {
+  background: rgba(234, 179, 8, 0.15);
+  color: #eab308;
+}
+
+.thinkt-search-result-relevance.low {
+  background: rgba(239, 68, 68, 0.15);
+  color: #ef4444;
+}
+
+.thinkt-search-result-first-prompt {
+  font-size: 11px;
+  color: var(--text-muted, #666);
+  margin-top: 4px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.thinkt-search-result-timestamp {
+  font-size: 11px;
+  color: var(--text-muted, #666);
+}
+
+.thinkt-search-preview-loading {
+  font-size: 12px;
+  color: var(--text-muted, #666);
+  font-style: italic;
+  padding: 8px;
+  background: var(--bg-tertiary, #1a1a1a);
+  border-radius: var(--radius-sm, 4px);
+}
 `;
 
 // ============================================
@@ -465,6 +550,13 @@ export class SearchOverlay {
   // Search options
   private caseSensitive = false;
   private useRegex = false;
+  private searchMode: 'text' | 'semantic' = 'text';
+  // @ts-ignore — used in upcoming semantic search tasks
+  private semanticResults: SemanticSearchResult[] = [];
+  // @ts-ignore — used in upcoming semantic search tasks
+  private filteredSemanticResults: SemanticSearchResult[] = [];
+  // @ts-ignore — used in upcoming semantic search tasks
+  private semanticPreviews: Map<string, string> = new Map(); // entry_uuid -> preview text
 
   constructor(options: SearchOverlayOptions) {
     this.elements = options.elements;
@@ -546,13 +638,17 @@ export class SearchOverlay {
         <div class="thinkt-search-header">
           <div class="thinkt-search-title">
             <span>${i18n._('Search Sessions')}</span>
+            <div class="thinkt-search-mode-toggle">
+              <button class="thinkt-search-mode-btn active" data-mode="text">${i18n._('Text')}</button>
+              <button class="thinkt-search-mode-btn" data-mode="semantic">${i18n._('Semantic')}</button>
+            </div>
             <kbd>${i18n._('esc')}</kbd>
           </div>
           <div class="thinkt-search-input-wrapper">
             <span class="thinkt-search-icon">🔍</span>
             <input type="text" class="thinkt-search-input" placeholder="${i18n._('Type to search across all sessions...')}" autocomplete="off">
           </div>
-          <div class="thinkt-search-options">
+          <div class="thinkt-search-options" id="search-text-options">
             <label class="thinkt-search-option">
               <input type="checkbox" id="search-case-sensitive">
               <span>${i18n._('Case sensitive')}</span>
@@ -561,6 +657,9 @@ export class SearchOverlay {
               <input type="checkbox" id="search-regex">
               <span>${i18n._('Regex')}</span>
             </label>
+          </div>
+          <div class="thinkt-search-options" id="search-semantic-options" style="display: none;">
+            <span class="thinkt-search-semantic-hint">${i18n._('Ask a question in natural language')}</span>
           </div>
         </div>
         <div class="thinkt-search-body">
@@ -641,6 +740,17 @@ export class SearchOverlay {
       this.boundHandlers.push(() => regexCheckbox.removeEventListener('change', handleChange));
     }
 
+    // Mode toggle
+    const modeButtons = this.overlay?.querySelectorAll<HTMLButtonElement>('.thinkt-search-mode-btn');
+    modeButtons?.forEach(btn => {
+      const handleClick = () => {
+        const mode = btn.dataset.mode as 'text' | 'semantic';
+        this.setSearchMode(mode);
+      };
+      btn.addEventListener('click', handleClick);
+      this.boundHandlers.push(() => btn.removeEventListener('click', handleClick));
+    });
+
     // Global keyboard shortcuts
     const handleGlobalKeydown = (e: KeyboardEvent) => {
       if (e.key === 'Escape') {
@@ -650,6 +760,33 @@ export class SearchOverlay {
     };
     document.addEventListener('keydown', handleGlobalKeydown);
     this.boundHandlers.push(() => document.removeEventListener('keydown', handleGlobalKeydown));
+  }
+
+  private setSearchMode(mode: 'text' | 'semantic'): void {
+    if (this.searchMode === mode) return;
+    this.searchMode = mode;
+
+    // Update toggle button styles
+    const buttons = this.overlay?.querySelectorAll<HTMLButtonElement>('.thinkt-search-mode-btn');
+    buttons?.forEach(btn => {
+      btn.classList.toggle('active', btn.dataset.mode === mode);
+    });
+
+    // Toggle option panels
+    const textOptions = this.overlay?.querySelector<HTMLElement>('#search-text-options');
+    const semanticOptions = this.overlay?.querySelector<HTMLElement>('#search-semantic-options');
+    if (textOptions) textOptions.style.display = mode === 'text' ? 'flex' : 'none';
+    if (semanticOptions) semanticOptions.style.display = mode === 'semantic' ? 'flex' : 'none';
+
+    // Update placeholder
+    if (this.input) {
+      this.input.placeholder = mode === 'text'
+        ? i18n._('Type to search across all sessions...')
+        : i18n._('Ask a question about your sessions...');
+    }
+
+    // Re-run search if there's a query
+    this.triggerSearch();
   }
 
   // ============================================
