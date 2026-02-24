@@ -8,6 +8,7 @@
 import type { SessionMeta } from '@wethinkt/ts-thinkt';
 import { type ThinktClient, getDefaultClient } from '@wethinkt/ts-thinkt/api';
 import { i18n } from '@lingui/core';
+import { injectStyleSheet } from './style-manager';
 
 // ============================================
 // Types
@@ -327,7 +328,6 @@ export class SessionList {
   private currentError: Error | null = null;
   private boundHandlers: Array<() => void> = [];
   private disposed = false;
-  private stylesInjected = false;
 
   constructor(options: SessionListOptions) {
     this.elements = options.elements;
@@ -351,26 +351,13 @@ export class SessionList {
   // ============================================
 
   private async init(): Promise<void> {
-    this.injectStyles();
+    injectStyleSheet('thinkt-session-list-styles', DEFAULT_STYLES);
     this.createStructure();
     this.attachListeners();
 
     if (this.options.projectId) {
       await this.loadSessions(this.options.projectId, this.options.projectSource);
     }
-  }
-
-  private injectStyles(): void {
-    if (this.stylesInjected) return;
-
-    const styleId = 'thinkt-session-list-styles';
-    if (!document.getElementById(styleId)) {
-      const style = document.createElement('style');
-      style.id = styleId;
-      style.textContent = DEFAULT_STYLES;
-      document.head.appendChild(style);
-    }
-    this.stylesInjected = true;
   }
 
   private createStructure(): void {

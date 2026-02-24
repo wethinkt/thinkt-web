@@ -19,6 +19,7 @@ import { ConversationView } from './ConversationView';
 import { TreeProjectBrowser, type ProjectGroup, type TreeProjectSortMode } from './TreeProjectBrowser';
 import { TimelineVisualization, type TimelineProjectSelection } from './TimelineVisualization';
 import { ProjectTimelinePanel } from './ProjectTimelinePanel';
+import { injectStyleSheet } from './style-manager';
 
 // ============================================
 // Types
@@ -84,7 +85,7 @@ const DEFAULT_STYLES = `
   min-width: 280px;
   max-width: 500px;
   border-right: 1px solid var(--thinkt-border-color, #2a2a2a);
-  background: var(--thinkt-sidebar-bg, #141414);
+  background: var(--thinkt-sidebar-bg, #0f1115);
 }
 
 .thinkt-project-browser,
@@ -209,7 +210,7 @@ const DEFAULT_STYLES = `
 
 .thinkt-view-switcher-btn:hover {
   background: var(--thinkt-bg-hover, #252525);
-  color: var(--thinkt-text-secondary, #a0a0a0);
+  color: var(--thinkt-text-secondary, #94a3b8);
 }
 
 .thinkt-view-switcher-btn.active {
@@ -367,7 +368,7 @@ const DEFAULT_STYLES = `
 }
 
 .thinkt-source-option--toggle {
-  color: var(--thinkt-text-secondary, #a0a0a0);
+  color: var(--thinkt-text-secondary, #94a3b8);
 }
 
 /* Sidebar toggle button (narrow viewports, inside #top-bar) */
@@ -469,7 +470,6 @@ export class ApiViewer {
   private isLoadingSession = false;
   private boundHandlers: Array<() => void> = [];
   private disposed = false;
-  private stylesInjected = false;
   private readonly minProjectPaneHeight = 150;
   private readonly minSessionPaneHeight = 200;
 
@@ -486,22 +486,9 @@ export class ApiViewer {
   // ============================================
 
   private init(): void {
-    this.injectStyles();
+    injectStyleSheet('thinkt-api-viewer-styles', DEFAULT_STYLES);
     this.createStructure();
     void this.initializeComponentsAsync();
-  }
-
-  private injectStyles(): void {
-    if (this.stylesInjected) return;
-
-    const styleId = 'thinkt-api-viewer-styles';
-    if (!document.getElementById(styleId)) {
-      const style = document.createElement('style');
-      style.id = styleId;
-      style.textContent = DEFAULT_STYLES;
-      document.head.appendChild(style);
-    }
-    this.stylesInjected = true;
   }
 
   private createStructure(): void {

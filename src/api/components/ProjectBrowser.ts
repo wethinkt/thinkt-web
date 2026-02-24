@@ -8,6 +8,7 @@
 import type { Project } from '@wethinkt/ts-thinkt';
 import { type ThinktClient, getDefaultClient } from '@wethinkt/ts-thinkt/api';
 import { i18n } from '@lingui/core';
+import { injectStyleSheet } from './style-manager';
 
 // ============================================
 // Types
@@ -273,7 +274,6 @@ export class ProjectBrowser {
   private currentError: Error | null = null;
   private boundHandlers: Array<() => void> = [];
   private disposed = false;
-  private stylesInjected = false;
 
   constructor(options: ProjectBrowserOptions) {
     this.elements = options.elements;
@@ -302,22 +302,9 @@ export class ProjectBrowser {
   // ============================================
 
   private init(): void {
-    this.injectStyles();
+    injectStyleSheet('thinkt-project-browser-styles', DEFAULT_STYLES);
     this.createStructure();
     this.attachListeners();
-  }
-
-  private injectStyles(): void {
-    if (this.stylesInjected) return;
-
-    const styleId = 'thinkt-project-browser-styles';
-    if (!document.getElementById(styleId)) {
-      const style = document.createElement('style');
-      style.id = styleId;
-      style.textContent = DEFAULT_STYLES;
-      document.head.appendChild(style);
-    }
-    this.stylesInjected = true;
   }
 
   private createStructure(): void {

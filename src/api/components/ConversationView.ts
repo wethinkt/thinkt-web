@@ -14,6 +14,7 @@ import type { Session, Entry, ToolResultBlock } from '@wethinkt/ts-thinkt';
 import { i18n } from '@lingui/core';
 import { CONVERSATION_STYLES } from './conversation-styles';
 import { escapeHtml, formatToolSummary, renderMarkdown, formatDuration } from './conversation-renderers';
+import { injectStyleSheet } from './style-manager';
 import { exportAsHtml, exportAsMarkdown, downloadFile, getSafeFilename } from './export';
 
 // ============================================
@@ -62,7 +63,6 @@ export class ConversationView {
   private contentContainer!: HTMLElement;
   private filterContainer!: HTMLElement;
   private toolbarContainer!: HTMLElement;
-  private stylesInjected = false;
   private client: ThinktClient | null = null;
   private onResumeSession: (() => Promise<void> | void) | null = null;
   private canResumeSession: (() => boolean) | null = null;
@@ -114,23 +114,10 @@ export class ConversationView {
   }
 
   private init(): void {
-    this.injectStyles();
+    injectStyleSheet('thinkt-conversation-view-styles', CONVERSATION_STYLES);
     this.container.className = 'thinkt-conversation-view';
     this.createStructure();
     this.setupFilters();
-  }
-
-  private injectStyles(): void {
-    if (this.stylesInjected) return;
-
-    const styleId = 'thinkt-conversation-view-styles';
-    if (!document.getElementById(styleId)) {
-      const style = document.createElement('style');
-      style.id = styleId;
-      style.textContent = CONVERSATION_STYLES;
-      document.head.appendChild(style);
-    }
-    this.stylesInjected = true;
   }
 
   private createStructure(): void {

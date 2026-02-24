@@ -18,6 +18,7 @@
 import type { Project, SessionMeta } from '@wethinkt/ts-thinkt';
 import { type ThinktClient, getDefaultClient } from '@wethinkt/ts-thinkt/api';
 import { i18n } from '@lingui/core';
+import { injectStyleSheet } from './style-manager';
 
 // ============================================
 // Types
@@ -107,7 +108,7 @@ const TREE_STYLES = `
 .thinkt-tree-view-toggle {
   display: flex;
   gap: 2px;
-  background: var(--thinkt-bg-tertiary, #2a2a2a);
+  background: var(--thinkt-bg-tertiary, #181a1f);
   padding: 2px;
   border-radius: 4px;
 }
@@ -222,7 +223,7 @@ const TREE_STYLES = `
   font-size: 10px;
   padding: 1px 5px;
   border-radius: 3px;
-  background: var(--thinkt-bg-tertiary, #2a2a2a);
+  background: var(--thinkt-bg-tertiary, #181a1f);
   color: var(--thinkt-muted-color, #888);
 }
 
@@ -268,7 +269,7 @@ const TREE_STYLES = `
 .thinkt-tree-source-name {
   flex: 1;
   font-size: 12px;
-  color: var(--thinkt-text-secondary, #a0a0a0);
+  color: var(--thinkt-text-secondary, #94a3b8);
   text-transform: capitalize;
 }
 
@@ -291,7 +292,7 @@ const TREE_STYLES = `
   font-size: 9px;
   padding: 1px 4px;
   border-radius: 3px;
-  background: var(--thinkt-bg-tertiary, #2a2a2a);
+  background: var(--thinkt-bg-tertiary, #181a1f);
   color: var(--thinkt-muted-color, #888);
   text-transform: uppercase;
   margin-left: 4px;
@@ -330,7 +331,7 @@ const TREE_STYLES = `
 .thinkt-tree-session-title {
   flex: 1;
   font-size: 11px;
-  color: var(--thinkt-text-secondary, #a0a0a0);
+  color: var(--thinkt-text-secondary, #94a3b8);
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -389,7 +390,6 @@ export class TreeProjectBrowser {
   private searchQuery = '';
   private sourceFilters: Set<string> | null = null;
   private isLoading = false;
-  private stylesInjected = false;
   private boundHandlers: Array<() => void> = [];
   private viewMode: TreeViewMode = 'hierarchical';
   private sortMode: TreeProjectSortMode = 'date_desc';
@@ -408,22 +408,9 @@ export class TreeProjectBrowser {
   }
 
   private init(): void {
-    this.injectStyles();
+    injectStyleSheet('thinkt-tree-browser-styles', TREE_STYLES);
     this.createStructure();
     void this.loadData();
-  }
-
-  private injectStyles(): void {
-    if (this.stylesInjected) return;
-
-    const styleId = 'thinkt-tree-browser-styles';
-    if (!document.getElementById(styleId)) {
-      const style = document.createElement('style');
-      style.id = styleId;
-      style.textContent = TREE_STYLES;
-      document.head.appendChild(style);
-    }
-    this.stylesInjected = true;
   }
 
   private createStructure(): void {

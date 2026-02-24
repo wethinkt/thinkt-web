@@ -414,6 +414,13 @@ body {
   --thinkt-selected-bg: var(--bg-selected);
   --thinkt-bg-secondary: rgba(255, 255, 255, 0.02);
   --thinkt-dropdown-bg: var(--bg-tertiary);
+  --thinkt-bg-tertiary: var(--bg-tertiary);
+  --thinkt-border-color-light: var(--border-color-light);
+  --thinkt-text-primary: var(--text-primary);
+  --thinkt-text-secondary: var(--text-secondary);
+  --thinkt-text-muted: var(--text-muted);
+  --thinkt-sidebar-bg: var(--bg-secondary);
+  --thinkt-font-mono: var(--font-mono);
 }
 
 /* Component Geometry & Glassmorphism Overrides */

@@ -64,7 +64,7 @@ export const CONVERSATION_STYLES = `
 }
 
 .thinkt-conversation-view__filter-btn:hover {
-  border-color: var(--thinkt-border-color-light, #444);
+  border-color: var(--thinkt-border-color-light, rgba(255, 255, 255, 0.12));
   color: var(--thinkt-text-color, #e0e0e0);
 }
 
@@ -255,7 +255,7 @@ export const CONVERSATION_STYLES = `
 }
 
 .thinkt-conversation-entry__text--markdown code {
-  font-family: var(--thinkt-font-mono, 'SF Mono', Monaco, monospace);
+  font-family: var(--thinkt-font-mono, 'SF Mono', Monaco, 'Cascadia Code', monospace);
   font-size: 0.9em;
   padding: 0.15em 0.4em;
   background: rgba(255, 255, 255, 0.08);
@@ -318,7 +318,7 @@ export const CONVERSATION_STYLES = `
   padding: 10px 12px;
   background: rgba(0, 0, 0, 0.3);
   overflow-x: auto;
-  font-family: var(--thinkt-font-mono, 'SF Mono', Monaco, monospace);
+  font-family: var(--thinkt-font-mono, 'SF Mono', Monaco, 'Cascadia Code', monospace);
   font-size: 12px;
   line-height: 1.5;
 }
@@ -488,7 +488,7 @@ export const CONVERSATION_STYLES = `
   text-overflow: ellipsis;
   flex: 1;
   min-width: 0;
-  font-family: var(--thinkt-font-mono, 'SF Mono', Monaco, monospace);
+  font-family: var(--thinkt-font-mono, 'SF Mono', Monaco, 'Cascadia Code', monospace);
   font-size: 11px;
 }
 
@@ -531,7 +531,7 @@ export const CONVERSATION_STYLES = `
 }
 
 .thinkt-tool-call__detail-content {
-  font-family: var(--thinkt-font-mono, 'SF Mono', Monaco, monospace);
+  font-family: var(--thinkt-font-mono, 'SF Mono', Monaco, 'Cascadia Code', monospace);
   font-size: 11px;
   background: rgba(0, 0, 0, 0.3);
   padding: 8px;
@@ -686,7 +686,7 @@ export const CONVERSATION_STYLES = `
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  font-family: var(--thinkt-font-mono, 'SF Mono', Monaco, monospace);
+  font-family: var(--thinkt-font-mono, 'SF Mono', Monaco, 'Cascadia Code', monospace);
 }
 
 .thinkt-conversation-view__toolbar-right {
@@ -729,7 +729,7 @@ export const CONVERSATION_STYLES = `
 
 .thinkt-conversation-view__toolbar-btn:hover {
   background: rgba(255, 255, 255, 0.08);
-  border-color: var(--thinkt-border-color-light, #444);
+  border-color: var(--thinkt-border-color-light, rgba(255, 255, 255, 0.12));
 }
 
 .thinkt-conversation-view__toolbar-btn:disabled {
@@ -803,7 +803,7 @@ export const CONVERSATION_STYLES = `
 
 .thinkt-conversation-view__export-btn:hover {
   background: rgba(255, 255, 255, 0.08);
-  border-color: var(--thinkt-border-color-light, #444);
+  border-color: var(--thinkt-border-color-light, rgba(255, 255, 255, 0.12));
   color: var(--thinkt-text-color, #e0e0e0);
 }
 

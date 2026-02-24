@@ -8,6 +8,7 @@
 import type { SearchSessionResult, SearchMatch, SearchOptions, SemanticSearchResult, SemanticSearchOptions } from '@wethinkt/ts-thinkt/api';
 import { type ThinktClient, getDefaultClient } from '@wethinkt/ts-thinkt/api';
 import { i18n } from '@lingui/core';
+import { injectStyleSheet } from './style-manager';
 
 // ============================================
 // Types
@@ -75,8 +76,8 @@ const OVERLAY_STYLES = `
   width: 85%;
   max-width: 1200px;
   max-height: 85vh;
-  background: var(--bg-secondary, #141414);
-  border: 1px solid var(--border-color, #2a2a2a);
+  background: var(--thinkt-bg-secondary, #0f1115);
+  border: 1px solid var(--thinkt-border-color, rgba(255, 255, 255, 0.08));
   border-radius: var(--radius-lg, 8px);
   box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
   display: flex;
@@ -98,7 +99,7 @@ const OVERLAY_STYLES = `
 
 .thinkt-search-header {
   padding: 16px;
-  border-bottom: 1px solid var(--border-color, #2a2a2a);
+  border-bottom: 1px solid var(--thinkt-border-color, rgba(255, 255, 255, 0.08));
   display: flex;
   flex-direction: column;
   gap: 12px;
@@ -107,21 +108,21 @@ const OVERLAY_STYLES = `
 .thinkt-search-title {
   font-size: 14px;
   font-weight: 600;
-  color: var(--text-primary, #f0f0f0);
+  color: var(--thinkt-text-primary, #f8fafc);
   display: flex;
   align-items: center;
   justify-content: space-between;
 }
 
 .thinkt-search-title kbd {
-  font-family: var(--font-mono, monospace);
+  font-family: var(--thinkt-font-mono, 'SF Mono', Monaco, 'Cascadia Code', monospace);
   font-size: 11px;
   font-weight: normal;
   padding: 2px 6px;
-  background: var(--bg-tertiary, #1a1a1a);
-  border: 1px solid var(--border-color-light, #333);
+  background: var(--thinkt-bg-tertiary, #181a1f);
+  border: 1px solid var(--thinkt-border-color-light, rgba(255, 255, 255, 0.12));
   border-radius: var(--radius-sm, 4px);
-  color: var(--text-muted, #666);
+  color: var(--thinkt-muted-color, #64748b);
 }
 
 .thinkt-search-input-wrapper {
@@ -133,7 +134,7 @@ const OVERLAY_STYLES = `
 .thinkt-search-icon {
   position: absolute;
   left: 12px;
-  color: var(--text-muted, #666);
+  color: var(--thinkt-muted-color, #64748b);
   font-size: 16px;
   pointer-events: none;
 }
@@ -141,21 +142,21 @@ const OVERLAY_STYLES = `
 .thinkt-search-input {
   width: 100%;
   padding: 10px 12px 10px 36px;
-  background: var(--bg-tertiary, #1a1a1a);
-  border: 1px solid var(--border-color-light, #333);
+  background: var(--thinkt-bg-tertiary, #181a1f);
+  border: 1px solid var(--thinkt-border-color-light, rgba(255, 255, 255, 0.12));
   border-radius: var(--radius-md, 6px);
-  color: var(--text-primary, #f0f0f0);
+  color: var(--thinkt-text-primary, #f8fafc);
   font-size: 14px;
   outline: none;
   transition: border-color 0.15s ease;
 }
 
 .thinkt-search-input:focus {
-  border-color: var(--accent-primary, #6366f1);
+  border-color: var(--thinkt-accent-color, #6366f1);
 }
 
 .thinkt-search-input::placeholder {
-  color: var(--text-muted, #666);
+  color: var(--thinkt-muted-color, #64748b);
 }
 
 .thinkt-search-options {
@@ -169,7 +170,7 @@ const OVERLAY_STYLES = `
   display: flex;
   align-items: center;
   gap: 6px;
-  color: var(--text-secondary, #a0a0a0);
+  color: var(--thinkt-text-secondary, #94a3b8);
   cursor: pointer;
   user-select: none;
 }
@@ -177,7 +178,7 @@ const OVERLAY_STYLES = `
 .thinkt-search-option input[type="checkbox"] {
   width: 14px;
   height: 14px;
-  accent-color: var(--accent-primary, #6366f1);
+  accent-color: var(--thinkt-accent-color, #6366f1);
   cursor: pointer;
 }
 
@@ -190,20 +191,20 @@ const OVERLAY_STYLES = `
 .thinkt-search-projects {
   width: 220px;
   min-width: 220px;
-  border-right: 1px solid var(--border-color, #2a2a2a);
-  background: var(--bg-tertiary, #1a1a1a);
+  border-right: 1px solid var(--thinkt-border-color, rgba(255, 255, 255, 0.08));
+  background: var(--thinkt-bg-tertiary, #181a1f);
   display: flex;
   flex-direction: column;
 }
 
 .thinkt-search-projects-header {
   padding: 12px 16px;
-  border-bottom: 1px solid var(--border-color, #2a2a2a);
+  border-bottom: 1px solid var(--thinkt-border-color, rgba(255, 255, 255, 0.08));
   font-size: 11px;
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.5px;
-  color: var(--text-muted, #666);
+  color: var(--thinkt-muted-color, #64748b);
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -217,7 +218,7 @@ const OVERLAY_STYLES = `
 .thinkt-search-projects-actions button {
   background: none;
   border: none;
-  color: var(--accent-primary, #6366f1);
+  color: var(--thinkt-accent-color, #6366f1);
   font-size: 11px;
   cursor: pointer;
   padding: 2px 6px;
@@ -225,7 +226,7 @@ const OVERLAY_STYLES = `
 }
 
 .thinkt-search-projects-actions button:hover {
-  background: var(--bg-hover, #252525);
+  background: var(--thinkt-hover-bg, rgba(255, 255, 255, 0.04));
 }
 
 .thinkt-search-projects-list {
@@ -242,18 +243,18 @@ const OVERLAY_STYLES = `
   border-radius: var(--radius-sm, 4px);
   cursor: pointer;
   font-size: 12px;
-  color: var(--text-secondary, #a0a0a0);
+  color: var(--thinkt-text-secondary, #94a3b8);
   transition: background-color 0.12s ease;
 }
 
 .thinkt-search-project-item:hover {
-  background: var(--bg-hover, #252525);
+  background: var(--thinkt-hover-bg, rgba(255, 255, 255, 0.04));
 }
 
 .thinkt-search-project-item input[type="checkbox"] {
   width: 14px;
   height: 14px;
-  accent-color: var(--accent-primary, #6366f1);
+  accent-color: var(--thinkt-accent-color, #6366f1);
   cursor: pointer;
   flex-shrink: 0;
 }
@@ -276,8 +277,8 @@ const OVERLAY_STYLES = `
 
 .thinkt-search-project-count {
   font-size: 10px;
-  color: var(--text-muted, #666);
-  background: var(--bg-secondary, #141414);
+  color: var(--thinkt-muted-color, #64748b);
+  background: var(--thinkt-bg-secondary, #0f1115);
   padding: 1px 4px;
   border-radius: 3px;
   flex-shrink: 0;
@@ -305,11 +306,11 @@ const OVERLAY_STYLES = `
 
 .thinkt-search-result:hover,
 .thinkt-search-result.selected {
-  background: var(--bg-hover, #252525);
+  background: var(--thinkt-hover-bg, rgba(255, 255, 255, 0.04));
 }
 
 .thinkt-search-result.selected {
-  border-left: 2px solid var(--accent-primary, #6366f1);
+  border-left: 2px solid var(--thinkt-accent-color, #6366f1);
   margin-left: -2px;
 }
 
@@ -324,18 +325,18 @@ const OVERLAY_STYLES = `
 .thinkt-search-result-project {
   font-weight: 500;
   font-size: 13px;
-  color: var(--text-primary, #f0f0f0);
+  color: var(--thinkt-text-primary, #f8fafc);
 }
 
 .thinkt-search-result-sep {
-  color: var(--text-muted, #666);
+  color: var(--thinkt-muted-color, #64748b);
   font-size: 12px;
 }
 
 .thinkt-search-result-session {
-  font-family: var(--font-mono, monospace);
+  font-family: var(--thinkt-font-mono, 'SF Mono', Monaco, 'Cascadia Code', monospace);
   font-size: 12px;
-  color: var(--text-secondary, #a0a0a0);
+  color: var(--thinkt-text-secondary, #94a3b8);
 }
 
 .thinkt-search-result-source {
@@ -364,17 +365,17 @@ const OVERLAY_STYLES = `
 
 .thinkt-search-result-matches {
   font-size: 12px;
-  color: var(--text-muted, #666);
+  color: var(--thinkt-muted-color, #64748b);
   margin-left: auto;
 }
 
 .thinkt-search-result-preview {
   font-size: 12px;
   line-height: 1.5;
-  color: var(--text-secondary, #a0a0a0);
-  font-family: var(--font-mono, monospace);
+  color: var(--thinkt-text-secondary, #94a3b8);
+  font-family: var(--thinkt-font-mono, 'SF Mono', Monaco, 'Cascadia Code', monospace);
   padding: 8px;
-  background: var(--bg-tertiary, #1a1a1a);
+  background: var(--thinkt-bg-tertiary, #181a1f);
   border-radius: var(--radius-sm, 4px);
   overflow-x: auto;
   white-space: pre-wrap;
@@ -383,7 +384,7 @@ const OVERLAY_STYLES = `
 
 .thinkt-search-result-preview mark {
   background: rgba(99, 102, 241, 0.3);
-  color: var(--text-primary, #f0f0f0);
+  color: var(--thinkt-text-primary, #f8fafc);
   padding: 1px 2px;
   border-radius: 2px;
   font-weight: 600;
@@ -392,7 +393,7 @@ const OVERLAY_STYLES = `
 .thinkt-search-result-role {
   display: inline-block;
   font-size: 10px;
-  color: var(--text-muted, #666);
+  color: var(--thinkt-muted-color, #64748b);
   margin-right: 8px;
   text-transform: lowercase;
 }
@@ -402,7 +403,7 @@ const OVERLAY_STYLES = `
 .thinkt-search-error {
   padding: 48px;
   text-align: center;
-  color: var(--text-muted, #666);
+  color: var(--thinkt-muted-color, #64748b);
 }
 
 .thinkt-search-empty-icon {
@@ -413,19 +414,19 @@ const OVERLAY_STYLES = `
 
 .thinkt-search-help {
   padding: 12px 16px;
-  border-top: 1px solid var(--border-color, #2a2a2a);
+  border-top: 1px solid var(--thinkt-border-color, rgba(255, 255, 255, 0.08));
   font-size: 11px;
-  color: var(--text-muted, #666);
+  color: var(--thinkt-muted-color, #64748b);
   display: flex;
   justify-content: space-between;
   align-items: center;
 }
 
 .thinkt-search-help kbd {
-  font-family: var(--font-mono, monospace);
+  font-family: var(--thinkt-font-mono, 'SF Mono', Monaco, 'Cascadia Code', monospace);
   padding: 2px 4px;
-  background: var(--bg-tertiary, #1a1a1a);
-  border: 1px solid var(--border-color-light, #333);
+  background: var(--thinkt-bg-tertiary, #181a1f);
+  border: 1px solid var(--thinkt-border-color-light, rgba(255, 255, 255, 0.12));
   border-radius: var(--radius-sm, 4px);
   margin: 0 2px;
 }
@@ -433,21 +434,21 @@ const OVERLAY_STYLES = `
 .thinkt-search-no-indexer {
   padding: 32px;
   text-align: center;
-  color: var(--text-muted, #666);
+  color: var(--thinkt-muted-color, #64748b);
 }
 
 .thinkt-search-no-indexer-title {
   font-size: 14px;
   font-weight: 500;
-  color: var(--text-secondary, #a0a0a0);
+  color: var(--thinkt-text-secondary, #94a3b8);
   margin-bottom: 8px;
 }
 
 .thinkt-search-mode-toggle {
   display: flex;
   gap: 0;
-  background: var(--bg-tertiary, #1a1a1a);
-  border: 1px solid var(--border-color-light, #333);
+  background: var(--thinkt-bg-tertiary, #181a1f);
+  border: 1px solid var(--thinkt-border-color-light, rgba(255, 255, 255, 0.12));
   border-radius: var(--radius-md, 6px);
   overflow: hidden;
   font-size: 12px;
@@ -457,7 +458,7 @@ const OVERLAY_STYLES = `
   padding: 6px 14px;
   background: none;
   border: none;
-  color: var(--text-muted, #666);
+  color: var(--thinkt-muted-color, #64748b);
   cursor: pointer;
   transition: all 0.15s ease;
   font-size: 12px;
@@ -465,17 +466,17 @@ const OVERLAY_STYLES = `
 }
 
 .thinkt-search-mode-btn:hover {
-  color: var(--text-secondary, #a0a0a0);
+  color: var(--thinkt-text-secondary, #94a3b8);
 }
 
 .thinkt-search-mode-btn.active {
-  background: var(--accent-primary, #6366f1);
+  background: var(--thinkt-accent-color, #6366f1);
   color: #fff;
 }
 
 .thinkt-search-semantic-hint {
   font-size: 11px;
-  color: var(--text-muted, #666);
+  color: var(--thinkt-muted-color, #64748b);
   font-style: italic;
   padding: 0 4px;
 }
@@ -503,7 +504,7 @@ const OVERLAY_STYLES = `
 
 .thinkt-search-result-first-prompt {
   font-size: 11px;
-  color: var(--text-muted, #666);
+  color: var(--thinkt-muted-color, #64748b);
   margin-top: 4px;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -512,15 +513,15 @@ const OVERLAY_STYLES = `
 
 .thinkt-search-result-timestamp {
   font-size: 11px;
-  color: var(--text-muted, #666);
+  color: var(--thinkt-muted-color, #64748b);
 }
 
 .thinkt-search-preview-loading {
   font-size: 12px;
-  color: var(--text-muted, #666);
+  color: var(--thinkt-muted-color, #64748b);
   font-style: italic;
   padding: 8px;
-  background: var(--bg-tertiary, #1a1a1a);
+  background: var(--thinkt-bg-tertiary, #181a1f);
   border-radius: var(--radius-sm, 4px);
 }
 `;
@@ -543,7 +544,6 @@ export class SearchOverlay {
   private isLoading = false;
   private searchDebounceTimer: ReturnType<typeof setTimeout> | null = null;
   private boundHandlers: Array<() => void> = [];
-  private stylesInjected = false;
   private isOpen = false;
 
   // Search options
@@ -558,24 +558,7 @@ export class SearchOverlay {
     this.elements = options.elements;
     this.options = options;
     this.client = options.client ?? getDefaultClient();
-    this.injectStyles();
-  }
-
-  // ============================================
-  // Styles
-  // ============================================
-
-  private injectStyles(): void {
-    if (this.stylesInjected) return;
-
-    const styleId = 'thinkt-search-overlay-styles';
-    if (!document.getElementById(styleId)) {
-      const style = document.createElement('style');
-      style.id = styleId;
-      style.textContent = OVERLAY_STYLES;
-      document.head.appendChild(style);
-    }
-    this.stylesInjected = true;
+    injectStyleSheet('thinkt-search-overlay-styles', OVERLAY_STYLES);
   }
 
   // ============================================

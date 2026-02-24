@@ -8,6 +8,7 @@
 import type { SessionMeta } from '@wethinkt/ts-thinkt';
 import { type ThinktClient, getDefaultClient } from '@wethinkt/ts-thinkt/api';
 import { i18n } from '@lingui/core';
+import { injectStyleSheet } from './style-manager';
 
 // ============================================
 // Types
@@ -69,7 +70,7 @@ const PANEL_STYLES = `
   justify-content: space-between;
   padding: 8px 12px;
   border-bottom: 1px solid var(--thinkt-border-color, #2a2a2a);
-  background: var(--thinkt-bg-tertiary, #1a1a1a);
+  background: var(--thinkt-bg-tertiary, #181a1f);
   flex-shrink: 0;
 }
 
@@ -97,7 +98,7 @@ const PANEL_STYLES = `
 
 .thinkt-project-timeline-close:hover {
   background: var(--thinkt-hover-bg, #252525);
-  color: var(--thinkt-text-secondary, #a0a0a0);
+  color: var(--thinkt-text-secondary, #94a3b8);
 }
 
 .thinkt-project-timeline-content {
@@ -118,7 +119,7 @@ const PANEL_STYLES = `
   padding: 8px 12px;
   border-top: 1px solid var(--thinkt-border-color, #2a2a2a);
   font-size: 11px;
-  color: var(--thinkt-text-secondary, #a0a0a0);
+  color: var(--thinkt-text-secondary, #94a3b8);
   flex-wrap: wrap;
   flex-shrink: 0;
 }
@@ -177,7 +178,7 @@ const PANEL_STYLES = `
 
 .thinkt-project-timeline-tooltip-title {
   font-weight: 500;
-  color: var(--thinkt-text-primary, #f0f0f0);
+  color: var(--thinkt-text-primary, #f8fafc);
   margin-bottom: 4px;
   line-height: 1.3;
 }
@@ -211,7 +212,6 @@ export class ProjectTimelinePanel {
   private tooltip: HTMLElement | null = null;
   private isLoading = false;
   private isVisible = false;
-  private stylesInjected = false;
   private cachedProjectKey: string | null = null;
 
   // Dimensions
@@ -229,7 +229,7 @@ export class ProjectTimelinePanel {
   }
 
   private init(): void {
-    this.injectStyles();
+    injectStyleSheet('thinkt-project-timeline-styles', PANEL_STYLES);
     this.createStructure();
 
     // Create tooltip
@@ -241,19 +241,6 @@ export class ProjectTimelinePanel {
     if (this.options.projectId) {
       void this.loadSessions(this.options.projectId, this.options.projectSource);
     }
-  }
-
-  private injectStyles(): void {
-    if (this.stylesInjected) return;
-
-    const styleId = 'thinkt-project-timeline-styles';
-    if (!document.getElementById(styleId)) {
-      const style = document.createElement('style');
-      style.id = styleId;
-      style.textContent = PANEL_STYLES;
-      document.head.appendChild(style);
-    }
-    this.stylesInjected = true;
   }
 
   private createStructure(): void {
@@ -499,7 +486,7 @@ export class ProjectTimelinePanel {
     const label = document.createElementNS('http://www.w3.org/2000/svg', 'text');
     label.setAttribute('x', '10');
     label.setAttribute('y', String(y + 4));
-    label.setAttribute('fill', 'var(--thinkt-text-secondary, #a0a0a0)');
+    label.setAttribute('fill', 'var(--thinkt-text-secondary, #94a3b8)');
     label.setAttribute('font-size', '11');
     label.setAttribute('font-weight', '500');
     label.setAttribute('text-anchor', 'start');

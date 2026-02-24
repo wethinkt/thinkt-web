@@ -75,3 +75,6 @@ export {
   type ProjectTimelinePanelOptions,
 } from './ProjectTimelinePanel';
 
+// Style Manager
+export { injectStyleSheet } from './style-manager';
+

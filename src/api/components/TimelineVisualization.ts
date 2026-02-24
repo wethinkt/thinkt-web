@@ -9,6 +9,7 @@
 import type { SessionMeta } from '@wethinkt/ts-thinkt';
 import { type ThinktClient, getDefaultClient } from '@wethinkt/ts-thinkt/api';
 import { i18n } from '@lingui/core';
+import { injectStyleSheet } from './style-manager';
 
 // ============================================
 // Types
@@ -146,10 +147,10 @@ const TIMELINE_STYLES = `
 .thinkt-timeline-btn {
   font-size: 11px;
   padding: 4px 10px;
-  background: var(--thinkt-bg-tertiary, #252525);
+  background: var(--thinkt-bg-tertiary, #181a1f);
   border: 1px solid var(--thinkt-border-color, #333);
   border-radius: 4px;
-  color: var(--thinkt-text-secondary, #a0a0a0);
+  color: var(--thinkt-text-secondary, #94a3b8);
   cursor: pointer;
   transition: all 0.15s ease;
 }
@@ -177,10 +178,10 @@ const TIMELINE_STYLES = `
   font-size: 10px;
   padding: 3px 6px;
   min-width: 30px;
-  background: var(--thinkt-bg-tertiary, #252525);
+  background: var(--thinkt-bg-tertiary, #181a1f);
   border: 1px solid var(--thinkt-border-color, #333);
   border-radius: 3px;
-  color: var(--thinkt-text-secondary, #a0a0a0);
+  color: var(--thinkt-text-secondary, #94a3b8);
   cursor: pointer;
 }
 
@@ -256,7 +257,7 @@ const TIMELINE_STYLES = `
   transform: translateX(-50%);
   font-size: 11px;
   font-weight: 600;
-  color: var(--thinkt-text-secondary, #a0a0a0);
+  color: var(--thinkt-text-secondary, #94a3b8);
   white-space: nowrap;
 }
 
@@ -317,7 +318,7 @@ const TIMELINE_STYLES = `
   font-size: 11px;
   font-weight: 500;
   line-height: 1.1;
-  color: var(--thinkt-text-secondary, #a0a0a0);
+  color: var(--thinkt-text-secondary, #94a3b8);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -393,7 +394,6 @@ export class TimelineVisualization {
   private includeDeletedProjects = false;
   private tooltip: HTMLElement | null = null;
   private isLoading = false;
-  private stylesInjected = false;
   private groupBy: 'project' | 'source' = 'project';
   private disposed = false;
   private rafScrollSync = 0;
@@ -441,22 +441,9 @@ export class TimelineVisualization {
   }
 
   private init(): void {
-    this.injectStyles();
+    injectStyleSheet('thinkt-timeline-styles', TIMELINE_STYLES);
     this.createStructure();
     void this.loadData();
-  }
-
-  private injectStyles(): void {
-    if (this.stylesInjected) return;
-
-    const styleId = 'thinkt-timeline-styles';
-    if (!document.getElementById(styleId)) {
-      const style = document.createElement('style');
-      style.id = styleId;
-      style.textContent = TIMELINE_STYLES;
-      document.head.appendChild(style);
-    }
-    this.stylesInjected = true;
   }
 
   private createStructure(): void {
