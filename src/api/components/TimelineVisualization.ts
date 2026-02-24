@@ -828,11 +828,8 @@ export class TimelineVisualization {
       this.sourceInfos = sourceInfos
         .map((sourceInfo) => {
           const name = (sourceInfo.name ?? '').toString().trim().toLowerCase();
-          const rawBasePath = 'base_path' in sourceInfo
-            ? sourceInfo.base_path
-            : ('basePath' in sourceInfo ? sourceInfo.basePath : '');
-          const basePath = typeof rawBasePath === 'string' && rawBasePath.trim().length > 0
-            ? this.normalizePath(rawBasePath)
+          const basePath = typeof sourceInfo.base_path === 'string' && sourceInfo.base_path.trim().length > 0
+            ? this.normalizePath(sourceInfo.base_path)
             : '';
           return { name, basePath };
         })

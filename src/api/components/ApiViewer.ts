@@ -1271,19 +1271,10 @@ export class ApiViewer {
       this.sourceCapabilities = sources
         .map((source) => {
           const name = this.normalizeSourceName(typeof source.name === 'string' ? source.name : '');
-          const sourceCapabilities = source as {
-            base_path?: string;
-            basePath?: string;
-            can_resume?: boolean;
-            canResume?: boolean;
-          };
-          const rawBasePath = typeof sourceCapabilities.base_path === 'string'
-            ? sourceCapabilities.base_path
-            : sourceCapabilities.basePath;
-          const basePath = rawBasePath && rawBasePath.trim().length > 0
-            ? this.normalizePath(rawBasePath)
+          const basePath = source.base_path && source.base_path.trim().length > 0
+            ? this.normalizePath(source.base_path)
             : '';
-          const canResume = Boolean(sourceCapabilities.can_resume || sourceCapabilities.canResume);
+          const canResume = Boolean(source.can_resume);
           return { name, basePath, canResume };
         })
         .filter((source) => source.name.length > 0);
