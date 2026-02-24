@@ -552,7 +552,6 @@ export class SearchOverlay {
   private searchMode: 'text' | 'semantic' = 'text';
   private semanticResults: SemanticSearchResult[] = [];
   private filteredSemanticResults: SemanticSearchResult[] = [];
-  // @ts-ignore — used in Task 5 (fetchSemanticPreviews)
   private semanticPreviews: Map<string, string> = new Map(); // entry_uuid -> preview text
 
   constructor(options: SearchOverlayOptions) {
@@ -1153,9 +1152,55 @@ export class SearchOverlay {
     }
   }
 
-  private fetchSemanticPreviews(): Promise<void> {
-    // TODO: Task 5 will implement this
-    return Promise.resolve();
+  private async fetchSemanticPreviews(): Promise<void> {
+    // Group results by session_path to minimize API calls
+    const sessionGroups = new Map<string, SemanticSearchResult[]>();
+    for (const result of this.filteredSemanticResults) {
+      if (!result.session_path || !result.entry_uuid) continue;
+      const group = sessionGroups.get(result.session_path) ?? [];
+      group.push(result);
+      sessionGroups.set(result.session_path, group);
+    }
+
+    // Fetch each session and extract matching entries
+    const fetchPromises = Array.from(sessionGroups.entries()).map(
+      async ([sessionPath, results]) => {
+        try {
+          const session = await this.client.getSession(sessionPath);
+          for (const result of results) {
+            const entry = session.entries.find(e => e.uuid === result.entry_uuid);
+            if (entry?.text) {
+              this.semanticPreviews.set(result.entry_uuid!, entry.text);
+            }
+          }
+        } catch {
+          // Silently skip failed session fetches
+        }
+      }
+    );
+
+    await Promise.allSettled(fetchPromises);
+
+    // Update the DOM with previews if still in semantic mode
+    if (this.searchMode === 'semantic' && this.isOpen) {
+      this.updateSemanticPreviews();
+    }
+  }
+
+  private updateSemanticPreviews(): void {
+    const loadingElements = this.overlay?.querySelectorAll<HTMLElement>('.thinkt-search-preview-loading');
+    loadingElements?.forEach(el => {
+      const uuid = el.dataset.entryUuid;
+      if (!uuid) return;
+      const preview = this.semanticPreviews.get(uuid);
+      if (preview) {
+        // Find the corresponding result to get the role
+        const result = this.filteredSemanticResults.find(r => r.entry_uuid === uuid);
+        const role = result?.role ?? '';
+        el.className = 'thinkt-search-result-preview';
+        el.innerHTML = `<span class="thinkt-search-result-role">[${this.escapeHtml(role)}]:</span> ${this.escapeHtml(this.truncate(preview, 300))}`;
+      }
+    });
   }
 
   // ============================================
