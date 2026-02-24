@@ -302,18 +302,18 @@
 }
 
 .thinkt-search-result-source--claude {
-  background: rgba(217, 119, 80, 0.15);
-  color: #d97750;
+  background: var(--thinkt-source-claude-bg, rgba(217, 119, 80, 0.15));
+  color: var(--thinkt-source-claude-color, #d97750);
 }
 
 .thinkt-search-result-source--kimi {
-  background: rgba(25, 195, 155, 0.15);
-  color: #19c39b;
+  background: var(--thinkt-source-kimi-bg, rgba(25, 195, 155, 0.15));
+  color: var(--thinkt-source-kimi-color, #19c39b);
 }
 
 .thinkt-search-result-source--gemini {
-  background: rgba(99, 102, 241, 0.15);
-  color: #6366f1;
+  background: var(--thinkt-source-gemini-bg, rgba(99, 102, 241, 0.15));
+  color: var(--thinkt-source-gemini-color, #6366f1);
 }
 
 .thinkt-search-result-matches {

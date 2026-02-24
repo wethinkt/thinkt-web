@@ -1,0 +1,260 @@
+.thinkt-timeline {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  font-family: var(--thinkt-font-family, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif);
+  color: var(--thinkt-text-color, #e0e0e0);
+  background: var(--thinkt-bg-color, #1a1a1a);
+  overflow: hidden;
+}
+
+.thinkt-timeline-header {
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--thinkt-border-color, #333);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-shrink: 0;
+}
+
+.thinkt-timeline-title {
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--thinkt-muted-color, #888);
+}
+
+.thinkt-timeline-controls {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.thinkt-timeline-btn {
+  font-size: 11px;
+  padding: 4px 10px;
+  background: var(--thinkt-bg-tertiary, #181a1f);
+  border: 1px solid var(--thinkt-border-color, #333);
+  border-radius: 4px;
+  color: var(--thinkt-text-secondary, #94a3b8);
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.thinkt-timeline-btn:hover {
+  background: var(--thinkt-hover-bg, #333);
+}
+
+.thinkt-timeline-btn.active {
+  background: var(--thinkt-accent-color, #6366f1);
+  border-color: var(--thinkt-accent-color, #6366f1);
+  color: white;
+}
+
+.thinkt-timeline-zoom {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-left: 6px;
+  padding-left: 8px;
+  border-left: 1px solid var(--thinkt-border-color, #333);
+}
+
+.thinkt-timeline-zoom-preset {
+  font-size: 10px;
+  padding: 3px 6px;
+  min-width: 30px;
+  background: var(--thinkt-bg-tertiary, #181a1f);
+  border: 1px solid var(--thinkt-border-color, #333);
+  border-radius: 3px;
+  color: var(--thinkt-text-secondary, #94a3b8);
+  cursor: pointer;
+}
+
+.thinkt-timeline-zoom-preset:hover {
+  background: var(--thinkt-hover-bg, #333);
+}
+
+.thinkt-timeline-scroll:focus-visible {
+  outline: 1px solid var(--thinkt-accent-color, #6366f1);
+  outline-offset: -1px;
+}
+
+.thinkt-timeline-scroll {
+  position: absolute;
+  inset: 0;
+  overflow: auto;
+}
+
+.thinkt-timeline-viewport {
+  flex: 1;
+  position: relative;
+  overflow: hidden;
+}
+
+.thinkt-timeline-chart-content {
+  position: relative;
+  min-height: 100%;
+}
+
+.thinkt-timeline-time-axis {
+  position: sticky;
+  top: 0;
+  height: 30px;
+  background: transparent;
+  border-bottom: 1px solid var(--thinkt-border-color, #333);
+  z-index: 20;
+}
+
+.thinkt-timeline-time-label {
+  position: absolute;
+  top: 8px;
+  font-size: 10px;
+  color: var(--thinkt-muted-color, #666);
+  transform: translateX(-50%);
+  white-space: nowrap;
+}
+
+.thinkt-timeline-source-content {
+  min-width: 100%;
+  min-height: 100%;
+}
+
+.thinkt-timeline-source-header {
+  position: sticky;
+  top: 0;
+  height: 30px;
+  border-bottom: 1px solid var(--thinkt-border-color, #333);
+  background: var(--thinkt-bg-color, #1a1a1a);
+  z-index: 20;
+}
+
+.thinkt-timeline-source-axis-corner {
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  border-right: 1px solid var(--thinkt-border-color, #2a2a2a);
+}
+
+.thinkt-timeline-source-header-label {
+  position: absolute;
+  top: 8px;
+  transform: translateX(-50%);
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--thinkt-text-secondary, #94a3b8);
+  white-space: nowrap;
+}
+
+.thinkt-timeline-source-time-label {
+  position: absolute;
+  left: 8px;
+  transform: translateY(-50%);
+  font-size: 10px;
+  color: var(--thinkt-muted-color, #666);
+  white-space: nowrap;
+  pointer-events: none;
+}
+
+.thinkt-timeline-source-svg {
+  display: block;
+}
+
+.thinkt-timeline-chart-row {
+  height: 50px;
+  border-bottom: 1px solid var(--thinkt-border-color, #222);
+  position: relative;
+}
+
+.thinkt-timeline-chart-svg {
+  display: block;
+  height: 100%;
+}
+
+/* Floating labels: fixed X, synced Y with scroll position */
+.thinkt-timeline-label-overlay {
+  position: absolute;
+  left: 0;
+  right: auto;
+  top: 0;
+  bottom: 0;
+  width: 140px;
+  overflow: hidden;
+  pointer-events: none;
+  z-index: 30;
+}
+
+.thinkt-timeline-label-track {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 30px;
+  will-change: transform;
+}
+
+.thinkt-timeline-label-item {
+  position: absolute;
+  left: 10px;
+  right: 8px;
+  height: 50px;
+  display: flex;
+  align-items: flex-start;
+  padding-top: 7px;
+  font-size: 11px;
+  font-weight: 500;
+  line-height: 1.1;
+  color: var(--thinkt-text-secondary, #94a3b8);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  background: transparent;
+}
+
+.thinkt-timeline-label-item.clickable {
+  pointer-events: auto;
+  cursor: pointer;
+}
+
+.thinkt-timeline-label-item.clickable:hover {
+  color: var(--thinkt-text-color, #e0e0e0);
+}
+
+.thinkt-timeline-tooltip {
+  position: absolute;
+  background: var(--thinkt-dropdown-bg, #1a1a1a);
+  border: 1px solid var(--thinkt-border-color, #333);
+  border-radius: 6px;
+  padding: 10px 12px;
+  font-size: 12px;
+  pointer-events: none;
+  z-index: 100;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
+  max-width: 280px;
+}
+
+.thinkt-timeline-tooltip-title {
+  font-weight: 500;
+  color: var(--thinkt-text-primary, #f0f0f0);
+  margin-bottom: 4px;
+  line-height: 1.3;
+}
+
+.thinkt-timeline-tooltip-meta {
+  color: var(--thinkt-muted-color, #888);
+  font-size: 11px;
+}
+
+.thinkt-timeline-empty,
+.thinkt-timeline-loading,
+.thinkt-timeline-error {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  color: var(--thinkt-muted-color, #666);
+  text-align: center;
+  padding: 48px;
+}

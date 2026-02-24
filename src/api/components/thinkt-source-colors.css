@@ -1,0 +1,15 @@
+/*
+ * Shared source-provider color tokens.
+ * Injected once; every component CSS references these variables with hardcoded fallbacks.
+ */
+:root {
+  --thinkt-source-claude-color: #d97750;
+  --thinkt-source-claude-bg: rgba(217, 119, 80, 0.15);
+  --thinkt-source-claude-border: rgba(217, 119, 80, 0.4);
+
+  --thinkt-source-kimi-color: #19c39b;
+  --thinkt-source-kimi-bg: rgba(25, 195, 155, 0.15);
+
+  --thinkt-source-gemini-color: #6366f1;
+  --thinkt-source-gemini-bg: rgba(99, 102, 241, 0.15);
+}

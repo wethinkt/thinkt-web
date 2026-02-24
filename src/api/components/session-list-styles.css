@@ -1,0 +1,205 @@
+.thinkt-session-list {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  font-family: var(--thinkt-font-family, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif);
+  color: var(--thinkt-text-color, #e0e0e0);
+  background: var(--thinkt-bg-color, #1a1a1a);
+}
+
+.thinkt-session-list__header {
+  padding: 8px 12px;
+  border-bottom: 1px solid var(--thinkt-border-color, #333);
+  flex-shrink: 0;
+}
+
+.thinkt-session-list__controls {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+}
+
+.thinkt-session-list__search {
+  flex: 1;
+  min-width: 0;
+  padding: 6px 10px;
+  border: 1px solid var(--thinkt-border-color, #333);
+  border-radius: 4px;
+  background: var(--thinkt-input-bg, #252525);
+  color: inherit;
+  font-size: 13px;
+  box-sizing: border-box;
+}
+
+.thinkt-session-list__search:focus {
+  outline: none;
+  border-color: var(--thinkt-accent-color, #6366f1);
+}
+
+.thinkt-session-list__search::placeholder {
+  color: var(--thinkt-muted-color, #666);
+}
+
+.thinkt-session-list__sort {
+  min-width: 88px;
+  max-width: 104px;
+  width: 100%;
+  padding: 6px 8px;
+  border: 1px solid var(--thinkt-border-color, #333);
+  border-radius: 4px;
+  background: var(--thinkt-input-bg, #252525);
+  color: inherit;
+  font-size: 12px;
+}
+
+.thinkt-session-list__sort:focus {
+  outline: none;
+  border-color: var(--thinkt-accent-color, #6366f1);
+}
+
+.thinkt-session-list__stats {
+  font-size: 11px;
+  color: var(--thinkt-muted-color, #666);
+  margin-top: 6px;
+}
+
+.thinkt-session-list__content {
+  flex: 1;
+  overflow-y: auto;
+}
+
+.thinkt-session-list__list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.thinkt-session-list__item {
+  padding: 10px 12px;
+  cursor: pointer;
+  transition: background-color 0.12s ease;
+  border-bottom: 1px solid var(--thinkt-border-color, #252525);
+  border-left: 2px solid transparent;
+}
+
+.thinkt-session-list__item:hover {
+  background: var(--thinkt-hover-bg, #252525);
+}
+
+.thinkt-session-list__item--selected {
+  background: var(--thinkt-selected-bg, rgba(99, 102, 241, 0.15));
+  border-left-color: var(--thinkt-accent-color, #6366f1);
+}
+
+.thinkt-session-list__title {
+  font-weight: 400;
+  font-size: 13px;
+  line-height: 1.4;
+  margin-bottom: 4px;
+  color: var(--thinkt-text-color, #e0e0e0);
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.thinkt-session-list__summary {
+  font-size: 12px;
+  color: var(--thinkt-muted-color, #888);
+  margin-bottom: 6px;
+  display: -webkit-box;
+  -webkit-line-clamp: 1;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  line-height: 1.3;
+}
+
+.thinkt-session-list__meta {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 11px;
+  color: var(--thinkt-muted-color, #666);
+  flex-wrap: wrap;
+}
+
+.thinkt-session-list__meta-item {
+  display: flex;
+  align-items: center;
+  gap: 3px;
+}
+
+.thinkt-session-list__meta-icon {
+  width: 12px;
+  height: 12px;
+  opacity: 0.6;
+}
+
+.thinkt-session-list__badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 1px 4px;
+  border-radius: 3px;
+  font-size: 9px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+}
+
+.thinkt-session-list__badge--claude {
+  background: var(--thinkt-source-claude-bg, rgba(217, 119, 80, 0.15));
+  color: var(--thinkt-source-claude-color, #d97750);
+}
+
+.thinkt-session-list__badge--kimi {
+  background: var(--thinkt-source-kimi-bg, rgba(25, 195, 155, 0.15));
+  color: var(--thinkt-source-kimi-color, #19c39b);
+}
+
+.thinkt-session-list__badge--gemini {
+  background: var(--thinkt-source-gemini-bg, rgba(99, 102, 241, 0.15));
+  color: var(--thinkt-source-gemini-color, #6366f1);
+}
+
+.thinkt-session-list__badge--chunked {
+  background: var(--thinkt-source-gemini-bg, rgba(99, 102, 241, 0.15));
+  color: var(--thinkt-source-gemini-color, #6366f1);
+}
+
+.thinkt-session-list__loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 48px;
+  color: var(--thinkt-muted-color, #888);
+}
+
+.thinkt-session-list__empty {
+  text-align: center;
+  padding: 48px;
+  color: var(--thinkt-muted-color, #888);
+}
+
+.thinkt-session-list__error {
+  padding: 16px;
+  margin: 16px;
+  background: rgba(239, 68, 68, 0.1);
+  border: 1px solid rgba(239, 68, 68, 0.3);
+  border-radius: 8px;
+  color: #ef4444;
+}
+
+.thinkt-session-list__retry {
+  margin-top: 8px;
+  padding: 6px 12px;
+  background: transparent;
+  border: 1px solid currentColor;
+  border-radius: 4px;
+  color: inherit;
+  cursor: pointer;
+  font-size: 12px;
+}
+
+.thinkt-session-list__retry:hover {
+  background: rgba(239, 68, 68, 0.2);
+}
