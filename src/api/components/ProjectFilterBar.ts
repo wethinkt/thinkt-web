@@ -197,6 +197,7 @@ export class ProjectFilterBar {
   private sortFilter: HTMLSelectElement | null = null;
   private includeDeletedToggle: HTMLInputElement | null = null;
   private includeDeletedLabel: HTMLSpanElement | null = null;
+  private searchDebounceTimer: ReturnType<typeof setTimeout> | null = null;
 
   private discoveredSources: string[] = [];
   private sourceCapabilities: SourceCapability[] = [];
@@ -284,8 +285,11 @@ export class ProjectFilterBar {
     includeDeletedLabelEl.appendChild(includeDeletedLabelText);
 
     const handleSearchInput = () => {
-      this.filters.searchQuery = searchInput.value;
-      this.options.onFiltersChanged();
+      if (this.searchDebounceTimer) clearTimeout(this.searchDebounceTimer);
+      this.searchDebounceTimer = setTimeout(() => {
+        this.filters.searchQuery = searchInput.value;
+        this.options.onFiltersChanged();
+      }, 150);
     };
     searchInput.addEventListener('input', handleSearchInput, { signal: this.signal });
 

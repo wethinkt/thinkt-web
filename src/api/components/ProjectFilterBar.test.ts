@@ -1,7 +1,7 @@
 /**
  * @vitest-environment jsdom
  */
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import type { ProjectFilterState } from './ApiViewer';
 import type { ThinktClient } from '@wethinkt/ts-thinkt/api';
 
@@ -11,10 +11,15 @@ let onFiltersChanged: ReturnType<typeof vi.fn>;
 let signal: AbortSignal;
 
 beforeEach(() => {
+  vi.useFakeTimers();
   container = document.createElement('div');
   filters = { searchQuery: '', sources: new Set(), sort: 'date_desc', includeDeleted: false };
   onFiltersChanged = vi.fn();
   signal = new AbortController().signal;
+});
+
+afterEach(() => {
+  vi.useRealTimers();
 });
 
 async function createBar(clientOverrides: Partial<ThinktClient> = {}) {
@@ -85,11 +90,13 @@ describe('ProjectFilterBar', () => {
   });
 
   describe('callbacks', () => {
-    it('fires onFiltersChanged on search input', async () => {
+    it('fires onFiltersChanged on search input after debounce', async () => {
       await createBar();
       const searchInput = container.querySelector('input[type="text"]') as HTMLInputElement;
       searchInput.value = 'test';
       searchInput.dispatchEvent(new Event('input'));
+      expect(onFiltersChanged).not.toHaveBeenCalled();
+      vi.advanceTimersByTime(150);
       expect(onFiltersChanged).toHaveBeenCalledOnce();
       expect(filters.searchQuery).toBe('test');
     });
