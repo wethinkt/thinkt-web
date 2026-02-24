@@ -16,7 +16,7 @@ import { i18n } from '@lingui/core';
 import { ProjectBrowser, type ProjectSortMode } from './ProjectBrowser';
 import { SessionList } from './SessionList';
 import { ConversationView } from './ConversationView';
-import { TreeProjectBrowser, type ProjectGroup, type TreeProjectSortMode } from './TreeProjectBrowser';
+import { TreeProjectBrowser, type ProjectGroup } from './TreeProjectBrowser';
 import { TimelineVisualization, type TimelineProjectSelection } from './TimelineVisualization';
 import { ProjectTimelinePanel } from './ProjectTimelinePanel';
 import { injectStyleSheet } from './style-manager';
@@ -53,6 +53,13 @@ export interface ApiViewerOptions {
 }
 
 export type ProjectViewMode = 'list' | 'tree' | 'timeline';
+
+export interface ProjectFilterState {
+  searchQuery: string;
+  sources: Set<string>;
+  sort: ProjectSortMode;
+  includeDeleted: boolean;
+}
 
 export interface LoadedSession {
   meta: SessionMeta;
@@ -460,10 +467,12 @@ export class ApiViewer {
   private projectIncludeDeletedToggle: HTMLInputElement | null = null;
   private projectIncludeDeletedLabel: HTMLSpanElement | null = null;
   private projectPaneHeightPx: number | null = null;
-  private projectSearchQuery = '';
-  private projectSources = new Set<string>();
-  private projectSort: ProjectSortMode = 'date_desc';
-  private projectIncludeDeleted = false;
+  private projectFilters: ProjectFilterState = {
+    searchQuery: '',
+    sources: new Set(),
+    sort: 'date_desc',
+    includeDeleted: false,
+  };
   private discoveredSources: string[] = [];
   private sourceCapabilities: SourceCapability[] = [];
   private resumableSources: Set<string> = new Set();
@@ -749,7 +758,7 @@ export class ApiViewer {
     searchInput.className = 'thinkt-project-filter__search';
     searchInput.type = 'text';
     searchInput.placeholder = i18n._('Filter projects...');
-    searchInput.value = this.projectSearchQuery;
+    searchInput.value = this.projectFilters.searchQuery;
     this.projectSearchInput = searchInput;
 
     const sourceDropdownContainer = document.createElement('div');
@@ -796,7 +805,7 @@ export class ApiViewer {
 
     const includeDeletedToggle = document.createElement('input');
     includeDeletedToggle.type = 'checkbox';
-    includeDeletedToggle.checked = this.projectIncludeDeleted;
+    includeDeletedToggle.checked = this.projectFilters.includeDeleted;
     this.projectIncludeDeletedToggle = includeDeletedToggle;
 
     const includeDeletedLabelText = document.createElement('span');
@@ -809,19 +818,19 @@ export class ApiViewer {
     includeDeletedLabel.appendChild(includeDeletedLabelText);
 
     const handleSearchInput = () => {
-      this.projectSearchQuery = searchInput.value;
+      this.projectFilters.searchQuery = searchInput.value;
       this.applyProjectFilters();
     };
     searchInput.addEventListener('input', handleSearchInput, { signal: this.abortController.signal });
 
     const handleSortChange = () => {
-      this.projectSort = this.normalizeProjectSort(sortFilter.value);
+      this.projectFilters.sort = this.normalizeProjectSort(sortFilter.value);
       this.applyProjectFilters();
     };
     sortFilter.addEventListener('change', handleSortChange, { signal: this.abortController.signal });
 
     const handleIncludeDeletedChange = () => {
-      this.projectIncludeDeleted = includeDeletedToggle.checked;
+      this.projectFilters.includeDeleted = includeDeletedToggle.checked;
       this.applyProjectFilters();
     };
     includeDeletedToggle.addEventListener('change', handleIncludeDeletedChange, { signal: this.abortController.signal });
@@ -941,7 +950,7 @@ export class ApiViewer {
       const checkbox = document.createElement('input');
       checkbox.type = 'checkbox';
       checkbox.value = source;
-      checkbox.checked = this.projectSources.has(source);
+      checkbox.checked = this.projectFilters.sources.has(source);
 
       const text = document.createElement('span');
       text.textContent = source.charAt(0).toUpperCase() + source.slice(1);
@@ -952,9 +961,9 @@ export class ApiViewer {
 
       checkbox.addEventListener('change', () => {
         if (checkbox.checked) {
-          this.projectSources.add(source);
+          this.projectFilters.sources.add(source);
         } else {
-          this.projectSources.delete(source);
+          this.projectFilters.sources.delete(source);
         }
         this.updateSourceDropdownButton();
         this.applyProjectFilters();
@@ -980,13 +989,13 @@ export class ApiViewer {
     if (!this.projectSourceDropdownBtn) return;
     const btnText = this.projectSourceDropdownBtn.querySelector('span:first-child');
     if (btnText) {
-      if (this.projectSources.size === 0) {
+      if (this.projectFilters.sources.size === 0) {
         btnText.textContent = i18n._('All Sources');
-      } else if (this.projectSources.size === 1) {
-        const source = Array.from(this.projectSources)[0];
+      } else if (this.projectFilters.sources.size === 1) {
+        const source = Array.from(this.projectFilters.sources)[0];
         btnText.textContent = source.charAt(0).toUpperCase() + source.slice(1);
       } else {
-        btnText.textContent = i18n._('{count} Sources', { count: this.projectSources.size });
+        btnText.textContent = i18n._('{count} Sources', { count: this.projectFilters.sources.size });
       }
     }
   }
@@ -995,7 +1004,7 @@ export class ApiViewer {
     if (!this.projectSortFilter) return;
 
     const sortFilter = this.projectSortFilter;
-    const selected = this.normalizeProjectSort(sortFilter.value || this.projectSort);
+    const selected = this.normalizeProjectSort(sortFilter.value || this.projectFilters.sort);
     sortFilter.innerHTML = '';
 
     const options: Array<{ value: ProjectSortMode; label: string }> = [
@@ -1013,13 +1022,13 @@ export class ApiViewer {
     });
 
     sortFilter.value = selected;
-    this.projectSort = selected;
+    this.projectFilters.sort = selected;
   }
 
   private async discoverSourcesFromProjects(): Promise<void> {
     try {
       const projects = await this.client.getProjects(undefined, {
-        includeDeleted: this.projectIncludeDeleted,
+        includeDeleted: this.projectFilters.includeDeleted,
       });
       const discovered = projects
         .map((project) => (typeof project.source === 'string' ? project.source.trim() : ''))
@@ -1031,32 +1040,16 @@ export class ApiViewer {
   }
 
   private applyProjectFilters(): void {
-    const query = this.projectSearchInput?.value ?? this.projectSearchQuery;
-    const sort = this.projectSortFilter?.value || this.projectSort;
-    const includeDeleted = this.projectIncludeDeletedToggle?.checked ?? this.projectIncludeDeleted;
-    const normalizedSort = this.normalizeProjectSort(sort);
-    this.projectSearchQuery = query;
-    this.projectSort = normalizedSort;
-    this.projectIncludeDeleted = includeDeleted;
+    // Sync from DOM inputs to shared state
+    if (this.projectSearchInput) this.projectFilters.searchQuery = this.projectSearchInput.value;
+    if (this.projectSortFilter) this.projectFilters.sort = this.normalizeProjectSort(this.projectSortFilter.value);
+    if (this.projectIncludeDeletedToggle) this.projectFilters.includeDeleted = this.projectIncludeDeletedToggle.checked;
 
+    // Single call on whichever view is active
     switch (this.currentProjectView) {
-      case 'list':
-        this.projectBrowser?.setIncludeDeleted(includeDeleted);
-        this.projectBrowser?.setSearch(query);
-        this.projectBrowser?.setSourceFilter(this.projectSources);
-        this.projectBrowser?.setSort(normalizedSort);
-        break;
-      case 'tree':
-        this.treeProjectBrowser?.setIncludeDeleted(includeDeleted);
-        this.treeProjectBrowser?.setSearch(query);
-        this.treeProjectBrowser?.setSourceFilter(this.projectSources);
-        this.treeProjectBrowser?.setSort(normalizedSort as TreeProjectSortMode);
-        break;
-      case 'timeline':
-        this.timelineVisualization?.setIncludeDeleted(includeDeleted);
-        this.timelineVisualization?.setSearch(query);
-        this.timelineVisualization?.setSourceFilter(this.projectSources);
-        break;
+      case 'list': this.projectBrowser?.applyFilters(); break;
+      case 'tree': this.treeProjectBrowser?.applyFilters(); break;
+      case 'timeline': this.timelineVisualization?.applyFilters(); break;
     }
   }
 
@@ -1159,7 +1152,7 @@ export class ApiViewer {
       client: this.client,
       enableSearch: false,
       enableSourceFilter: false,
-      initialIncludeDeleted: this.projectIncludeDeleted,
+      filters: this.projectFilters,
       onProjectSelect: (project) => { this.handleProjectSelect(project); },
       onError: (error) => { this.handleError(error); },
     });
@@ -1172,7 +1165,7 @@ export class ApiViewer {
         container: this.elements.projectBrowserContainer,
       },
       client: this.client,
-      initialIncludeDeleted: this.projectIncludeDeleted,
+      filters: this.projectFilters,
       onSessionSelect: (session, project) => {
         void this.handleTreeSessionSelect(session, project);
       },
@@ -1187,7 +1180,7 @@ export class ApiViewer {
         container: this.elements.projectBrowserContainer,
       },
       client: this.client,
-      includeDeletedProjects: this.projectIncludeDeleted,
+      filters: this.projectFilters,
       onProjectSelect: (project) => {
         this.handleTimelineProjectSelect(project);
       },

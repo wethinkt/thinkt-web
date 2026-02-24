@@ -8,6 +8,7 @@
 import type { Project } from '@wethinkt/ts-thinkt';
 import { type ThinktClient, getDefaultClient } from '@wethinkt/ts-thinkt/api';
 import { i18n } from '@lingui/core';
+import type { ProjectFilterState } from './ApiViewer';
 import { injectStyleSheet } from './style-manager';
 
 // ============================================
@@ -39,12 +40,8 @@ export interface ProjectBrowserOptions {
   onError?: (error: Error) => void;
   /** Custom renderer for project items */
   projectRenderer?: (project: Project, index: number) => HTMLElement;
-  /** Initial sources filter */
-  initialSources?: string[];
-  /** Whether to show deleted projects initially (default: false) */
-  initialIncludeDeleted?: boolean;
-  /** Initial project sort mode */
-  initialSort?: ProjectSortMode;
+  /** Shared filter state owned by ApiViewer */
+  filters?: ProjectFilterState;
   /** Enable search filtering */
   enableSearch?: boolean;
   /** Enable source filtering */
@@ -264,10 +261,8 @@ export class ProjectBrowser {
   private projects: Project[] = [];
   private filteredProjects: Project[] = [];
   private discoveredSources: string[] = [];
-  private searchQuery = '';
-  private currentSourceFilters: Set<string> | null = null;
-  private includeDeletedProjects = false;
-  private sortMode: ProjectSortMode = 'date_desc';
+  private filters: ProjectFilterState;
+  private lastLoadedIncludeDeleted = false;
   private selectedIndex = -1;
   private isLoading = false;
   private itemElements: Map<string, HTMLElement> = new Map();
@@ -283,11 +278,12 @@ export class ProjectBrowser {
       enableSourceFilter: options.enableSourceFilter ?? true,
       classPrefix: options.classPrefix ?? 'thinkt-project-browser',
     };
-    if (options.initialSources && options.initialSources.length > 0) {
-      this.currentSourceFilters = new Set(options.initialSources);
-    }
-    this.includeDeletedProjects = options.initialIncludeDeleted ?? false;
-    this.sortMode = options.initialSort ?? 'date_desc';
+    this.filters = options.filters ?? {
+      searchQuery: '',
+      sources: new Set(),
+      sort: 'date_desc',
+      includeDeleted: false,
+    };
 
     // Get client (either provided or default)
     this.client = options.client ?? getDefaultClient();
@@ -329,7 +325,7 @@ export class ProjectBrowser {
       searchInput.className = `${classPrefix}__search`;
       searchInput.type = 'text';
       searchInput.placeholder = i18n._('Filter projects...');
-      searchInput.value = this.searchQuery;
+      searchInput.value = this.filters.searchQuery;
       if (!this.elements.searchInput) {
         this.elements.searchInput = searchInput;
         toolbar.appendChild(searchInput);
@@ -398,7 +394,7 @@ export class ProjectBrowser {
     // Search input
     if (searchInput) {
       const handleSearch = () => {
-        this.searchQuery = searchInput.value.toLowerCase();
+        this.filters.searchQuery = searchInput.value.toLowerCase();
         this.filterProjects();
       };
       searchInput.addEventListener('input', handleSearch, { signal: this.abortController.signal });
@@ -456,8 +452,9 @@ export class ProjectBrowser {
     try {
       // Fetch all projects regardless of source, we filter locally
       this.projects = await this.client.getProjects(undefined, {
-        includeDeleted: this.includeDeletedProjects,
+        includeDeleted: this.filters.includeDeleted,
       });
+      this.lastLoadedIncludeDeleted = this.filters.includeDeleted;
       const seen = new Set(this.discoveredSources);
       this.projects.forEach((project) => {
         if (typeof project.source === 'string' && project.source.trim().length > 0) {
@@ -518,16 +515,16 @@ export class ProjectBrowser {
   // ============================================
 
   private filterProjects(): void {
-    const searchTerm = this.searchQuery.trim();
+    const searchTerm = this.filters.searchQuery.trim().toLowerCase();
+    const sourceFilters = this.filters.sources;
 
     this.filteredProjects = this.projects.filter(project => {
       const matchesSearch = !searchTerm ||
         project.name?.toLowerCase().includes(searchTerm) ||
         project.path?.toLowerCase().includes(searchTerm);
 
-      const matchesSource = !this.currentSourceFilters ||
-        this.currentSourceFilters.size === 0 ||
-        (typeof project.source === 'string' && this.currentSourceFilters.has(project.source.trim().toLowerCase()));
+      const matchesSource = sourceFilters.size === 0 ||
+        (typeof project.source === 'string' && sourceFilters.has(project.source.trim().toLowerCase()));
 
       return matchesSearch && matchesSource;
     });
@@ -551,7 +548,7 @@ export class ProjectBrowser {
     const byNameAsc = (): number => this.projectSortName(a).localeCompare(this.projectSortName(b));
     const byDateAsc = (): number => this.projectSortTime(a) - this.projectSortTime(b);
 
-    switch (this.sortMode) {
+    switch (this.filters.sort) {
       case 'name_asc':
         return byNameAsc();
       case 'name_desc':
@@ -751,52 +748,16 @@ export class ProjectBrowser {
   }
 
   /**
-   * Set the search query
+   * Apply current shared filter state. Reloads from API if includeDeleted changed.
    */
-  setSearch(query: string): void {
-    this.searchQuery = query.toLowerCase();
-    if (this.elements.searchInput) {
-      this.elements.searchInput.value = query;
+  applyFilters(): void {
+    if (this.filters.includeDeleted !== this.lastLoadedIncludeDeleted) {
+      void this.loadProjects();
+      return;
     }
-    if (this.isLoading) return;
-    this.filterProjects();
-  }
-
-  /**
-   * Set the source filter
-   */
-  setSourceFilter(sources: Set<string> | string[] | null): void {
-    if (sources === null || (Array.isArray(sources) && sources.length === 0) || (sources instanceof Set && sources.size === 0)) {
-      this.currentSourceFilters = null;
-    } else {
-      this.currentSourceFilters = new Set(sources);
-    }
-
-    // We don't need to reload from API, just apply local filter
     if (!this.isLoading) {
       this.filterProjects();
     }
-  }
-
-  /**
-   * Include or exclude projects whose paths no longer exist.
-   */
-  setIncludeDeleted(includeDeleted: boolean): void {
-    if (this.includeDeletedProjects === includeDeleted) {
-      return;
-    }
-    this.includeDeletedProjects = includeDeleted;
-    void this.loadProjects();
-  }
-
-  /**
-   * Set project sort mode
-   */
-  setSort(sort: ProjectSortMode): void {
-    if (this.sortMode === sort) return;
-    this.sortMode = sort;
-    if (this.isLoading) return;
-    this.filterProjects();
   }
 
   /**

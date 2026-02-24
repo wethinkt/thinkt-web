@@ -9,6 +9,7 @@
 import type { SessionMeta } from '@wethinkt/ts-thinkt';
 import { type ThinktClient, getDefaultClient } from '@wethinkt/ts-thinkt/api';
 import { i18n } from '@lingui/core';
+import type { ProjectFilterState } from './ApiViewer';
 import { injectStyleSheet } from './style-manager';
 
 // ============================================
@@ -34,8 +35,8 @@ export interface TimelineVisualizationOptions {
   onError?: (error: Error) => void;
   /** Grouping mode: 'project' | 'source' */
   groupBy?: 'project' | 'source';
-  /** Include projects whose paths no longer exist */
-  includeDeletedProjects?: boolean;
+  /** Shared filter state owned by ApiViewer */
+  filters?: ProjectFilterState;
 }
 
 export interface TimelineProjectSelection {
@@ -389,9 +390,8 @@ export class TimelineVisualization {
   private sessions: TimelineSession[] = [];
   private rows: TimelineRow[] = [];
   private sourceInfos: TimelineSourceInfo[] = [];
-  private searchQuery = '';
-  private sourceFilters: Set<string> | null = null;
-  private includeDeletedProjects = false;
+  private filters: ProjectFilterState;
+  private lastLoadedIncludeDeleted = false;
   private tooltip: HTMLElement | null = null;
   private isLoading = false;
   private groupBy: 'project' | 'source' = 'project';
@@ -432,7 +432,12 @@ export class TimelineVisualization {
     this.options = options;
     this.client = options.client ?? getDefaultClient();
     this.groupBy = options.groupBy ?? 'project';
-    this.includeDeletedProjects = options.includeDeletedProjects ?? false;
+    this.filters = options.filters ?? {
+      searchQuery: '',
+      sources: new Set(),
+      sort: 'date_desc',
+      includeDeleted: false,
+    };
     this.container = options.elements.container;
     this.viewport = document.createElement('div');
     this.scrollArea = document.createElement('div');
@@ -848,10 +853,11 @@ export class TimelineVisualization {
     try {
       const [projects] = await Promise.all([
         this.client.getProjects(undefined, {
-          includeDeleted: this.includeDeletedProjects,
+          includeDeleted: this.filters.includeDeleted,
         }),
         this.loadSourceInfos(),
       ]);
+      this.lastLoadedIncludeDeleted = this.filters.includeDeleted;
       const allSessions: TimelineSession[] = [];
       const discoveredSources = new Set<string>();
       let hasPendingCommit = false;
@@ -974,13 +980,19 @@ export class TimelineVisualization {
     }
   }
 
-  private applyFilters(options?: { preserveAlignment?: boolean; force?: boolean }): void {
+  applyFilters(options?: { preserveAlignment?: boolean; force?: boolean }): void {
+    // Check if we need to reload from API
+    if (!options?.force && this.filters.includeDeleted !== this.lastLoadedIncludeDeleted) {
+      void this.loadData();
+      return;
+    }
+
     if (!options?.force && this.isLoading && this.allSessions.length === 0) {
       return;
     }
 
-    const query = this.searchQuery.trim();
-    const sourceFilters = this.sourceFilters;
+    const query = this.filters.searchQuery.trim().toLowerCase();
+    const sourceFilters = this.filters.sources;
     this.sessions = this.allSessions.filter((session) => {
       if (sourceFilters && sourceFilters.size > 0 && !sourceFilters.has(session.source.toLowerCase())) {
         return false;
@@ -1539,26 +1551,6 @@ export class TimelineVisualization {
     this.expectedScrollTop = null;
     this.pendingZoomAnchor = null;
     this.render();
-  }
-
-  setSearch(query: string): void {
-    this.searchQuery = query.trim().toLowerCase();
-    this.applyFilters();
-  }
-
-  setSourceFilter(sources: Set<string> | string[] | null): void {
-    if (sources === null || (Array.isArray(sources) && sources.length === 0) || (sources instanceof Set && sources.size === 0)) {
-      this.sourceFilters = null;
-    } else {
-      this.sourceFilters = new Set(sources);
-    }
-    this.applyFilters();
-  }
-
-  setIncludeDeleted(includeDeleted: boolean): void {
-    if (this.includeDeletedProjects === includeDeleted) return;
-    this.includeDeletedProjects = includeDeleted;
-    void this.loadData();
   }
 
   refresh(): Promise<void> {

@@ -18,6 +18,7 @@
 import type { Project, SessionMeta } from '@wethinkt/ts-thinkt';
 import { type ThinktClient, getDefaultClient } from '@wethinkt/ts-thinkt/api';
 import { i18n } from '@lingui/core';
+import type { ProjectFilterState } from './ApiViewer';
 import { injectStyleSheet } from './style-manager';
 
 // ============================================
@@ -42,10 +43,8 @@ export interface TreeProjectBrowserOptions {
   onError?: (error: Error) => void;
   /** Initial view mode (default: 'hierarchical') */
   initialViewMode?: TreeViewMode;
-  /** Initial project sort mode (default: 'date_desc') */
-  initialSort?: TreeProjectSortMode;
-  /** Include projects whose paths no longer exist */
-  initialIncludeDeleted?: boolean;
+  /** Shared filter state owned by ApiViewer */
+  filters?: ProjectFilterState;
 }
 
 /** A group of projects that share the same underlying project path */
@@ -387,13 +386,11 @@ export class TreeProjectBrowser {
   private expandedProjects: Set<string> = new Set();
   private expandedSources: Set<string> = new Set();
   private selectedSessionId: string | null = null;
-  private searchQuery = '';
-  private sourceFilters: Set<string> | null = null;
+  private filters: ProjectFilterState;
+  private lastLoadedIncludeDeleted = false;
   private isLoading = false;
   private abortController = new AbortController();
   private viewMode: TreeViewMode = 'hierarchical';
-  private sortMode: TreeProjectSortMode = 'date_desc';
-  private includeDeletedProjects = false;
 
   constructor(options: TreeProjectBrowserOptions) {
     this.options = options;
@@ -402,8 +399,12 @@ export class TreeProjectBrowser {
     this.contentContainer = document.createElement('div');
     this.headerContainer = document.createElement('div');
     this.viewMode = options.initialViewMode ?? 'hierarchical';
-    this.sortMode = options.initialSort ?? 'date_desc';
-    this.includeDeletedProjects = options.initialIncludeDeleted ?? false;
+    this.filters = options.filters ?? {
+      searchQuery: '',
+      sources: new Set(),
+      sort: 'date_desc',
+      includeDeleted: false,
+    };
     this.init();
   }
 
@@ -463,8 +464,9 @@ export class TreeProjectBrowser {
     try {
       // Load all projects from all sources
       const projects = await this.client.getProjects(undefined, {
-        includeDeleted: this.includeDeletedProjects,
+        includeDeleted: this.filters.includeDeleted,
       });
+      this.lastLoadedIncludeDeleted = this.filters.includeDeleted;
 
       // Group projects by their underlying path
       this.projectGroups = this.groupProjectsByPath(projects);
@@ -940,7 +942,7 @@ export class TreeProjectBrowser {
     const byDateAsc = (): number =>
       a.lastModified.getTime() - b.lastModified.getTime();
 
-    switch (this.sortMode) {
+    switch (this.filters.sort) {
       case 'name_asc':
         return byNameAsc();
       case 'name_desc':
@@ -965,42 +967,23 @@ export class TreeProjectBrowser {
     return this.loadData();
   }
 
-  setSearch(query: string): void {
-    this.searchQuery = query.trim().toLowerCase();
-    if (this.isLoading) return;
-    this.render();
-  }
-
-  setSourceFilter(sources: Set<string> | string[] | null): void {
-    if (sources === null || (Array.isArray(sources) && sources.length === 0) || (sources instanceof Set && sources.size === 0)) {
-      this.sourceFilters = null;
-    } else {
-      this.sourceFilters = new Set(sources);
+  applyFilters(): void {
+    if (this.filters.includeDeleted !== this.lastLoadedIncludeDeleted) {
+      void this.loadData();
+      return;
     }
-    if (this.isLoading) return;
-    this.render();
-  }
-
-  setSort(sort: TreeProjectSortMode): void {
-    if (this.sortMode === sort) return;
-    this.sortMode = sort;
-    if (this.isLoading) return;
-    this.render();
-  }
-
-  setIncludeDeleted(includeDeleted: boolean): void {
-    if (this.includeDeletedProjects === includeDeleted) return;
-    this.includeDeletedProjects = includeDeleted;
-    void this.loadData();
+    if (!this.isLoading) {
+      this.render();
+    }
   }
 
   private hasActiveFilters(): boolean {
-    return this.searchQuery.length > 0 || this.sourceFilters !== null;
+    return this.filters.searchQuery.length > 0 || this.filters.sources.size > 0;
   }
 
   private getFilteredProjectGroups(): ProjectGroup[] {
-    const query = this.searchQuery;
-    const sourceFilters = this.sourceFilters;
+    const query = this.filters.searchQuery.trim().toLowerCase();
+    const sourceFilters = this.filters.sources;
     const result: ProjectGroup[] = [];
 
     for (const group of this.projectGroups.values()) {
