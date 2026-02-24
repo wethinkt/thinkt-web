@@ -722,11 +722,3 @@ export class ProjectTimelinePanel {
     this.cachedProjectKey = null;
   }
 }
-
-// ============================================
-// Factory Function
-// ============================================
-
-export function createProjectTimelinePanel(options: ProjectTimelinePanelOptions): ProjectTimelinePanel {
-  return new ProjectTimelinePanel(options);
-}

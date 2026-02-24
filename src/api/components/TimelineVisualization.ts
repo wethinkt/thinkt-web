@@ -1584,11 +1584,3 @@ export class TimelineVisualization {
     this.container.innerHTML = '';
   }
 }
-
-// ============================================
-// Factory Function
-// ============================================
-
-export function createTimelineVisualization(options: TimelineVisualizationOptions): TimelineVisualization {
-  return new TimelineVisualization(options);
-}

@@ -926,11 +926,3 @@ export class SessionList {
     this.disposed = true;
   }
 }
-
-// ============================================
-// Factory Function
-// ============================================
-
-export function createSessionList(options: SessionListOptions): SessionList {
-  return new SessionList(options);
-}

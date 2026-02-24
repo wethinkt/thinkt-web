@@ -8,7 +8,6 @@
 // Project Browser
 export {
   ProjectBrowser,
-  createProjectBrowser,
   type ProjectBrowserElements,
   type ProjectBrowserOptions,
   type ProjectItemState,
@@ -17,7 +16,6 @@ export {
 // Session List
 export {
   SessionList,
-  createSessionList,
   type SessionListElements,
   type SessionListOptions,
 } from './SessionList';
@@ -25,7 +23,6 @@ export {
 // API Viewer (high-level component)
 export {
   ApiViewer,
-  createApiViewer,
   type ApiViewerElements,
   type ApiViewerOptions,
   type LoadedSession,
@@ -34,7 +31,6 @@ export {
 // Conversation View (simple text view, no 3D)
 export {
   ConversationView,
-  createConversationView,
   type ConversationViewElements,
   type ConversationViewOptions,
   type FilterState,
@@ -43,7 +39,6 @@ export {
 // Search Overlay (global session search)
 export {
   SearchOverlay,
-  createSearchOverlay,
   type SearchOverlayElements,
   type SearchOverlayOptions,
 } from './SearchOverlay';
@@ -51,7 +46,6 @@ export {
 // Tree Project Browser (hierarchical project view)
 export {
   TreeProjectBrowser,
-  createTreeProjectBrowser,
   type TreeProjectBrowserElements,
   type TreeProjectBrowserOptions,
   type ProjectGroup,
@@ -62,7 +56,6 @@ export {
 // Timeline Visualization (time-based session view)
 export {
   TimelineVisualization,
-  createTimelineVisualization,
   type TimelineVisualizationElements,
   type TimelineVisualizationOptions,
 } from './TimelineVisualization';
@@ -70,11 +63,9 @@ export {
 // Project Timeline Panel (per-project timeline below conversation)
 export {
   ProjectTimelinePanel,
-  createProjectTimelinePanel,
   type ProjectTimelinePanelElements,
   type ProjectTimelinePanelOptions,
 } from './ProjectTimelinePanel';
 
 // Style Manager
 export { injectStyleSheet } from './style-manager';
-

@@ -888,11 +888,3 @@ export class ConversationView {
     this.container.innerHTML = '';
   }
 }
-
-// ============================================
-// Factory Function
-// ============================================
-
-export function createConversationView(options: ConversationViewOptions): ConversationView {
-  return new ConversationView(options);
-}

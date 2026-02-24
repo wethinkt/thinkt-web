@@ -1718,11 +1718,3 @@ export class ApiViewer {
     this.disposed = true;
   }
 }
-
-// ============================================
-// Factory Function
-// ============================================
-
-export function createApiViewer(options: ApiViewerOptions): ApiViewer {
-  return new ApiViewer(options);
-}

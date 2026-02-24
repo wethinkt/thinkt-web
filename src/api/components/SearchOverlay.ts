@@ -1428,11 +1428,3 @@ export class SearchOverlay {
     this.close();
   }
 }
-
-// ============================================
-// Factory Function
-// ============================================
-
-export function createSearchOverlay(options: SearchOverlayOptions): SearchOverlay {
-  return new SearchOverlay(options);
-}

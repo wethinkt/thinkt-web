@@ -811,11 +811,3 @@ export class ProjectBrowser {
     this.disposed = true;
   }
 }
-
-// ============================================
-// Factory Function
-// ============================================
-
-export function createProjectBrowser(options: ProjectBrowserOptions): ProjectBrowser {
-  return new ProjectBrowser(options);
-}

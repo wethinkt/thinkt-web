@@ -1068,11 +1068,3 @@ export class TreeProjectBrowser {
     this.container.innerHTML = '';
   }
 }
-
-// ============================================
-// Factory Function
-// ============================================
-
-export function createTreeProjectBrowser(options: TreeProjectBrowserOptions): TreeProjectBrowser {
-  return new TreeProjectBrowser(options);
-}
