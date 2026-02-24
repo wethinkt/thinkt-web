@@ -210,7 +210,7 @@ function setupKeyboardShortcuts(): void {
       const result = apiViewer?.refreshProjects();
       if (result) {
         void result.catch((err: unknown) => {
-          void err;
+          console.warn('[THINKT] Failed to refresh projects:', err);
         });
       }
       return;

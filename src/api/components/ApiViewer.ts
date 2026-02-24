@@ -1065,8 +1065,8 @@ export class ApiViewer {
         .map((project) => (typeof project.source === 'string' ? project.source.trim() : ''))
         .filter((source) => source.length > 0);
       this.mergeDiscoveredSources(discovered);
-    } catch {
-      // Ignore discovery failures; project loading in active views still works.
+    } catch (error) {
+      console.warn('[THINKT] Source discovery failed:', error);
     }
   }
 

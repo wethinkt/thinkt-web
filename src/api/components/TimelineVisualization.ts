@@ -954,8 +954,8 @@ export class TimelineVisualization {
             if (didAddSessions) {
               scheduleProgressiveCommit();
             }
-          } catch {
-            // Skip failed project session fetches.
+          } catch (error) {
+            console.warn('[THINKT] Failed to load sessions for project:', project.id, error);
           }
         }
       };

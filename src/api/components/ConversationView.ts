@@ -343,7 +343,8 @@ export class ConversationView {
     if (this.client) {
       try {
         await this.client.openIn(action, this.currentProjectPath);
-      } catch {
+      } catch (error) {
+        console.warn('[THINKT] Failed to open in app, copying path to clipboard:', error);
         try { await navigator.clipboard.writeText(this.currentProjectPath!); } catch { /* */ }
       }
     } else {

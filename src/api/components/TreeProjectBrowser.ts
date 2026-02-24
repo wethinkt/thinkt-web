@@ -614,7 +614,8 @@ export class TreeProjectBrowser {
       });
       sourceGroup.sessions = sessions;
       sourceGroup.loaded = true;
-    } catch {
+    } catch (error) {
+      console.warn('[THINKT] Failed to load sessions for source:', sourceGroup.source, error);
       sourceGroup.sessions = [];
       sourceGroup.loaded = true;
     } finally {

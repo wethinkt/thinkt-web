@@ -1164,8 +1164,8 @@ export class SearchOverlay {
               this.semanticPreviews.set(result.entry_uuid!, entry.text);
             }
           }
-        } catch {
-          // Silently skip failed session fetches
+        } catch (error) {
+          console.warn('[THINKT] Failed to fetch preview for session:', sessionPath, error);
         }
       }
     );
