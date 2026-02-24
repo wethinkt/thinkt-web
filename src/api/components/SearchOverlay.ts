@@ -11,6 +11,15 @@ import { i18n } from '@lingui/core';
 import { injectStyleSheet } from './style-manager';
 
 // ============================================
+// Constants
+// ============================================
+
+const CLOSE_ANIMATION_MS = 150;
+const TEXT_SEARCH_DEBOUNCE_MS = 150;
+const SEMANTIC_SEARCH_DEBOUNCE_MS = 300;
+const PREVIEW_TRUNCATE_LENGTH = 300;
+
+// ============================================
 // Types
 // ============================================
 
@@ -583,7 +592,7 @@ export class SearchOverlay {
     setTimeout(() => {
       this.cleanup();
       this.options.onClose?.();
-    }, 150);
+    }, CLOSE_ANIMATION_MS);
   }
 
   private cleanup(): void {
@@ -948,7 +957,7 @@ export class SearchOverlay {
 
     this.searchDebounceTimer = setTimeout(() => {
       void this.performSearch(query);
-    }, this.searchMode === 'semantic' ? 300 : 150);
+    }, this.searchMode === 'semantic' ? SEMANTIC_SEARCH_DEBOUNCE_MS : TEXT_SEARCH_DEBOUNCE_MS);
   }
 
   private triggerSearch(): void {
@@ -959,7 +968,7 @@ export class SearchOverlay {
       }
       this.searchDebounceTimer = setTimeout(() => {
         void this.performSearch(query);
-      }, this.searchMode === 'semantic' ? 300 : 150);
+      }, this.searchMode === 'semantic' ? SEMANTIC_SEARCH_DEBOUNCE_MS : TEXT_SEARCH_DEBOUNCE_MS);
     }
   }
 
@@ -1082,7 +1091,7 @@ export class SearchOverlay {
     const role = result.role ?? '';
 
     const previewHtml = preview
-      ? `<div class="thinkt-search-result-preview"><span class="thinkt-search-result-role">[${this.escapeHtml(role)}]:</span> ${this.escapeHtml(this.truncate(preview, 300))}</div>`
+      ? `<div class="thinkt-search-result-preview"><span class="thinkt-search-result-role">[${this.escapeHtml(role)}]:</span> ${this.escapeHtml(this.truncate(preview, PREVIEW_TRUNCATE_LENGTH))}</div>`
       : `<div class="thinkt-search-preview-loading" data-entry-uuid="${this.escapeHtml(entryUuid)}">${i18n._('Loading preview...')}</div>`;
 
     li.innerHTML = `
@@ -1189,7 +1198,7 @@ export class SearchOverlay {
         const result = this.filteredSemanticResults.find(r => r.entry_uuid === uuid);
         const role = result?.role ?? '';
         el.className = 'thinkt-search-result-preview';
-        el.innerHTML = `<span class="thinkt-search-result-role">[${this.escapeHtml(role)}]:</span> ${this.escapeHtml(this.truncate(preview, 300))}`;
+        el.innerHTML = `<span class="thinkt-search-result-role">[${this.escapeHtml(role)}]:</span> ${this.escapeHtml(this.truncate(preview, PREVIEW_TRUNCATE_LENGTH))}`;
       }
     });
   }

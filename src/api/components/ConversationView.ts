@@ -18,6 +18,13 @@ import { injectStyleSheet } from './style-manager';
 import { exportAsHtml, exportAsMarkdown, downloadFile, getSafeFilename } from './export';
 
 // ============================================
+// Constants
+// ============================================
+
+const COPY_FEEDBACK_MS = 1500;
+const HIGHLIGHT_DURATION_MS = 2000;
+
+// ============================================
 // Types
 // ============================================
 
@@ -207,7 +214,7 @@ export class ConversationView {
       await navigator.clipboard.writeText(text);
       const original = btn.textContent;
       btn.textContent = '\u2713';
-      setTimeout(() => { btn.textContent = original; }, 1500);
+      setTimeout(() => { btn.textContent = original; }, COPY_FEEDBACK_MS);
     } catch {
       // Silently fail
     }
@@ -870,7 +877,7 @@ export class ConversationView {
       element.classList.add('thinkt-conversation-entry--highlighted');
       setTimeout(() => {
         element.classList.remove('thinkt-conversation-entry--highlighted');
-      }, 2000);
+      }, HIGHLIGHT_DURATION_MS);
     }
   }
 

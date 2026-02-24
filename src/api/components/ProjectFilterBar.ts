@@ -13,6 +13,12 @@ import type { ProjectFilterState } from './ApiViewer';
 import { SourceResolver, type SourceCapability } from './SourceResolver';
 
 // ============================================
+// Constants
+// ============================================
+
+const SEARCH_DEBOUNCE_MS = 150;
+
+// ============================================
 // Types
 // ============================================
 
@@ -289,7 +295,7 @@ export class ProjectFilterBar {
       this.searchDebounceTimer = setTimeout(() => {
         this.filters.searchQuery = searchInput.value;
         this.options.onFiltersChanged();
-      }, 150);
+      }, SEARCH_DEBOUNCE_MS);
     };
     searchInput.addEventListener('input', handleSearchInput, { signal: this.signal });
 

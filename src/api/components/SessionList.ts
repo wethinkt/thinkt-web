@@ -11,6 +11,12 @@ import { i18n } from '@lingui/core';
 import { injectStyleSheet } from './style-manager';
 
 // ============================================
+// Constants
+// ============================================
+
+const SESSION_TITLE_MAX_LENGTH = 80;
+
+// ============================================
 // Types
 // ============================================
 
@@ -714,7 +720,7 @@ export class SessionList {
 
     // Build title from first prompt or ID
     const title = session.firstPrompt
-      ? session.firstPrompt.slice(0, 80) + (session.firstPrompt.length > 80 ? '...' : '')
+      ? session.firstPrompt.slice(0, SESSION_TITLE_MAX_LENGTH) + (session.firstPrompt.length > SESSION_TITLE_MAX_LENGTH ? '...' : '')
       : session.id ?? i18n._('Unknown Session');
 
     // Build meta items - compact format like Kimi Code

@@ -31,6 +31,11 @@ export interface SidebarLayoutOptions {
 // Component Class
 // ============================================
 
+const MIN_SIDEBAR_WIDTH_PX = 250;
+const MAX_SIDEBAR_WIDTH_PX = 600;
+const MIN_PROJECT_PANE_HEIGHT_PX = 150;
+const MIN_SESSION_PANE_HEIGHT_PX = 200;
+
 export class SidebarLayout {
   readonly sidebar: HTMLElement;
   readonly projectsSection: HTMLElement;
@@ -41,8 +46,8 @@ export class SidebarLayout {
   private sectionSplitter: HTMLElement;
   private projectPaneHeightPx: number | null = null;
   private disposed = false;
-  private readonly minProjectPaneHeight = 150;
-  private readonly minSessionPaneHeight = 200;
+  private readonly minProjectPaneHeight = MIN_PROJECT_PANE_HEIGHT_PX;
+  private readonly minSessionPaneHeight = MIN_SESSION_PANE_HEIGHT_PX;
   private currentView: ProjectViewMode;
 
   constructor(private options: SidebarLayoutOptions) {
@@ -130,7 +135,7 @@ export class SidebarLayout {
       this.setupDragResize(options.elements.resizer, {
         cursor: 'col-resize',
         onMove: (e) => {
-          if (e.clientX >= 250 && e.clientX <= 600) {
+          if (e.clientX >= MIN_SIDEBAR_WIDTH_PX && e.clientX <= MAX_SIDEBAR_WIDTH_PX) {
             this.sidebar.style.width = `${e.clientX}px`;
           }
         },
