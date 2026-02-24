@@ -1046,8 +1046,111 @@ export class SearchOverlay {
   }
 
   private renderSemanticResultsList(): void {
-    // TODO: Task 4 will implement this
-    this.renderResultsList();
+    const content = this.overlay?.querySelector('.thinkt-search-content');
+    if (!content) return;
+
+    if (this.filteredSemanticResults.length === 0) {
+      content.innerHTML = `
+        <div class="thinkt-search-empty">
+          <div class="thinkt-search-empty-icon">🧠</div>
+          <div>${i18n._('No semantic matches found')}</div>
+        </div>
+      `;
+      return;
+    }
+
+    const list = document.createElement('ul');
+    list.className = 'thinkt-search-results';
+
+    this.filteredSemanticResults.forEach((result, index) => {
+      const item = this.createSemanticResultItem(result, index);
+      list.appendChild(item);
+    });
+
+    content.innerHTML = '';
+    content.appendChild(list);
+
+    this.updateSelection();
+  }
+
+  private createSemanticResultItem(result: SemanticSearchResult, index: number): HTMLElement {
+    const li = document.createElement('li');
+    li.className = 'thinkt-search-result';
+    if (index === this.selectedIndex) {
+      li.classList.add('selected');
+    }
+
+    const source = result.source ?? 'claude';
+    const distance = result.distance ?? 1;
+    const relevance = this.formatRelevance(distance);
+    const firstPrompt = result.first_prompt
+      ? this.escapeHtml(this.truncate(result.first_prompt, 120))
+      : '';
+    const timestamp = result.timestamp ? this.formatTimestamp(result.timestamp) : '';
+    const entryUuid = result.entry_uuid ?? '';
+    const preview = this.semanticPreviews.get(entryUuid);
+    const role = result.role ?? '';
+
+    const previewHtml = preview
+      ? `<div class="thinkt-search-result-preview"><span class="thinkt-search-result-role">[${this.escapeHtml(role)}]:</span> ${this.escapeHtml(this.truncate(preview, 300))}</div>`
+      : `<div class="thinkt-search-preview-loading" data-entry-uuid="${this.escapeHtml(entryUuid)}">${i18n._('Loading preview...')}</div>`;
+
+    li.innerHTML = `
+      <div class="thinkt-search-result-header">
+        <span class="thinkt-search-result-project">${this.escapeHtml(result.project_name ?? i18n._('Unknown'))}</span>
+        <span class="thinkt-search-result-sep">·</span>
+        <span class="thinkt-search-result-session">${this.escapeHtml(this.shortenId(result.session_id ?? ''))}</span>
+        <span class="thinkt-search-result-source thinkt-search-result-source--${source}">${source}</span>
+        <span class="thinkt-search-result-timestamp">${timestamp}</span>
+        <span class="thinkt-search-result-relevance ${relevance.className}">${relevance.label}</span>
+      </div>
+      ${firstPrompt ? `<div class="thinkt-search-result-first-prompt">${firstPrompt}</div>` : ''}
+      ${previewHtml}
+    `;
+
+    li.addEventListener('click', () => { void this.selectSemanticResult(result); });
+    li.addEventListener('mouseenter', () => {
+      this.selectedIndex = index;
+      this.updateSelection();
+    });
+
+    return li;
+  }
+
+  private formatRelevance(distance: number): { label: string; className: string } {
+    if (distance < 0.5) return { label: i18n._('High'), className: '' };
+    if (distance < 1.0) return { label: i18n._('Medium'), className: 'medium' };
+    return { label: i18n._('Low'), className: 'low' };
+  }
+
+  private formatTimestamp(ts: string): string {
+    try {
+      const date = new Date(ts);
+      const now = new Date();
+      const diffMs = now.getTime() - date.getTime();
+      const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+
+      if (diffDays === 0) return i18n._('today');
+      if (diffDays === 1) return i18n._('yesterday');
+      if (diffDays < 7) return i18n._('{days}d ago', { days: diffDays });
+      if (diffDays < 30) return i18n._('{weeks}w ago', { weeks: Math.floor(diffDays / 7) });
+      return date.toLocaleDateString();
+    } catch {
+      return '';
+    }
+  }
+
+  private truncate(text: string, maxLen: number): string {
+    if (text.length <= maxLen) return text;
+    return text.slice(0, maxLen) + '...';
+  }
+
+  private async selectSemanticResult(result: SemanticSearchResult): Promise<void> {
+    try {
+      await this.options.onSessionSelect?.(result, result.line_number);
+    } finally {
+      this.close();
+    }
   }
 
   private fetchSemanticPreviews(): Promise<void> {
