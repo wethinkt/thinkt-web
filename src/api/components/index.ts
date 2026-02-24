@@ -43,6 +43,10 @@ export {
   type SearchOverlayOptions,
 } from './SearchOverlay';
 
+// Search sub-components
+export { SearchProjectFilter, type SearchProjectFilterOptions, type ProjectInfo } from './SearchProjectFilter';
+export { SearchResultRenderer, type SearchResultRendererOptions } from './SearchResultRenderer';
+
 // Tree Project Browser (hierarchical project view)
 export {
   TreeProjectBrowser,
