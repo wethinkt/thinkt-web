@@ -1153,31 +1153,24 @@ export class SearchOverlay {
   }
 
   private async fetchSemanticPreviews(): Promise<void> {
-    // Group results by session_path to minimize API calls
-    const sessionGroups = new Map<string, SemanticSearchResult[]>();
-    for (const result of this.filteredSemanticResults) {
-      if (!result.session_path || !result.entry_uuid) continue;
-      const group = sessionGroups.get(result.session_path) ?? [];
-      group.push(result);
-      sessionGroups.set(result.session_path, group);
-    }
+    // Fetch only the specific entry for each result using line_number as offset
+    const fetchPromises = this.filteredSemanticResults.map(async (result) => {
+      if (!result.session_path || !result.entry_uuid) return;
 
-    // Fetch each session and extract matching entries
-    const fetchPromises = Array.from(sessionGroups.entries()).map(
-      async ([sessionPath, results]) => {
-        try {
-          const session = await this.client.getSession(sessionPath);
-          for (const result of results) {
-            const entry = session.entries.find(e => e.uuid === result.entry_uuid);
-            if (entry?.text) {
-              this.semanticPreviews.set(result.entry_uuid!, entry.text);
-            }
-          }
-        } catch (error) {
-          console.warn('[THINKT] Failed to fetch preview for session:', sessionPath, error);
+      try {
+        const offset = result.line_number ?? 0;
+        const session = await this.client.getSession(result.session_path, {
+          limit: 1,
+          offset,
+        });
+        const entry = session.entries.find(e => e.uuid === result.entry_uuid) ?? session.entries[0];
+        if (entry?.text) {
+          this.semanticPreviews.set(result.entry_uuid!, entry.text);
         }
+      } catch (error) {
+        console.warn('[THINKT] Failed to fetch preview for entry:', result.entry_uuid, error);
       }
-    );
+    });
 
     await Promise.allSettled(fetchPromises);
 

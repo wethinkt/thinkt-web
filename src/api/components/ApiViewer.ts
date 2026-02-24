@@ -74,6 +74,7 @@ export interface LoadedSession {
 // ============================================
 
 const STORAGE_KEY = 'thinkt-viewer-state';
+const STREAM_CHUNK_SIZE = 50;
 
 interface PersistedState {
   projectView?: ProjectViewMode;
@@ -809,16 +810,39 @@ export class ApiViewer {
       if (!sessionPath) {
         throw new Error('Session has no path');
       }
-      const entries = await this.client.getAllSessionEntries(sessionPath, undefined, controller.signal);
+
+      // Stream entries progressively — renders as chunks arrive
+      this.conversationView?.beginProgressiveDisplay();
+      this.conversationView?.scrollToTop?.();
+
+      const entries: Entry[] = [];
+      let batch: Entry[] = [];
+
+      for await (const entry of this.client.streamSessionEntries(sessionPath, STREAM_CHUNK_SIZE, controller.signal)) {
+        if (controller.signal.aborted) return;
+        entries.push(entry);
+        batch.push(entry);
+
+        if (batch.length >= STREAM_CHUNK_SIZE) {
+          this.conversationView?.appendEntries(batch);
+          batch = [];
+        }
+      }
+
       if (controller.signal.aborted) return;
+
+      // Flush remaining entries
+      if (batch.length > 0) {
+        this.conversationView?.appendEntries(batch);
+      }
+
+      // Finalize: link tool results, set up filters
+      this.conversationView?.finalizeProgressiveDisplay();
 
       this.currentSession = {
         meta: session,
         entries,
       };
-
-      this.conversationView?.displayEntries(entries);
-      this.conversationView?.scrollToTop?.();
 
       void Promise.resolve(this.options.onSessionLoaded?.(session, entries));
     } catch (error) {

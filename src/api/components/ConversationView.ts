@@ -598,6 +598,54 @@ export class ConversationView {
     // Note: Caller decides scroll position (preserves scroll by default)
   }
 
+  /**
+   * Begin a progressive display session. Entries are appended incrementally
+   * via appendEntries(), then finalized to link tool results.
+   */
+  beginProgressiveDisplay(): void {
+    this.contentContainer.replaceChildren();
+    this.currentEntries = [];
+    this.toolResultIndex.clear();
+    this.inlinedToolResults.clear();
+    this.currentEntryCount = 0;
+    this.renderToolbar();
+    this.renderFilterBar();
+  }
+
+  /**
+   * Append a batch of entries during progressive loading.
+   */
+  appendEntries(entries: Entry[]): void {
+    for (const entry of entries) {
+      this.currentEntries.push(entry);
+      const entryEl = this.renderEntry(entry, this.currentEntries.length - 1);
+      this.contentContainer.appendChild(entryEl);
+    }
+    this.currentEntryCount = this.currentEntries.length;
+  }
+
+  /**
+   * Finalize progressive display: rebuild tool result index and re-render
+   * to link tool_use blocks with their results.
+   */
+  finalizeProgressiveDisplay(): void {
+    this.buildToolResultIndex(this.currentEntries);
+
+    // Only re-render if there are tool results to link
+    if (this.toolResultIndex.size > 0) {
+      this.contentContainer.replaceChildren();
+      for (let i = 0; i < this.currentEntries.length; i++) {
+        const entryEl = this.renderEntry(this.currentEntries[i], i);
+        this.contentContainer.appendChild(entryEl);
+      }
+    }
+
+    this.renderToolbar();
+    this.renderFilterBar();
+    this.setupFilters();
+    this.applyFilters();
+  }
+
   // ============================================
   // Entry Rendering
   // ============================================
