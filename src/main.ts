@@ -277,10 +277,11 @@ function openSearchOverlay(): void {
 }
 
 async function loadSessionFromSearch(
-  result: { path?: string; session_id?: string; project_name?: string },
+  result: { path?: string; session_path?: string; session_id?: string; project_name?: string },
   lineNum?: number
 ): Promise<void> {
-  if (!result.path) {
+  const path = result.path ?? result.session_path;
+  if (!path) {
     console.error('[THINKT] Search result has no path');
     return;
   }
@@ -309,7 +310,7 @@ async function loadSessionFromSearch(
     }
 
     // Step 2: Load the session (this loads entries and updates conversation view)
-    await apiViewer?.loadSession(result.path);
+    await apiViewer?.loadSession(path);
 
     // Step 3: Select the session in the session list UI
     if (result.session_id) {
