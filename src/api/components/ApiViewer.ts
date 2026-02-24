@@ -70,6 +70,40 @@ export interface LoadedSession {
 }
 
 // ============================================
+// Session Storage Persistence
+// ============================================
+
+const STORAGE_KEY = 'thinkt-viewer-state';
+
+interface PersistedState {
+  projectView?: ProjectViewMode;
+  filterSort?: ProjectSortMode;
+  filterSources?: string[];
+  filterIncludeDeleted?: boolean;
+  projectId?: string;
+  projectName?: string;
+  projectPath?: string;
+  projectSource?: string;
+}
+
+function loadPersistedState(): PersistedState {
+  try {
+    const raw = sessionStorage.getItem(STORAGE_KEY);
+    return raw ? JSON.parse(raw) : {};
+  } catch {
+    return {};
+  }
+}
+
+function savePersistedState(state: PersistedState): void {
+  try {
+    sessionStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+  } catch {
+    // Storage full or unavailable — ignore
+  }
+}
+
+// ============================================
 // Default Styles
 // ============================================
 
@@ -319,7 +353,13 @@ export class ApiViewer {
     this.elements = options.elements;
     this.options = options;
     this.client = options.client ?? getDefaultClient();
-    this.currentProjectView = options.initialProjectView ?? 'list';
+
+    // Restore persisted state (options take priority)
+    const persisted = loadPersistedState();
+    this.currentProjectView = options.initialProjectView ?? persisted.projectView ?? 'list';
+    if (persisted.filterSort) this.projectFilters.sort = persisted.filterSort;
+    if (persisted.filterSources?.length) this.projectFilters.sources = new Set(persisted.filterSources);
+    if (persisted.filterIncludeDeleted) this.projectFilters.includeDeleted = persisted.filterIncludeDeleted;
 
     injectStyleSheet('thinkt-api-viewer-styles', DEFAULT_STYLES);
     injectStyleSheet('thinkt-project-filter-styles', ProjectFilterBar.styles);
@@ -399,6 +439,7 @@ export class ApiViewer {
     if (this.currentProjectView === mode) return;
 
     this.currentProjectView = mode;
+    this.persistState();
 
     // Update button states
     const buttons = this.elements.container.querySelectorAll('.thinkt-view-switcher-btn');
@@ -508,6 +549,21 @@ export class ApiViewer {
       case 'tree': this.treeProjectBrowser?.applyFilters(); break;
       case 'timeline': this.timelineVisualization?.applyFilters(); break;
     }
+
+    this.persistState();
+  }
+
+  private persistState(): void {
+    savePersistedState({
+      projectView: this.currentProjectView,
+      filterSort: this.projectFilters.sort,
+      filterSources: Array.from(this.projectFilters.sources),
+      filterIncludeDeleted: this.projectFilters.includeDeleted,
+      projectId: this.currentProject?.id,
+      projectName: this.currentProject?.name,
+      projectPath: this.currentProject?.path,
+      projectSource: this.currentProject?.source,
+    });
   }
 
   // ============================================
@@ -569,6 +625,26 @@ export class ApiViewer {
           this.handleError(error);
         },
       });
+    }
+
+    // Restore persisted project selection
+    void this.restorePersistedProject();
+  }
+
+  private async restorePersistedProject(): Promise<void> {
+    const persisted = loadPersistedState();
+    if (!persisted.projectId) return;
+
+    try {
+      const projects = await this.client.getProjects(undefined, {
+        includeDeleted: this.projectFilters.includeDeleted,
+      });
+      const match = projects.find((p) => p.id === persisted.projectId);
+      if (match) {
+        this.handleProjectSelect(match);
+      }
+    } catch {
+      // Project no longer available — ignore
     }
   }
 
@@ -666,6 +742,7 @@ export class ApiViewer {
 
   private handleProjectSelect(project: Project): void {
     this.currentProject = project;
+    this.persistState();
     if (project.id) {
       void this.sessionList?.setProjectId(project.id, project.source);
     }
