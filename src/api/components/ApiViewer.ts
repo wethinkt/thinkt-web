@@ -591,8 +591,39 @@ export class ApiViewer {
       this.elements.resizer = resizer;
     }
     container.appendChild(this.elements.resizer);
-    this.setupResizer();
-    this.setupSidebarSectionResizer();
+    // Sidebar width resizer
+    if (this.elements.resizer) {
+      this.setupDragResize(this.elements.resizer, {
+        cursor: 'col-resize',
+        onMove: (e) => {
+          if (e.clientX >= 250 && e.clientX <= 600) {
+            sidebar.style.width = `${e.clientX}px`;
+          }
+        },
+      });
+    }
+
+    // Sidebar section splitter (projects/sessions)
+    if (this.sidebarSectionSplitter) {
+      const splitter = this.sidebarSectionSplitter;
+      this.setupDragResize(splitter, {
+        cursor: 'row-resize',
+        onStart: () => {
+          if (this.currentProjectView !== 'list') return false;
+          splitter.classList.add('resizing');
+        },
+        onMove: (e) => {
+          const bounds = this.getProjectPaneBounds();
+          if (!bounds) return;
+          const nextHeight = e.clientY - bounds.top;
+          this.projectPaneHeightPx = Math.min(bounds.max, Math.max(bounds.min, nextHeight));
+          this.clampProjectPaneHeightToBounds();
+        },
+        onEnd: () => {
+          splitter.classList.remove('resizing');
+        },
+      });
+    }
     this.updateSidebarSectionsForView(this.currentProjectView);
 
     // Viewer section - contains conversation and timeline panel
@@ -656,43 +687,41 @@ export class ApiViewer {
     sessionsSection.style.flex = '1 1 auto';
   }
 
-  private setupSidebarSectionResizer(): void {
-    const splitter = this.sidebarSectionSplitter;
-    if (!splitter) return;
+  private setupDragResize(
+    handle: HTMLElement,
+    callbacks: {
+      cursor: string;
+      onStart?: (e: MouseEvent) => boolean | void;
+      onMove: (e: MouseEvent) => void;
+      onEnd?: () => void;
+    },
+  ): void {
+    let active = false;
 
-    let isResizing = false;
-
-    const startResize = (e: MouseEvent) => {
-      if (this.currentProjectView !== 'list') return;
-      isResizing = true;
-      splitter.classList.add('resizing');
-      document.body.style.cursor = 'row-resize';
+    const start = (e: MouseEvent) => {
+      if (callbacks.onStart?.(e) === false) return;
+      active = true;
+      document.body.style.cursor = callbacks.cursor;
       document.body.style.userSelect = 'none';
       e.preventDefault();
     };
 
-    const doResize = (e: MouseEvent) => {
-      if (!isResizing) return;
-      const bounds = this.getProjectPaneBounds();
-      if (!bounds) return;
-
-      const nextHeight = e.clientY - bounds.top;
-      const clamped = Math.min(bounds.max, Math.max(bounds.min, nextHeight));
-      this.projectPaneHeightPx = clamped;
-      this.clampProjectPaneHeightToBounds();
+    const move = (e: MouseEvent) => {
+      if (!active) return;
+      callbacks.onMove(e);
     };
 
-    const stopResize = () => {
-      if (!isResizing) return;
-      isResizing = false;
-      splitter.classList.remove('resizing');
+    const end = () => {
+      if (!active) return;
+      active = false;
       document.body.style.cursor = '';
       document.body.style.userSelect = '';
+      callbacks.onEnd?.();
     };
 
-    splitter.addEventListener('mousedown', startResize, { signal: this.abortController.signal });
-    document.addEventListener('mousemove', doResize, { signal: this.abortController.signal });
-    document.addEventListener('mouseup', stopResize, { signal: this.abortController.signal });
+    handle.addEventListener('mousedown', start, { signal: this.abortController.signal });
+    document.addEventListener('mousemove', move, { signal: this.abortController.signal });
+    document.addEventListener('mouseup', end, { signal: this.abortController.signal });
   }
 
   private updateSidebarSectionsForView(mode: ProjectViewMode): void {
@@ -1053,38 +1082,6 @@ export class ApiViewer {
     }
   }
 
-  private setupResizer(): void {
-    const { resizer, container } = this.elements;
-    if (!resizer) return;
-
-    const sidebar = container.querySelector('.thinkt-api-viewer__sidebar') as HTMLElement;
-    if (!sidebar) return;
-
-    let isResizing = false;
-
-    const startResize = (e: MouseEvent) => {
-      isResizing = true;
-      document.body.style.cursor = 'col-resize';
-      e.preventDefault();
-    };
-
-    const doResize = (e: MouseEvent) => {
-      if (!isResizing) return;
-      const newWidth = e.clientX;
-      if (newWidth >= 250 && newWidth <= 600) {
-        sidebar.style.width = `${newWidth}px`;
-      }
-    };
-
-    const stopResize = () => {
-      isResizing = false;
-      document.body.style.cursor = '';
-    };
-
-    resizer.addEventListener('mousedown', startResize, { signal: this.abortController.signal });
-    document.addEventListener('mousemove', doResize, { signal: this.abortController.signal });
-    document.addEventListener('mouseup', stopResize, { signal: this.abortController.signal });
-  }
 
   // ============================================
   // View Switching
