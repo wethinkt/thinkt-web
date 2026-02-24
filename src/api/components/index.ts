@@ -67,5 +67,14 @@ export {
   type ProjectTimelinePanelOptions,
 } from './ProjectTimelinePanel';
 
+// Source Resolver
+export { SourceResolver, type SourceCapability } from './SourceResolver';
+
+// Project Filter Bar
+export { ProjectFilterBar, type ProjectFilterBarOptions } from './ProjectFilterBar';
+
+// Sidebar Layout
+export { SidebarLayout, type SidebarLayoutElements, type SidebarLayoutOptions } from './SidebarLayout';
+
 // Style Manager
 export { injectStyleSheet } from './style-manager';
