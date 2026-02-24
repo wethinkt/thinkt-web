@@ -620,6 +620,9 @@ export class SearchOverlay {
     this.projects.clear();
     this.selectedProjects.clear();
     this.selectedIndex = -1;
+    this.semanticResults = [];
+    this.filteredSemanticResults = [];
+    this.semanticPreviews.clear();
   }
 
   // ============================================
@@ -932,18 +935,27 @@ export class SearchOverlay {
   }
 
   private applyProjectFilter(): void {
-    if (this.selectedProjects.size === 0) {
-      // No projects selected, show all results
-      this.filteredResults = [...this.results];
+    if (this.searchMode === 'semantic') {
+      if (this.selectedProjects.size === 0) {
+        this.filteredSemanticResults = [...this.semanticResults];
+      } else {
+        this.filteredSemanticResults = this.semanticResults.filter(r =>
+          r.project_name && this.selectedProjects.has(r.project_name)
+        );
+      }
+      this.selectedIndex = this.filteredSemanticResults.length > 0 ? 0 : -1;
+      this.renderSemanticResultsList();
     } else {
-      // Filter to selected projects
-      this.filteredResults = this.results.filter(r => 
-        r.project_name && this.selectedProjects.has(r.project_name)
-      );
+      if (this.selectedProjects.size === 0) {
+        this.filteredResults = [...this.results];
+      } else {
+        this.filteredResults = this.results.filter(r =>
+          r.project_name && this.selectedProjects.has(r.project_name)
+        );
+      }
+      this.selectedIndex = this.filteredResults.length > 0 ? 0 : -1;
+      this.renderResultsList();
     }
-    
-    this.selectedIndex = this.filteredResults.length > 0 ? 0 : -1;
-    this.renderResultsList();
   }
 
   // ============================================
@@ -1237,10 +1249,19 @@ export class SearchOverlay {
   }
 
   private selectCurrent(): void {
-    if (this.selectedIndex >= 0 && this.selectedIndex < this.filteredResults.length) {
-      const result = this.filteredResults[this.selectedIndex];
-      if (result) {
-        void this.selectResult(result);
+    if (this.searchMode === 'semantic') {
+      if (this.selectedIndex >= 0 && this.selectedIndex < this.filteredSemanticResults.length) {
+        const result = this.filteredSemanticResults[this.selectedIndex];
+        if (result) {
+          void this.selectSemanticResult(result);
+        }
+      }
+    } else {
+      if (this.selectedIndex >= 0 && this.selectedIndex < this.filteredResults.length) {
+        const result = this.filteredResults[this.selectedIndex];
+        if (result) {
+          void this.selectResult(result);
+        }
       }
     }
   }
