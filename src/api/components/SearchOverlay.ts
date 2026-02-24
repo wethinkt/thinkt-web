@@ -5,8 +5,7 @@
  * Features a project filter sidebar on the left for isolating results.
  */
 
-// @ts-ignore — SemanticSearchResponse and SemanticSearchOptions will be used in upcoming semantic search tasks
-import type { SearchSessionResult, SearchMatch, SearchOptions, SemanticSearchResult, SemanticSearchResponse, SemanticSearchOptions } from '@wethinkt/ts-thinkt/api';
+import type { SearchSessionResult, SearchMatch, SearchOptions, SemanticSearchResult, SemanticSearchOptions } from '@wethinkt/ts-thinkt/api';
 import { type ThinktClient, getDefaultClient } from '@wethinkt/ts-thinkt/api';
 import { i18n } from '@lingui/core';
 
@@ -551,11 +550,9 @@ export class SearchOverlay {
   private caseSensitive = false;
   private useRegex = false;
   private searchMode: 'text' | 'semantic' = 'text';
-  // @ts-ignore — used in upcoming semantic search tasks
   private semanticResults: SemanticSearchResult[] = [];
-  // @ts-ignore — used in upcoming semantic search tasks
   private filteredSemanticResults: SemanticSearchResult[] = [];
-  // @ts-ignore — used in upcoming semantic search tasks
+  // @ts-ignore — used in Task 5 (fetchSemanticPreviews)
   private semanticPreviews: Map<string, string> = new Map(); // entry_uuid -> preview text
 
   constructor(options: SearchOverlayOptions) {
@@ -815,6 +812,28 @@ export class SearchOverlay {
     return projects;
   }
 
+  private extractProjectsFromSemantic(results: SemanticSearchResult[]): Map<string, ProjectInfo> {
+    const projects = new Map<string, ProjectInfo>();
+
+    for (const result of results) {
+      const name = result.project_name;
+      if (!name) continue;
+
+      const existing = projects.get(name);
+      if (existing) {
+        existing.count++;
+      } else {
+        projects.set(name, {
+          name,
+          count: 1,
+          source: result.source ?? 'claude',
+        });
+      }
+    }
+
+    return projects;
+  }
+
   private renderProjects(): void {
     const container = this.overlay?.querySelector('.thinkt-search-projects') as HTMLElement | null;
     const list = this.overlay?.querySelector('.thinkt-search-projects-list') as HTMLElement | null;
@@ -945,7 +964,7 @@ export class SearchOverlay {
 
     this.searchDebounceTimer = setTimeout(() => {
       void this.performSearch(query);
-    }, 150);
+    }, this.searchMode === 'semantic' ? 300 : 150);
   }
 
   private triggerSearch(): void {
@@ -956,7 +975,7 @@ export class SearchOverlay {
       }
       this.searchDebounceTimer = setTimeout(() => {
         void this.performSearch(query);
-      }, 150);
+      }, this.searchMode === 'semantic' ? 300 : 150);
     }
   }
 
@@ -966,26 +985,11 @@ export class SearchOverlay {
     this.showLoadingState();
 
     try {
-      const options: SearchOptions = {
-        query,
-        limit: 50,
-        limitPerSession: 2,
-        caseSensitive: this.caseSensitive,
-        regex: this.useRegex,
-      };
-
-      const response = await this.client.search(options);
-      this.results = response.sessions ?? [];
-      
-      // Extract projects and select all by default
-      this.projects = this.extractProjects(this.results);
-      this.selectedProjects = new Set(this.projects.keys());
-      
-      this.filteredResults = [...this.results];
-      this.selectedIndex = this.filteredResults.length > 0 ? 0 : -1;
-      
-      this.renderProjects();
-      this.renderResultsList();
+      if (this.searchMode === 'semantic') {
+        await this.performSemanticSearch(query);
+      } else {
+        await this.performTextSearch(query);
+      }
     } catch (error) {
       const err = error instanceof Error ? error : new Error(String(error));
       this.showErrorState(err);
@@ -993,6 +997,62 @@ export class SearchOverlay {
     } finally {
       this.isLoading = false;
     }
+  }
+
+  private async performTextSearch(query: string): Promise<void> {
+    const options: SearchOptions = {
+      query,
+      limit: 50,
+      limitPerSession: 2,
+      caseSensitive: this.caseSensitive,
+      regex: this.useRegex,
+    };
+
+    const response = await this.client.search(options);
+    this.results = response.sessions ?? [];
+
+    this.projects = this.extractProjects(this.results);
+    this.selectedProjects = new Set(this.projects.keys());
+
+    this.filteredResults = [...this.results];
+    this.selectedIndex = this.filteredResults.length > 0 ? 0 : -1;
+
+    this.renderProjects();
+    this.renderResultsList();
+  }
+
+  private async performSemanticSearch(query: string): Promise<void> {
+    const options: SemanticSearchOptions = {
+      query,
+      limit: 20,
+      diversity: true,
+    };
+
+    const response = await this.client.semanticSearch(options);
+    this.semanticResults = response.results ?? [];
+
+    // Extract projects from semantic results
+    this.projects = this.extractProjectsFromSemantic(this.semanticResults);
+    this.selectedProjects = new Set(this.projects.keys());
+
+    this.filteredSemanticResults = [...this.semanticResults];
+    this.selectedIndex = this.filteredSemanticResults.length > 0 ? 0 : -1;
+
+    this.renderProjects();
+    this.renderSemanticResultsList();
+
+    // Fetch previews asynchronously
+    void this.fetchSemanticPreviews();
+  }
+
+  private renderSemanticResultsList(): void {
+    // TODO: Task 4 will implement this
+    this.renderResultsList();
+  }
+
+  private fetchSemanticPreviews(): Promise<void> {
+    // TODO: Task 5 will implement this
+    return Promise.resolve();
   }
 
   // ============================================
