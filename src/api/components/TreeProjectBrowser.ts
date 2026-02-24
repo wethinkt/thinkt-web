@@ -411,6 +411,10 @@ export class TreeProjectBrowser {
     injectStyleSheet('thinkt-tree-browser-styles', TREE_STYLES);
     this.createStructure();
     void this.loadData();
+
+    const handleLocaleChange = () => this.refreshI18n();
+    window.addEventListener('thinkt:locale-changed', handleLocaleChange);
+    this.boundHandlers.push(() => window.removeEventListener('thinkt:locale-changed', handleLocaleChange));
   }
 
   private createStructure(): void {

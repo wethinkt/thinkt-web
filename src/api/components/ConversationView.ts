@@ -94,6 +94,7 @@ export class ConversationView {
 
   // Bound handlers for cleanup
   private boundFilterHandlers: Map<HTMLElement, () => void> = new Map();
+  private removeLocaleListener: (() => void) | null = null;
 
   // Available apps for open-in
   private availableApps: AppInfo[] = [];
@@ -118,6 +119,10 @@ export class ConversationView {
     this.container.className = 'thinkt-conversation-view';
     this.createStructure();
     this.setupFilters();
+
+    const handleLocaleChange = () => this.refreshI18n();
+    window.addEventListener('thinkt:locale-changed', handleLocaleChange);
+    this.removeLocaleListener = () => window.removeEventListener('thinkt:locale-changed', handleLocaleChange);
   }
 
   private createStructure(): void {
@@ -911,6 +916,9 @@ export class ConversationView {
    * Dispose the view
    */
   dispose(): void {
+    this.removeLocaleListener?.();
+    this.removeLocaleListener = null;
+
     this.boundFilterHandlers.forEach((handler, button) => {
       button.removeEventListener('click', handler);
     });

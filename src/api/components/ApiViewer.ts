@@ -1379,13 +1379,6 @@ export class ApiViewer {
     }
     this.renderSourceFilterOptions();
     this.renderSortFilterOptions();
-
-    this.projectBrowser?.refreshI18n();
-    this.treeProjectBrowser?.refreshI18n();
-    this.timelineVisualization?.refreshI18n();
-    this.sessionList?.refreshI18n();
-    this.conversationView?.refreshI18n();
-    this.projectTimelinePanel?.refreshI18n();
   }
 
   private isCurrentSessionResumable(): boolean {

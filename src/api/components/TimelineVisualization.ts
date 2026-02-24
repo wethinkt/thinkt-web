@@ -426,6 +426,7 @@ export class TimelineVisualization {
   private readonly autoFollowGraceMs = 3000;
   private readonly userScrollEpsilonPx = 6;
   private zoomMsPerPixel = this.defaultMsPerPixel;
+  private removeLocaleListener: (() => void) | null = null;
 
   constructor(options: TimelineVisualizationOptions) {
     this.options = options;
@@ -444,6 +445,10 @@ export class TimelineVisualization {
     injectStyleSheet('thinkt-timeline-styles', TIMELINE_STYLES);
     this.createStructure();
     void this.loadData();
+
+    const handleLocaleChange = () => this.refreshI18n();
+    window.addEventListener('thinkt:locale-changed', handleLocaleChange);
+    this.removeLocaleListener = () => window.removeEventListener('thinkt:locale-changed', handleLocaleChange);
   }
 
   private createStructure(): void {
@@ -1573,6 +1578,9 @@ export class TimelineVisualization {
   dispose(): void {
     if (this.disposed) return;
     this.disposed = true;
+
+    this.removeLocaleListener?.();
+    this.removeLocaleListener = null;
 
     if (this.rafScrollSync !== 0) {
       window.cancelAnimationFrame(this.rafScrollSync);

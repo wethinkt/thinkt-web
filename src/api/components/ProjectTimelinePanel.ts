@@ -218,6 +218,7 @@ export class ProjectTimelinePanel {
   private readonly rowHeight = 50;
   private readonly blobRadius = 7;
   private readonly padding = { top: 30, right: 30, bottom: 20, left: 80 };
+  private removeLocaleListener: (() => void) | null = null;
 
   constructor(options: ProjectTimelinePanelOptions) {
     this.options = options;
@@ -237,6 +238,10 @@ export class ProjectTimelinePanel {
     this.tooltip.className = 'thinkt-project-timeline-tooltip';
     this.tooltip.style.display = 'none';
     document.body.appendChild(this.tooltip);
+
+    const handleLocaleChange = () => this.refreshI18n();
+    window.addEventListener('thinkt:locale-changed', handleLocaleChange);
+    this.removeLocaleListener = () => window.removeEventListener('thinkt:locale-changed', handleLocaleChange);
 
     if (this.options.projectId) {
       void this.loadSessions(this.options.projectId, this.options.projectSource);
@@ -707,6 +712,9 @@ export class ProjectTimelinePanel {
   }
 
   dispose(): void {
+    this.removeLocaleListener?.();
+    this.removeLocaleListener = null;
+
     if (this.tooltip) {
       this.tooltip.remove();
       this.tooltip = null;

@@ -355,6 +355,10 @@ export class SessionList {
     this.createStructure();
     this.attachListeners();
 
+    const handleLocaleChange = () => this.refreshI18n();
+    window.addEventListener('thinkt:locale-changed', handleLocaleChange);
+    this.boundHandlers.push(() => window.removeEventListener('thinkt:locale-changed', handleLocaleChange));
+
     if (this.options.projectId) {
       await this.loadSessions(this.options.projectId, this.options.projectSource);
     }
