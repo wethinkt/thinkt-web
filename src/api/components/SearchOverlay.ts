@@ -51,7 +51,7 @@ const OVERLAY_STYLES = `
   display: flex;
   align-items: flex-start;
   justify-content: center;
-  padding-top: 10vh;
+  padding-top: 5vh;
   background: rgba(0, 0, 0, 0.7);
   backdrop-filter: blur(4px);
   animation: thinkt-search-fade-in 0.15s ease;
@@ -74,7 +74,7 @@ const OVERLAY_STYLES = `
 .thinkt-search-modal {
   width: 85%;
   max-width: 1200px;
-  max-height: 70vh;
+  max-height: 85vh;
   background: var(--bg-secondary, #141414);
   border: 1px solid var(--border-color, #2a2a2a);
   border-radius: var(--radius-lg, 8px);

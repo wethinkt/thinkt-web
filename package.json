@@ -4,7 +4,7 @@
   "description": "THINKT API web application - project and session browser",
   "type": "module",
   "scripts": {
-    "dev": "THINKT_API_TOKEN=$(thinkt server token 2>/dev/null) vite",
+    "dev": "THINKT_API_TOKEN=$(/Users/evan/wethinkt/go-thinkt/bin/thinkt server token 2>/dev/null) vite",
     "build": "npm run lint && tsc && vite build",
     "build:fast": "tsc && vite build",
     "preview": "vite preview",
@@ -36,7 +36,7 @@
     "@lingui/core": "^5.9.1",
     "@lingui/message-utils": "^5.9.1",
     "@lingui/vite-plugin": "^5.9.1",
-    "@wethinkt/ts-thinkt": "^0.1.10",
+    "@wethinkt/ts-thinkt": "^0.1.13",
     "marked": "^17.0.1"
   }
 }

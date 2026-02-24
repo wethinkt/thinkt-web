@@ -164,14 +164,14 @@ const PANEL_STYLES = `
 /* Tooltip */
 .thinkt-project-timeline-tooltip {
   position: absolute;
-  background: var(--thinkt-bg-secondary, #1a1a1a);
+  background: var(--thinkt-dropdown-bg, #1a1a1a);
   border: 1px solid var(--thinkt-border-color, #333);
   border-radius: 6px;
   padding: 10px 12px;
   font-size: 12px;
   pointer-events: none;
   z-index: 100;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
   max-width: 280px;
 }
 

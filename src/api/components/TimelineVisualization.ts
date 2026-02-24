@@ -335,14 +335,14 @@ const TIMELINE_STYLES = `
 
 .thinkt-timeline-tooltip {
   position: absolute;
-  background: var(--thinkt-bg-secondary, #1a1a1a);
+  background: var(--thinkt-dropdown-bg, #1a1a1a);
   border: 1px solid var(--thinkt-border-color, #333);
   border-radius: 6px;
   padding: 10px 12px;
   font-size: 12px;
   pointer-events: none;
   z-index: 100;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
   max-width: 280px;
 }
 
@@ -1065,7 +1065,7 @@ export class TimelineVisualization {
       sessions: group.sessions.sort((a, b) => this.toTimestampMs(a.timestamp) - this.toTimestampMs(b.timestamp)),
       color: this.groupBy === 'source'
         ? this.getSourceColor(group.label)
-        : this.getDefaultColor(group.label),
+        : group.projectSource ? this.getSourceColor(group.projectSource) : this.getDefaultColor(group.label),
     }));
 
     this.rows.sort((a, b) => {
@@ -1430,7 +1430,19 @@ export class TimelineVisualization {
       label.className = 'thinkt-timeline-label-item';
       label.style.top = `${index * this.rowHeight}px`;
       label.title = row.label;
-      label.textContent = this.truncateLabel(row.label, 18);
+      if (this.groupBy === 'project' && row.projectSource) {
+        const nameSpan = document.createElement('span');
+        nameSpan.textContent = this.truncateLabel(row.label, 14);
+        const sourceSpan = document.createElement('span');
+        sourceSpan.textContent = `(${row.projectSource})`;
+        sourceSpan.style.fontWeight = 'normal';
+        sourceSpan.style.opacity = '0.6';
+        sourceSpan.style.marginLeft = '4px';
+        label.appendChild(nameSpan);
+        label.appendChild(sourceSpan);
+      } else {
+        label.textContent = this.truncateLabel(row.label, 18);
+      }
       if (this.groupBy === 'project' && row.projectId) {
         label.classList.add('clickable');
         label.addEventListener('click', () => {

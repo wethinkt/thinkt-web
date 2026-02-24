@@ -748,14 +748,14 @@ describe('TimelineVisualization', () => {
 
     const labelsBefore = Array.from(container.querySelectorAll('.thinkt-timeline-label-item'))
       .map((el) => (el.textContent ?? '').trim().toLowerCase());
-    expect(labelsBefore).toEqual(['projectfast']);
+    expect(labelsBefore).toEqual(['projectfast(claude)']);
 
     resolveSlowProject([createSession('slow-1', '2026-01-01T10:00:00Z', 'kimi')]);
     await flush();
 
     const labelsAfter = Array.from(container.querySelectorAll('.thinkt-timeline-label-item'))
       .map((el) => (el.textContent ?? '').trim().toLowerCase());
-    expect(labelsAfter).toEqual(['projectfast', 'projectslow']);
+    expect(labelsAfter).toEqual(['projectfast(claude)', 'projectslow(kimi)']);
 
     timeline.dispose();
   });

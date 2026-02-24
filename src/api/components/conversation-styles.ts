@@ -743,10 +743,10 @@ export const CONVERSATION_STYLES = `
   right: 0;
   margin-top: 4px;
   min-width: 160px;
-  background: var(--thinkt-bg-secondary, #141414);
-  border: 1px solid var(--thinkt-border-color, #2a2a2a);
-  border-radius: 8px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+  background: var(--thinkt-dropdown-bg, #1a1a1a);
+  border: 1px solid var(--thinkt-border-color, #333);
+  border-radius: 6px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
   z-index: 1000;
   display: none;
   overflow: hidden;
@@ -815,10 +815,10 @@ export const CONVERSATION_STYLES = `
 .thinkt-conversation-view__export-dropdown {
   position: fixed;
   min-width: 140px;
-  background: var(--thinkt-bg-secondary, #141414);
-  border: 1px solid var(--thinkt-border-color, #2a2a2a);
+  background: var(--thinkt-dropdown-bg, #1a1a1a);
+  border: 1px solid var(--thinkt-border-color, #333);
   border-radius: 6px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
   z-index: 10000;
   display: none;
   overflow: hidden;
