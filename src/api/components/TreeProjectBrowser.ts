@@ -390,7 +390,7 @@ export class TreeProjectBrowser {
   private searchQuery = '';
   private sourceFilters: Set<string> | null = null;
   private isLoading = false;
-  private boundHandlers: Array<() => void> = [];
+  private abortController = new AbortController();
   private viewMode: TreeViewMode = 'hierarchical';
   private sortMode: TreeProjectSortMode = 'date_desc';
   private includeDeletedProjects = false;
@@ -412,9 +412,7 @@ export class TreeProjectBrowser {
     this.createStructure();
     void this.loadData();
 
-    const handleLocaleChange = () => this.refreshI18n();
-    window.addEventListener('thinkt:locale-changed', handleLocaleChange);
-    this.boundHandlers.push(() => window.removeEventListener('thinkt:locale-changed', handleLocaleChange));
+    window.addEventListener('thinkt:locale-changed', () => this.refreshI18n(), { signal: this.abortController.signal });
   }
 
   private createStructure(): void {
@@ -444,8 +442,7 @@ export class TreeProjectBrowser {
         const mode = (btn as HTMLElement).dataset.mode as TreeViewMode;
         this.setViewMode(mode);
       };
-      btn.addEventListener('click', handler);
-      this.boundHandlers.push(() => btn.removeEventListener('click', handler));
+      btn.addEventListener('click', handler, { signal: this.abortController.signal });
     });
 
     this.contentContainer.className = 'thinkt-tree-content';
@@ -1084,8 +1081,7 @@ export class TreeProjectBrowser {
   }
 
   dispose(): void {
-    this.boundHandlers.forEach(remove => remove());
-    this.boundHandlers = [];
+    this.abortController.abort();
     this.container.innerHTML = '';
   }
 }

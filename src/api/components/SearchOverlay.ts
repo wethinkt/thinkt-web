@@ -543,7 +543,7 @@ export class SearchOverlay {
   private selectedIndex = -1;
   private isLoading = false;
   private searchDebounceTimer: ReturnType<typeof setTimeout> | null = null;
-  private boundHandlers: Array<() => void> = [];
+  private abortController = new AbortController();
   private isOpen = false;
 
   // Search options
@@ -587,8 +587,8 @@ export class SearchOverlay {
   }
 
   private cleanup(): void {
-    this.boundHandlers.forEach(remove => remove());
-    this.boundHandlers = [];
+    this.abortController.abort();
+    this.abortController = new AbortController();
 
     if (this.searchDebounceTimer) {
       clearTimeout(this.searchDebounceTimer);
@@ -686,18 +686,15 @@ export class SearchOverlay {
         this.close();
       }
     };
-    this.overlay.addEventListener('click', handleBackdropClick);
-    this.boundHandlers.push(() => this.overlay?.removeEventListener('click', handleBackdropClick));
+    this.overlay.addEventListener('click', handleBackdropClick, { signal: this.abortController.signal });
 
     // Input handling with debounce
     if (this.input) {
       const handleInput = () => this.handleSearchInput();
-      this.input.addEventListener('input', handleInput);
-      this.boundHandlers.push(() => this.input?.removeEventListener('input', handleInput));
+      this.input.addEventListener('input', handleInput, { signal: this.abortController.signal });
 
       const handleKeydown = (e: KeyboardEvent) => this.handleKeydown(e);
-      this.input.addEventListener('keydown', handleKeydown);
-      this.boundHandlers.push(() => this.input?.removeEventListener('keydown', handleKeydown));
+      this.input.addEventListener('keydown', handleKeydown, { signal: this.abortController.signal });
     }
 
     // Option checkboxes
@@ -709,8 +706,7 @@ export class SearchOverlay {
         this.caseSensitive = caseSensitiveCheckbox.checked;
         this.triggerSearch();
       };
-      caseSensitiveCheckbox.addEventListener('change', handleChange);
-      this.boundHandlers.push(() => caseSensitiveCheckbox.removeEventListener('change', handleChange));
+      caseSensitiveCheckbox.addEventListener('change', handleChange, { signal: this.abortController.signal });
     }
 
     if (regexCheckbox) {
@@ -718,8 +714,7 @@ export class SearchOverlay {
         this.useRegex = regexCheckbox.checked;
         this.triggerSearch();
       };
-      regexCheckbox.addEventListener('change', handleChange);
-      this.boundHandlers.push(() => regexCheckbox.removeEventListener('change', handleChange));
+      regexCheckbox.addEventListener('change', handleChange, { signal: this.abortController.signal });
     }
 
     // Mode toggle
@@ -729,8 +724,7 @@ export class SearchOverlay {
         const mode = btn.dataset.mode as 'text' | 'semantic';
         this.setSearchMode(mode);
       };
-      btn.addEventListener('click', handleClick);
-      this.boundHandlers.push(() => btn.removeEventListener('click', handleClick));
+      btn.addEventListener('click', handleClick, { signal: this.abortController.signal });
     });
 
     // Global keyboard shortcuts
@@ -740,8 +734,7 @@ export class SearchOverlay {
         this.close();
       }
     };
-    document.addEventListener('keydown', handleGlobalKeydown);
-    this.boundHandlers.push(() => document.removeEventListener('keydown', handleGlobalKeydown));
+    document.addEventListener('keydown', handleGlobalKeydown, { signal: this.abortController.signal });
   }
 
   private setSearchMode(mode: 'text' | 'semantic'): void {
@@ -862,8 +855,7 @@ export class SearchOverlay {
           }
           this.applyProjectFilter();
         };
-        checkbox.addEventListener('change', handleChange);
-        this.boundHandlers.push(() => checkbox.removeEventListener('change', handleChange));
+        checkbox.addEventListener('change', handleChange, { signal: this.abortController.signal });
       }
       
       // Click on label toggles checkbox
@@ -899,8 +891,7 @@ export class SearchOverlay {
         this.renderProjects();
         this.applyProjectFilter();
       };
-      selectAllBtn.addEventListener('click', handleClick);
-      this.boundHandlers.push(() => selectAllBtn.removeEventListener('click', handleClick));
+      selectAllBtn.addEventListener('click', handleClick, { signal: this.abortController.signal });
     }
 
     // Select None button
@@ -912,8 +903,7 @@ export class SearchOverlay {
         this.renderProjects();
         this.applyProjectFilter();
       };
-      selectNoneBtn.addEventListener('click', handleClick);
-      this.boundHandlers.push(() => selectNoneBtn.removeEventListener('click', handleClick));
+      selectNoneBtn.addEventListener('click', handleClick, { signal: this.abortController.signal });
     }
   }
 

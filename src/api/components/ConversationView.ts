@@ -92,9 +92,7 @@ export class ConversationView {
   // Track which tool results were inlined with their tool_use
   private inlinedToolResults: Set<string> = new Set();
 
-  // Bound handlers for cleanup
-  private boundFilterHandlers: Map<HTMLElement, () => void> = new Map();
-  private removeLocaleListener: (() => void) | null = null;
+  private abortController = new AbortController();
 
   // Available apps for open-in
   private availableApps: AppInfo[] = [];
@@ -120,9 +118,7 @@ export class ConversationView {
     this.createStructure();
     this.setupFilters();
 
-    const handleLocaleChange = () => this.refreshI18n();
-    window.addEventListener('thinkt:locale-changed', handleLocaleChange);
-    this.removeLocaleListener = () => window.removeEventListener('thinkt:locale-changed', handleLocaleChange);
+    window.addEventListener('thinkt:locale-changed', () => this.refreshI18n(), { signal: this.abortController.signal });
   }
 
   private createStructure(): void {
@@ -144,7 +140,7 @@ export class ConversationView {
     this.container.appendChild(this.contentContainer);
 
     // Event delegation on content container
-    this.contentContainer.addEventListener('click', (e) => this.handleContentClick(e));
+    this.contentContainer.addEventListener('click', (e) => this.handleContentClick(e), { signal: this.abortController.signal });
 
     this.showEmpty();
   }
@@ -497,8 +493,7 @@ export class ConversationView {
         this.applyFilters();
       };
 
-      button.addEventListener('click', handler);
-      this.boundFilterHandlers.set(button, handler);
+      button.addEventListener('click', handler, { signal: this.abortController.signal });
     });
   }
 
@@ -916,14 +911,7 @@ export class ConversationView {
    * Dispose the view
    */
   dispose(): void {
-    this.removeLocaleListener?.();
-    this.removeLocaleListener = null;
-
-    this.boundFilterHandlers.forEach((handler, button) => {
-      button.removeEventListener('click', handler);
-    });
-    this.boundFilterHandlers.clear();
-
+    this.abortController.abort();
     this.container.innerHTML = '';
   }
 }

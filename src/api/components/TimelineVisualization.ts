@@ -426,7 +426,7 @@ export class TimelineVisualization {
   private readonly autoFollowGraceMs = 3000;
   private readonly userScrollEpsilonPx = 6;
   private zoomMsPerPixel = this.defaultMsPerPixel;
-  private removeLocaleListener: (() => void) | null = null;
+  private abortController = new AbortController();
 
   constructor(options: TimelineVisualizationOptions) {
     this.options = options;
@@ -446,9 +446,7 @@ export class TimelineVisualization {
     this.createStructure();
     void this.loadData();
 
-    const handleLocaleChange = () => this.refreshI18n();
-    window.addEventListener('thinkt:locale-changed', handleLocaleChange);
-    this.removeLocaleListener = () => window.removeEventListener('thinkt:locale-changed', handleLocaleChange);
+    window.addEventListener('thinkt:locale-changed', () => this.refreshI18n(), { signal: this.abortController.signal });
   }
 
   private createStructure(): void {
@@ -471,9 +469,9 @@ export class TimelineVisualization {
 
     this.scrollArea.className = 'thinkt-timeline-scroll';
     this.scrollArea.tabIndex = 0;
-    this.scrollArea.addEventListener('scroll', this.handleScroll);
-    this.scrollArea.addEventListener('wheel', this.handleWheel, { passive: false });
-    this.scrollArea.addEventListener('keydown', this.handleKeyDown);
+    this.scrollArea.addEventListener('scroll', this.handleScroll, { signal: this.abortController.signal });
+    this.scrollArea.addEventListener('wheel', this.handleWheel, { passive: false, signal: this.abortController.signal });
+    this.scrollArea.addEventListener('keydown', this.handleKeyDown, { signal: this.abortController.signal });
     this.viewport.appendChild(this.scrollArea);
 
     this.labelOverlay.className = 'thinkt-timeline-label-overlay';
@@ -1579,16 +1577,12 @@ export class TimelineVisualization {
     if (this.disposed) return;
     this.disposed = true;
 
-    this.removeLocaleListener?.();
-    this.removeLocaleListener = null;
+    this.abortController.abort();
 
     if (this.rafScrollSync !== 0) {
       window.cancelAnimationFrame(this.rafScrollSync);
       this.rafScrollSync = 0;
     }
-    this.scrollArea.removeEventListener('scroll', this.handleScroll);
-    this.scrollArea.removeEventListener('wheel', this.handleWheel);
-    this.scrollArea.removeEventListener('keydown', this.handleKeyDown);
 
     if (this.tooltip) {
       this.tooltip.remove();

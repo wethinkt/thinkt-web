@@ -326,7 +326,7 @@ export class SessionList {
   private isLoading = false;
   private itemElements: Map<string, HTMLElement> = new Map();
   private currentError: Error | null = null;
-  private boundHandlers: Array<() => void> = [];
+  private abortController = new AbortController();
   private disposed = false;
 
   constructor(options: SessionListOptions) {
@@ -355,9 +355,7 @@ export class SessionList {
     this.createStructure();
     this.attachListeners();
 
-    const handleLocaleChange = () => this.refreshI18n();
-    window.addEventListener('thinkt:locale-changed', handleLocaleChange);
-    this.boundHandlers.push(() => window.removeEventListener('thinkt:locale-changed', handleLocaleChange));
+    window.addEventListener('thinkt:locale-changed', () => this.refreshI18n(), { signal: this.abortController.signal });
 
     if (this.options.projectId) {
       await this.loadSessions(this.options.projectId, this.options.projectSource);
@@ -441,8 +439,7 @@ export class SessionList {
 
     if (searchInput) {
       const handleSearch = () => this.filterSessions();
-      searchInput.addEventListener('input', handleSearch);
-      this.boundHandlers.push(() => searchInput.removeEventListener('input', handleSearch));
+      searchInput.addEventListener('input', handleSearch, { signal: this.abortController.signal });
     }
 
     if (sortSelect) {
@@ -450,13 +447,11 @@ export class SessionList {
         this.sortMode = this.normalizeSortMode(sortSelect.value);
         this.filterSessions();
       };
-      sortSelect.addEventListener('change', handleSort);
-      this.boundHandlers.push(() => sortSelect.removeEventListener('change', handleSort));
+      sortSelect.addEventListener('change', handleSort, { signal: this.abortController.signal });
     }
 
     const handleKeydown = (e: KeyboardEvent) => this.handleKeydown(e);
-    container.addEventListener('keydown', handleKeydown);
-    this.boundHandlers.push(() => container.removeEventListener('keydown', handleKeydown));
+    container.addEventListener('keydown', handleKeydown, { signal: this.abortController.signal });
 
     container.setAttribute('tabindex', '0');
   }
@@ -920,8 +915,7 @@ export class SessionList {
   dispose(): void {
     if (this.disposed) return;
 
-    this.boundHandlers.forEach(remove => remove());
-    this.boundHandlers = [];
+    this.abortController.abort();
 
     this.itemElements.clear();
     this.sessions = [];

@@ -272,7 +272,7 @@ export class ProjectBrowser {
   private isLoading = false;
   private itemElements: Map<string, HTMLElement> = new Map();
   private currentError: Error | null = null;
-  private boundHandlers: Array<() => void> = [];
+  private abortController = new AbortController();
   private disposed = false;
 
   constructor(options: ProjectBrowserOptions) {
@@ -306,9 +306,7 @@ export class ProjectBrowser {
     this.createStructure();
     this.attachListeners();
 
-    const handleLocaleChange = () => this.refreshI18n();
-    window.addEventListener('thinkt:locale-changed', handleLocaleChange);
-    this.boundHandlers.push(() => window.removeEventListener('thinkt:locale-changed', handleLocaleChange));
+    window.addEventListener('thinkt:locale-changed', () => this.refreshI18n(), { signal: this.abortController.signal });
   }
 
   private createStructure(): void {
@@ -403,16 +401,14 @@ export class ProjectBrowser {
         this.searchQuery = searchInput.value.toLowerCase();
         this.filterProjects();
       };
-      searchInput.addEventListener('input', handleSearch);
-      this.boundHandlers.push(() => searchInput.removeEventListener('input', handleSearch));
+      searchInput.addEventListener('input', handleSearch, { signal: this.abortController.signal });
     }
 
     // Native source filter removed; managed externally by ApiViewer
 
     // Keyboard navigation
     const handleKeydown = (e: KeyboardEvent) => this.handleKeydown(e);
-    container.addEventListener('keydown', handleKeydown);
-    this.boundHandlers.push(() => container.removeEventListener('keydown', handleKeydown));
+    container.addEventListener('keydown', handleKeydown, { signal: this.abortController.signal });
 
     // Make container focusable
     container.setAttribute('tabindex', '0');
@@ -838,8 +834,7 @@ export class ProjectBrowser {
     if (this.disposed) return;
 
     // Remove event listeners
-    this.boundHandlers.forEach(remove => remove());
-    this.boundHandlers = [];
+    this.abortController.abort();
 
     // Clear references
     this.itemElements.clear();

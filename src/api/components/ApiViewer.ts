@@ -468,7 +468,7 @@ export class ApiViewer {
   private sourceCapabilities: SourceCapability[] = [];
   private resumableSources: Set<string> = new Set();
   private isLoadingSession = false;
-  private boundHandlers: Array<() => void> = [];
+  private abortController = new AbortController();
   private disposed = false;
   private readonly minProjectPaneHeight = 150;
   private readonly minSessionPaneHeight = 200;
@@ -562,24 +562,18 @@ export class ApiViewer {
       sidebar.classList.remove('thinkt-api-viewer__sidebar--open');
       sidebarOverlay.classList.remove('thinkt-sidebar-overlay--open');
     };
-    sidebarToggle.addEventListener('click', toggleSidebar);
-    sidebarOverlay.addEventListener('click', closeSidebar);
-    this.boundHandlers.push(() => {
-      sidebarToggle.removeEventListener('click', toggleSidebar);
-      sidebarOverlay.removeEventListener('click', closeSidebar);
-    });
+    sidebarToggle.addEventListener('click', toggleSidebar, { signal: this.abortController.signal });
+    sidebarOverlay.addEventListener('click', closeSidebar, { signal: this.abortController.signal });
 
     const handleWindowResize = () => {
       this.clampProjectPaneHeightToBounds();
     };
-    window.addEventListener('resize', handleWindowResize);
-    this.boundHandlers.push(() => window.removeEventListener('resize', handleWindowResize));
+    window.addEventListener('resize', handleWindowResize, { signal: this.abortController.signal });
 
     const handleLocaleChange = () => {
       this.refreshI18n();
     };
-    window.addEventListener('thinkt:locale-changed', handleLocaleChange as EventListener);
-    this.boundHandlers.push(() => window.removeEventListener('thinkt:locale-changed', handleLocaleChange as EventListener));
+    window.addEventListener('thinkt:locale-changed', handleLocaleChange as EventListener, { signal: this.abortController.signal });
 
     // Resizer (optional)
     if (!this.elements.resizer) {
@@ -687,15 +681,9 @@ export class ApiViewer {
       document.body.style.userSelect = '';
     };
 
-    splitter.addEventListener('mousedown', startResize);
-    document.addEventListener('mousemove', doResize);
-    document.addEventListener('mouseup', stopResize);
-
-    this.boundHandlers.push(() => {
-      splitter.removeEventListener('mousedown', startResize);
-      document.removeEventListener('mousemove', doResize);
-      document.removeEventListener('mouseup', stopResize);
-    });
+    splitter.addEventListener('mousedown', startResize, { signal: this.abortController.signal });
+    document.addEventListener('mousemove', doResize, { signal: this.abortController.signal });
+    document.addEventListener('mouseup', stopResize, { signal: this.abortController.signal });
   }
 
   private updateSidebarSectionsForView(mode: ProjectViewMode): void {
@@ -799,8 +787,7 @@ export class ApiViewer {
         sourceBtn.classList.remove('active');
       }
     };
-    sourceBtn.addEventListener('click', toggleDropdown);
-    this.boundHandlers.push(() => sourceBtn.removeEventListener('click', toggleDropdown));
+    sourceBtn.addEventListener('click', toggleDropdown, { signal: this.abortController.signal });
 
     const sortFilter = document.createElement('select');
     sortFilter.className = 'thinkt-project-filter__sort';
@@ -825,22 +812,19 @@ export class ApiViewer {
       this.projectSearchQuery = searchInput.value;
       this.applyProjectFilters();
     };
-    searchInput.addEventListener('input', handleSearchInput);
-    this.boundHandlers.push(() => searchInput.removeEventListener('input', handleSearchInput));
+    searchInput.addEventListener('input', handleSearchInput, { signal: this.abortController.signal });
 
     const handleSortChange = () => {
       this.projectSort = this.normalizeProjectSort(sortFilter.value);
       this.applyProjectFilters();
     };
-    sortFilter.addEventListener('change', handleSortChange);
-    this.boundHandlers.push(() => sortFilter.removeEventListener('change', handleSortChange));
+    sortFilter.addEventListener('change', handleSortChange, { signal: this.abortController.signal });
 
     const handleIncludeDeletedChange = () => {
       this.projectIncludeDeleted = includeDeletedToggle.checked;
       this.applyProjectFilters();
     };
-    includeDeletedToggle.addEventListener('change', handleIncludeDeletedChange);
-    this.boundHandlers.push(() => includeDeletedToggle.removeEventListener('change', handleIncludeDeletedChange));
+    includeDeletedToggle.addEventListener('change', handleIncludeDeletedChange, { signal: this.abortController.signal });
 
     this.renderSourceFilterOptions();
 
@@ -1104,15 +1088,9 @@ export class ApiViewer {
       document.body.style.cursor = '';
     };
 
-    resizer.addEventListener('mousedown', startResize);
-    document.addEventListener('mousemove', doResize);
-    document.addEventListener('mouseup', stopResize);
-
-    this.boundHandlers.push(() => {
-      resizer.removeEventListener('mousedown', startResize);
-      document.removeEventListener('mousemove', doResize);
-      document.removeEventListener('mouseup', stopResize);
-    });
+    resizer.addEventListener('mousedown', startResize, { signal: this.abortController.signal });
+    document.addEventListener('mousemove', doResize, { signal: this.abortController.signal });
+    document.addEventListener('mouseup', stopResize, { signal: this.abortController.signal });
   }
 
   // ============================================
@@ -1716,8 +1694,7 @@ export class ApiViewer {
   dispose(): void {
     if (this.disposed) return;
 
-    this.boundHandlers.forEach(remove => remove());
-    this.boundHandlers = [];
+    this.abortController.abort();
 
     this.projectBrowser?.dispose();
     this.treeProjectBrowser?.dispose();
