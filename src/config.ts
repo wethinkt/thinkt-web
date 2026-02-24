@@ -11,7 +11,8 @@
  * 5. Same origin (default)
  *
  * Auth token:
- * - Read from ?token= query parameter (set by `thinkt web`)
+ * - Read from #token= URL fragment (set by `thinkt web`), with ?token= query param fallback
+ * - Fragments are preferred because they are never sent to the server in HTTP requests
  * - In dev mode, the vite proxy injects the token server-side
  */
 
@@ -57,10 +58,16 @@ export function getApiBaseUrl(): string {
 }
 
 /**
- * Get the API auth token from the ?token= query parameter.
+ * Get the API auth token from the URL fragment (#token=) or query parameter (?token=).
+ * Fragment is preferred (never sent to server); query param kept as fallback.
  * Set by `thinkt web` when opening the browser.
  */
 export function getApiToken(): string | null {
   if (typeof window === 'undefined') return null;
+  // Prefer fragment (#token=...) — not sent to server in HTTP requests
+  const hash = window.location.hash.replace(/^#/, '');
+  const fragmentToken = new URLSearchParams(hash).get('token');
+  if (fragmentToken) return fragmentToken;
+  // Fallback to query param for backwards compatibility
   return new URLSearchParams(window.location.search).get('token');
 }
