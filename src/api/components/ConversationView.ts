@@ -10,7 +10,7 @@
  */
 
 import type { ThinktClient, AppInfo } from '@wethinkt/ts-thinkt/api';
-import type { Session, Entry, ToolResultBlock } from '@wethinkt/ts-thinkt';
+import type { Entry, ToolResultBlock } from '@wethinkt/ts-thinkt';
 import { i18n } from '@lingui/core';
 import { CONVERSATION_STYLES } from './conversation-styles';
 import { escapeHtml, formatToolSummary, renderMarkdown, formatDuration } from './conversation-renderers';
@@ -560,33 +560,6 @@ export class ConversationView {
   // ============================================
   // Display Methods
   // ============================================
-
-  /**
-   * Display entries from a session
-   */
-  displaySession(session: Session): void {
-    this.contentContainer.innerHTML = '';
-    this.currentEntries = session.entries || [];
-
-    if (this.currentEntries.length === 0) {
-      this.showEmpty();
-      this.renderFilterBar();
-      return;
-    }
-
-    this.buildToolResultIndex(this.currentEntries);
-
-    for (let i = 0; i < this.currentEntries.length; i++) {
-      const entry = this.currentEntries[i];
-      const entryEl = this.renderEntry(entry, i);
-      this.contentContainer.appendChild(entryEl);
-    }
-
-    this.renderFilterBar();
-    this.setupFilters();
-    this.applyFilters();
-    // Note: Caller decides scroll position (preserves scroll by default)
-  }
 
   /**
    * Display entries in the conversation view
