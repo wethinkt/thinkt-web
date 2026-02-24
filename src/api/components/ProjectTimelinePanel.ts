@@ -210,7 +210,7 @@ export class ProjectTimelinePanel {
   private rows: SourceRow[] = [];
   private svg: SVGSVGElement | null = null;
   private tooltip: HTMLElement | null = null;
-  private isLoading = false;
+  private loadController: AbortController | null = null;
   private isVisible = false;
   private cachedProjectKey: string | null = null;
 
@@ -286,7 +286,6 @@ export class ProjectTimelinePanel {
   // ============================================
 
   async loadSessions(projectId: string, source?: string, force = false): Promise<void> {
-    if (this.isLoading) return;
     const normalizedSource = source?.trim().toLowerCase() || undefined;
     const projectKey = `${normalizedSource ?? ''}::${projectId}`;
 
@@ -296,7 +295,10 @@ export class ProjectTimelinePanel {
       return;
     }
 
-    this.isLoading = true;
+    this.loadController?.abort();
+    const controller = new AbortController();
+    this.loadController = controller;
+
     this.options.projectId = projectId;
     this.options.projectSource = normalizedSource;
     this.cachedProjectKey = projectKey;
@@ -304,19 +306,20 @@ export class ProjectTimelinePanel {
 
     try {
       // Limit to recent sessions to avoid overwhelming the UI
-      const sessions = await this.client.getSessions(projectId, this.options.projectSource);
-      
+      const sessions = await this.client.getSessions(projectId, this.options.projectSource, controller.signal);
+      if (controller.signal.aborted) return;
+
       // Process sessions with timing info
       this.sessions = sessions
         .filter(s => s.createdAt && s.modifiedAt)
         .map(session => {
-          const startTime = session.createdAt instanceof Date 
-            ? session.createdAt 
+          const startTime = session.createdAt instanceof Date
+            ? session.createdAt
             : new Date(session.createdAt!);
           const endTime = session.modifiedAt instanceof Date
             ? session.modifiedAt
             : new Date(session.modifiedAt!);
-          
+
           return {
             session,
             source: session.source || 'unknown',
@@ -330,11 +333,14 @@ export class ProjectTimelinePanel {
       this.processRows();
       this.render();
     } catch (error) {
+      if (controller.signal.aborted) return;
       const err = error instanceof Error ? error : new Error(String(error));
       this.showError(err);
       this.options.onError?.(err);
     } finally {
-      this.isLoading = false;
+      if (this.loadController === controller) {
+        this.loadController = null;
+      }
     }
   }
 
@@ -711,6 +717,7 @@ export class ProjectTimelinePanel {
 
   dispose(): void {
     this.abortController.abort();
+    this.loadController?.abort();
 
     if (this.tooltip) {
       this.tooltip.remove();

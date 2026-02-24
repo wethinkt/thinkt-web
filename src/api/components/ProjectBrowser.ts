@@ -264,7 +264,7 @@ export class ProjectBrowser {
   private filters: ProjectFilterState;
   private lastLoadedIncludeDeleted = false;
   private selectedIndex = -1;
-  private isLoading = false;
+  private loadController: AbortController | null = null;
   private itemElements: Map<string, HTMLElement> = new Map();
   private currentError: Error | null = null;
   private abortController = new AbortController();
@@ -442,10 +442,15 @@ export class ProjectBrowser {
   // Data Loading
   // ============================================
 
-  async loadProjects(): Promise<void> {
-    if (this.isLoading) return;
+  private get isLoading(): boolean {
+    return this.loadController !== null && !this.loadController.signal.aborted;
+  }
 
-    this.isLoading = true;
+  async loadProjects(): Promise<void> {
+    this.loadController?.abort();
+    const controller = new AbortController();
+    this.loadController = controller;
+
     this.showLoading(true);
     this.showError(null);
 
@@ -453,7 +458,9 @@ export class ProjectBrowser {
       // Fetch all projects regardless of source, we filter locally
       this.projects = await this.client.getProjects(undefined, {
         includeDeleted: this.filters.includeDeleted,
+        signal: controller.signal,
       });
+      if (controller.signal.aborted) return;
       this.lastLoadedIncludeDeleted = this.filters.includeDeleted;
       const seen = new Set(this.discoveredSources);
       this.projects.forEach((project) => {
@@ -466,12 +473,15 @@ export class ProjectBrowser {
       this.filterProjects();
       void Promise.resolve(this.options.onProjectsLoaded?.(this.projects));
     } catch (error) {
+      if (controller.signal.aborted) return;
       const err = error instanceof Error ? error : new Error(String(error));
       this.showError(err);
       this.options.onError?.(err);
     } finally {
-      this.isLoading = false;
-      this.showLoading(false);
+      if (this.loadController === controller) {
+        this.loadController = null;
+        this.showLoading(false);
+      }
     }
   }
 
@@ -794,8 +804,9 @@ export class ProjectBrowser {
   dispose(): void {
     if (this.disposed) return;
 
-    // Remove event listeners
+    // Cancel pending requests and event listeners
     this.abortController.abort();
+    this.loadController?.abort();
 
     // Clear references
     this.itemElements.clear();

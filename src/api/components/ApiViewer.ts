@@ -476,7 +476,7 @@ export class ApiViewer {
   private discoveredSources: string[] = [];
   private sourceCapabilities: SourceCapability[] = [];
   private resumableSources: Set<string> = new Set();
-  private isLoadingSession = false;
+  private sessionLoadController: AbortController | null = null;
   private abortController = new AbortController();
   private disposed = false;
   private readonly minProjectPaneHeight = 150;
@@ -1480,15 +1480,16 @@ export class ApiViewer {
   }
 
   private async handleSessionSelect(session: SessionMeta): Promise<void> {
-    if (this.isLoadingSession) return;
-
     // Skip if already viewing this session
     if (this.currentSession?.meta.id === session.id) {
       return;
     }
 
+    this.sessionLoadController?.abort();
+    const controller = new AbortController();
+    this.sessionLoadController = controller;
+
     this.closeMobileSidebar();
-    this.isLoadingSession = true;
 
     try {
       // Load all entries for the session
@@ -1496,7 +1497,8 @@ export class ApiViewer {
       if (!sessionPath) {
         throw new Error('Session has no path');
       }
-      const entries = await this.client.getAllSessionEntries(sessionPath);
+      const entries = await this.client.getAllSessionEntries(sessionPath, undefined, controller.signal);
+      if (controller.signal.aborted) return;
 
       this.currentSession = {
         meta: session,
@@ -1510,9 +1512,12 @@ export class ApiViewer {
 
       void Promise.resolve(this.options.onSessionLoaded?.(session, entries));
     } catch (error) {
+      if (controller.signal.aborted) return;
       this.handleError(error instanceof Error ? error : new Error(String(error)));
     } finally {
-      this.isLoadingSession = false;
+      if (this.sessionLoadController === controller) {
+        this.sessionLoadController = null;
+      }
     }
   }
 
@@ -1687,6 +1692,7 @@ export class ApiViewer {
     if (this.disposed) return;
 
     this.abortController.abort();
+    this.sessionLoadController?.abort();
 
     this.projectBrowser?.dispose();
     this.treeProjectBrowser?.dispose();

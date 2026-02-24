@@ -388,7 +388,7 @@ export class TreeProjectBrowser {
   private selectedSessionId: string | null = null;
   private filters: ProjectFilterState;
   private lastLoadedIncludeDeleted = false;
-  private isLoading = false;
+  private loadController: AbortController | null = null;
   private abortController = new AbortController();
   private viewMode: TreeViewMode = 'hierarchical';
 
@@ -456,16 +456,23 @@ export class TreeProjectBrowser {
   // Data Loading
   // ============================================
 
+  private get isLoading(): boolean {
+    return this.loadController !== null && !this.loadController.signal.aborted;
+  }
+
   private async loadData(): Promise<void> {
-    if (this.isLoading) return;
-    this.isLoading = true;
+    this.loadController?.abort();
+    const controller = new AbortController();
+    this.loadController = controller;
     this.showLoading();
 
     try {
       // Load all projects from all sources
       const projects = await this.client.getProjects(undefined, {
         includeDeleted: this.filters.includeDeleted,
+        signal: controller.signal,
       });
+      if (controller.signal.aborted) return;
       this.lastLoadedIncludeDeleted = this.filters.includeDeleted;
 
       // Group projects by their underlying path
@@ -483,11 +490,14 @@ export class TreeProjectBrowser {
 
       this.render();
     } catch (error) {
+      if (controller.signal.aborted) return;
       const err = error instanceof Error ? error : new Error(String(error));
       this.showError(err);
       this.options.onError?.(err);
     } finally {
-      this.isLoading = false;
+      if (this.loadController === controller) {
+        this.loadController = null;
+      }
     }
   }
 
@@ -1065,6 +1075,7 @@ export class TreeProjectBrowser {
 
   dispose(): void {
     this.abortController.abort();
+    this.loadController?.abort();
     this.container.innerHTML = '';
   }
 }

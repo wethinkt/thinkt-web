@@ -541,7 +541,7 @@ export class SearchOverlay {
   private projects: Map<string, ProjectInfo> = new Map();
   private selectedProjects: Set<string> = new Set();
   private selectedIndex = -1;
-  private isLoading = false;
+  private searchController: AbortController | null = null;
   private searchDebounceTimer: ReturnType<typeof setTimeout> | null = null;
   private abortController = new AbortController();
   private isOpen = false;
@@ -964,32 +964,37 @@ export class SearchOverlay {
   }
 
   private async performSearch(query: string): Promise<void> {
-    if (this.isLoading) return;
-    this.isLoading = true;
+    this.searchController?.abort();
+    const controller = new AbortController();
+    this.searchController = controller;
     this.showLoadingState();
 
     try {
       if (this.searchMode === 'semantic') {
-        await this.performSemanticSearch(query);
+        await this.performSemanticSearch(query, controller.signal);
       } else {
-        await this.performTextSearch(query);
+        await this.performTextSearch(query, controller.signal);
       }
     } catch (error) {
+      if (controller.signal.aborted) return;
       const err = error instanceof Error ? error : new Error(String(error));
       this.showErrorState(err);
       this.options.onError?.(err);
     } finally {
-      this.isLoading = false;
+      if (this.searchController === controller) {
+        this.searchController = null;
+      }
     }
   }
 
-  private async performTextSearch(query: string): Promise<void> {
+  private async performTextSearch(query: string, signal?: AbortSignal): Promise<void> {
     const options: SearchOptions = {
       query,
       limit: 50,
       limitPerSession: 2,
       caseSensitive: this.caseSensitive,
       regex: this.useRegex,
+      signal,
     };
 
     const response = await this.client.search(options);
@@ -1005,11 +1010,12 @@ export class SearchOverlay {
     this.renderResultsList();
   }
 
-  private async performSemanticSearch(query: string): Promise<void> {
+  private async performSemanticSearch(query: string, signal?: AbortSignal): Promise<void> {
     const options: SemanticSearchOptions = {
       query,
       limit: 20,
       diversity: true,
+      signal,
     };
 
     const response = await this.client.semanticSearch(options);

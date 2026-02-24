@@ -323,7 +323,7 @@ export class SessionList {
   private filteredSessions: SessionMeta[] = [];
   private sortMode: SessionSortMode = 'date_desc';
   private selectedIndex = -1;
-  private isLoading = false;
+  private loadController: AbortController | null = null;
   private itemElements: Map<string, HTMLElement> = new Map();
   private currentError: Error | null = null;
   private abortController = new AbortController();
@@ -488,12 +488,17 @@ export class SessionList {
   // Data Loading
   // ============================================
 
+  private get isLoading(): boolean {
+    return this.loadController !== null && !this.loadController.signal.aborted;
+  }
+
   async loadSessions(projectId: string, source?: string): Promise<void> {
-    if (this.isLoading) return;
+    this.loadController?.abort();
+    const controller = new AbortController();
+    this.loadController = controller;
 
     this.options.projectId = projectId;
     this.options.projectSource = source?.trim().toLowerCase() || undefined;
-    this.isLoading = true;
     this.showLoading(true);
     this.showError(null);
     this.sessions = [];
@@ -502,16 +507,20 @@ export class SessionList {
     this.render();
 
     try {
-      this.sessions = await this.client.getSessions(projectId, this.options.projectSource);
+      this.sessions = await this.client.getSessions(projectId, this.options.projectSource, controller.signal);
+      if (controller.signal.aborted) return;
       this.filterSessions();
       void Promise.resolve(this.options.onSessionsLoaded?.(this.sessions));
     } catch (error) {
+      if (controller.signal.aborted) return;
       const err = error instanceof Error ? error : new Error(String(error));
       this.showError(err);
       this.options.onError?.(err);
     } finally {
-      this.isLoading = false;
-      this.showLoading(false);
+      if (this.loadController === controller) {
+        this.loadController = null;
+        this.showLoading(false);
+      }
     }
   }
 
@@ -916,6 +925,7 @@ export class SessionList {
     if (this.disposed) return;
 
     this.abortController.abort();
+    this.loadController?.abort();
 
     this.itemElements.clear();
     this.sessions = [];
