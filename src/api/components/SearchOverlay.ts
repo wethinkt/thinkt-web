@@ -829,7 +829,7 @@ export class SearchOverlay {
       a.name.localeCompare(b.name)
     );
 
-    list.innerHTML = '';
+    list.replaceChildren();
     
     for (const project of sortedProjects) {
       const item = document.createElement('div');
@@ -1057,7 +1057,7 @@ export class SearchOverlay {
       list.appendChild(item);
     });
 
-    content.innerHTML = '';
+    content.replaceChildren();
     content.appendChild(list);
 
     this.updateSelection();
@@ -1303,7 +1303,7 @@ export class SearchOverlay {
     } else {
       content.innerHTML = `
         <div class="thinkt-search-error">
-          <div>${i18n._('Error: {message}', { message: error.message })}</div>
+          <div>${i18n._('Error: {message}', { message: this.escapeHtml(error.message) })}</div>
         </div>
       `;
     }
@@ -1341,7 +1341,7 @@ export class SearchOverlay {
       list.appendChild(item);
     });
 
-    content.innerHTML = '';
+    content.replaceChildren();
     content.appendChild(list);
 
     this.updateSelection();

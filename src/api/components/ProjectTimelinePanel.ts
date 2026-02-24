@@ -388,7 +388,7 @@ export class ProjectTimelinePanel {
       return;
     }
 
-    this.contentContainer.innerHTML = '';
+    this.contentContainer.replaceChildren();
 
     // Calculate dimensions
     const width = Math.max(400, this.contentContainer.clientWidth);
@@ -643,7 +643,7 @@ export class ProjectTimelinePanel {
 
   private showError(error: Error): void {
     this.contentContainer.innerHTML = `
-      <div class="thinkt-project-timeline-error">${i18n._('Error: {message}', { message: error.message })}</div>
+      <div class="thinkt-project-timeline-error">${i18n._('Error: {message}', { message: this.escapeHtml(error.message) })}</div>
     `;
   }
 
@@ -723,7 +723,7 @@ export class ProjectTimelinePanel {
       this.tooltip.remove();
       this.tooltip = null;
     }
-    this.container.innerHTML = '';
+    this.container.replaceChildren();
     this.sessions = [];
     this.rows = [];
     this.cachedProjectKey = null;

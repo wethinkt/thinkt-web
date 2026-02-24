@@ -367,7 +367,7 @@ export class SessionList {
     const { classPrefix } = this.options;
 
     container.className = classPrefix;
-    container.innerHTML = '';
+    container.replaceChildren();
 
     // Header
     const header = document.createElement('div');
@@ -540,7 +540,7 @@ export class SessionList {
     this.currentError = error;
 
     if (error) {
-      this.elements.errorDisplay.innerHTML = '';
+      this.elements.errorDisplay.replaceChildren();
       const msgDiv = document.createElement('div');
       msgDiv.textContent = error.message;
       this.elements.errorDisplay.appendChild(msgDiv);
@@ -616,7 +616,7 @@ export class SessionList {
     const sortSelect = this.elements.sortSelect;
     if (!sortSelect) return;
 
-    sortSelect.innerHTML = '';
+    sortSelect.replaceChildren();
     const options: Array<{ value: SessionSortMode; label: string }> = [
       { value: 'date_desc', label: i18n._('Newest') },
       { value: 'date_asc', label: i18n._('Oldest') },
@@ -665,7 +665,7 @@ export class SessionList {
     if (!list) return;
 
     // Clear list and remove ALL existing empty states first
-    list.innerHTML = '';
+    list.replaceChildren();
     this.itemElements.clear();
     const existingEmpty = this.elements.container.querySelectorAll(`.${this.options.classPrefix}__empty`);
     existingEmpty.forEach(el => el.remove());
@@ -931,7 +931,7 @@ export class SessionList {
     this.sessions = [];
     this.filteredSessions = [];
 
-    this.elements.container.innerHTML = '';
+    this.elements.container.replaceChildren();
 
     this.disposed = true;
   }

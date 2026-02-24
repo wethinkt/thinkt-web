@@ -1104,8 +1104,8 @@ export class TimelineVisualization {
       return;
     }
 
-    this.scrollArea.innerHTML = '';
-    this.labelTrack.innerHTML = '';
+    this.scrollArea.replaceChildren();
+    this.labelTrack.replaceChildren();
 
     if (this.groupBy === 'source') {
       this.labelOverlay.style.display = 'none';
@@ -1423,7 +1423,7 @@ export class TimelineVisualization {
   }
 
   private renderLabelOverlay(): void {
-    this.labelTrack.innerHTML = '';
+    this.labelTrack.replaceChildren();
     this.rows.forEach((row, index) => {
       const label = document.createElement('div');
       label.className = 'thinkt-timeline-label-item';
@@ -1522,7 +1522,7 @@ export class TimelineVisualization {
   private showError(error: Error): void {
     this.scrollArea.innerHTML = `
       <div class="thinkt-timeline-error">
-        <div>${i18n._('Error: {message}', { message: error.message })}</div>
+        <div>${i18n._('Error: {message}', { message: this.escapeHtml(error.message) })}</div>
       </div>
     `;
   }
@@ -1578,6 +1578,6 @@ export class TimelineVisualization {
       this.tooltip = null;
     }
 
-    this.container.innerHTML = '';
+    this.container.replaceChildren();
   }
 }

@@ -566,7 +566,7 @@ export class ConversationView {
    * Display entries in the conversation view
    */
   displayEntries(entries: Entry[]): void {
-    this.contentContainer.innerHTML = '';
+    this.contentContainer.replaceChildren();
     this.currentEntries = entries || [];
 
     if (this.currentEntries.length === 0) {
@@ -886,6 +886,6 @@ export class ConversationView {
    */
   dispose(): void {
     this.abortController.abort();
-    this.container.innerHTML = '';
+    this.container.replaceChildren();
   }
 }

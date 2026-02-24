@@ -501,7 +501,7 @@ export class ProjectBrowser {
     this.currentError = error;
 
     if (error) {
-      this.elements.errorDisplay.innerHTML = '';
+      this.elements.errorDisplay.replaceChildren();
       const msgDiv = document.createElement('div');
       msgDiv.textContent = error.message;
       this.elements.errorDisplay.appendChild(msgDiv);
@@ -606,7 +606,7 @@ export class ProjectBrowser {
     if (!list) return;
 
     // Clear list and remove ALL existing empty states first
-    list.innerHTML = '';
+    list.replaceChildren();
     this.itemElements.clear();
     const existingEmpty = this.elements.container.querySelectorAll(`.${this.options.classPrefix}__empty`);
     existingEmpty.forEach(el => el.remove());
@@ -816,7 +816,7 @@ export class ProjectBrowser {
     // Remove elements created by us (but not the container)
     const content = this.elements.container.querySelector(`.${this.options.classPrefix}__content`);
     if (content) {
-      content.innerHTML = '';
+      content.replaceChildren();
     }
 
     this.disposed = true;

@@ -418,7 +418,7 @@ export class TreeProjectBrowser {
 
   private createStructure(): void {
     this.container.className = 'thinkt-tree-browser';
-    this.container.innerHTML = '';
+    this.container.replaceChildren();
 
     // Header with view toggle
     this.headerContainer.className = 'thinkt-tree-header';
@@ -645,7 +645,7 @@ export class TreeProjectBrowser {
       return;
     }
 
-    this.contentContainer.innerHTML = '';
+    this.contentContainer.replaceChildren();
 
     const sortedProjects = filteredProjects.sort((a, b) => this.compareProjectGroups(a, b));
 
@@ -924,7 +924,7 @@ export class TreeProjectBrowser {
   private showError(error: Error): void {
     this.contentContainer.innerHTML = `
       <div class="thinkt-tree-error">
-        <div>${i18n._('Error: {message}', { message: error.message })}</div>
+        <div>${i18n._('Error: {message}', { message: this.escapeHtml(error.message) })}</div>
         <button class="thinkt-tree-retry">${i18n._('Retry')}</button>
       </div>
     `;
@@ -1077,6 +1077,6 @@ export class TreeProjectBrowser {
   dispose(): void {
     this.abortController.abort();
     this.loadController?.abort();
-    this.container.innerHTML = '';
+    this.container.replaceChildren();
   }
 }

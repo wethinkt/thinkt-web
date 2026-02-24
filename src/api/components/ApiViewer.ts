@@ -966,7 +966,7 @@ export class ApiViewer {
     const menu = this.projectSourceDropdownMenu;
     const toggleElement = this.projectIncludeDeletedLabel?.parentElement;
 
-    menu.innerHTML = '';
+    menu.replaceChildren();
 
     const listContainer = document.createElement('div');
     listContainer.className = 'thinkt-source-dropdown__list';
@@ -1036,7 +1036,7 @@ export class ApiViewer {
 
     const sortFilter = this.projectSortFilter;
     const selected = this.normalizeProjectSort(sortFilter.value || this.projectFilters.sort);
-    sortFilter.innerHTML = '';
+    sortFilter.replaceChildren();
 
     const options: Array<{ value: ProjectSortMode; label: string }> = [
       { value: 'date_desc', label: i18n._('Newest') },
@@ -1102,7 +1102,7 @@ export class ApiViewer {
     });
 
     // Clear current view
-    this.elements.projectBrowserContainer.innerHTML = '';
+    this.elements.projectBrowserContainer.replaceChildren();
 
     // Dispose old views
     this.projectBrowser?.dispose();
