@@ -307,7 +307,7 @@ export class ConversationView {
 
     document.addEventListener('click', () => {
       dropdown.classList.remove('open');
-    });
+    }, { signal: this.abortController.signal });
 
     dropdown.querySelectorAll('.thinkt-conversation-view__toolbar-dropdown-item').forEach((item) => {
       item.addEventListener('click', (e) => {
@@ -429,7 +429,7 @@ export class ConversationView {
         this.exportDropdownOpen = false;
         dropdown.classList.remove('open');
       }
-    });
+    }, { signal: this.abortController.signal });
 
     // Handle export format selection
     dropdown.querySelectorAll('.thinkt-conversation-view__export-dropdown-item').forEach((item) => {

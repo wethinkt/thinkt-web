@@ -811,15 +811,17 @@ export class ApiViewer {
       if (this.isSourceDropdownOpen) {
         sourceMenu.classList.add('open');
         sourceBtn.classList.add('active');
+        const closeController = new AbortController();
         const closeMenu = (ev: Event) => {
           if (!sourceDropdownContainer.contains(ev.target as Node)) {
             this.isSourceDropdownOpen = false;
             sourceMenu.classList.remove('open');
             sourceBtn.classList.remove('active');
-            document.removeEventListener('click', closeMenu);
+            closeController.abort();
           }
         };
-        document.addEventListener('click', closeMenu);
+        document.addEventListener('click', closeMenu, { signal: closeController.signal });
+        this.abortController.signal.addEventListener('abort', () => closeController.abort());
       } else {
         sourceMenu.classList.remove('open');
         sourceBtn.classList.remove('active');
