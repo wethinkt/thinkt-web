@@ -559,14 +559,14 @@ export class ConversationView {
     // All top-level items have data-role and data-block-type
     this.contentContainer.querySelectorAll('[data-role]').forEach((el) => {
       const item = el as HTMLElement;
-      const role = item.dataset.role;
+      const role = (item.dataset.role ?? '').toLowerCase();
       const blockType = item.dataset.blockType;
 
       // Check role filter
       let hidden = false;
       if (role === 'user') hidden = !this.filterState.user;
       else if (role === 'assistant') hidden = !this.filterState.assistant;
-      else if (role === 'system') hidden = !this.filterState.system;
+      else if (role === 'system' || role === 'progress' || role === 'checkpoint') hidden = !this.filterState.system;
 
       // Check block-type filter (standalone blocks only)
       if (!hidden && blockType) {
@@ -660,6 +660,8 @@ export class ConversationView {
     this.currentEntryCount = 0;
     this.renderToolbar();
     this.renderFilterBar();
+    this.setupFilters();
+    this.applyFilters();
   }
 
   /**
@@ -672,6 +674,8 @@ export class ConversationView {
       this.contentContainer.appendChild(entryEl);
     }
     this.currentEntryCount = this.currentEntries.length;
+    // Keep visibility consistent with the current filter state while streaming.
+    this.applyFilters();
   }
 
   /**

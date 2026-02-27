@@ -176,9 +176,9 @@
 }
 
 .thinkt-conversation-view__filter-btn.active[data-filter="system"] {
-  background: rgba(136, 136, 136, 0.15);
-  border-color: rgba(136, 136, 136, 0.4);
-  color: #888;
+  background: rgba(248, 113, 113, 0.18);
+  border-color: rgba(248, 113, 113, 0.45);
+  color: #fca5a5;
 }
 
 /* ============================================
