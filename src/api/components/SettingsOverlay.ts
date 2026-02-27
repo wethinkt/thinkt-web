@@ -34,6 +34,11 @@ interface ServerInfoPayload {
   uptime_seconds?: number;
   version?: string;
 }
+interface ProgressRenderOptions {
+  includeProjects?: boolean;
+  includeSessions?: boolean;
+  includeChunks?: boolean;
+}
 
 export interface SettingsOverlayElements {
   container: HTMLElement;
@@ -142,6 +147,10 @@ export class SettingsOverlay {
             <section class="thinkt-settings-section">
               <h3>${i18n._('Indexer Status')}</h3>
               <div id="settings-indexer" class="thinkt-settings-loading">${i18n._('Loading indexer status...')}</div>
+            </section>
+            <section class="thinkt-settings-section">
+              <h3>${i18n._('Embedding Status')}</h3>
+              <div id="settings-embedding" class="thinkt-settings-loading">${i18n._('Loading embedding status...')}</div>
             </section>
           </div>
 
@@ -296,6 +305,7 @@ export class SettingsOverlay {
     this.setContent('settings-connection', `<div class="thinkt-settings-loading">${i18n._('Checking connection...')}</div>`);
     this.setContent('settings-stats', `<div class="thinkt-settings-loading">${i18n._('Loading stats...')}</div>`);
     this.setContent('settings-indexer', `<div class="thinkt-settings-loading">${i18n._('Loading indexer status...')}</div>`);
+    this.setContent('settings-embedding', `<div class="thinkt-settings-loading">${i18n._('Loading embedding status...')}</div>`);
     this.setContent('settings-sources', `<div class="thinkt-settings-loading">${i18n._('Loading sources...')}</div>`);
     this.setContent('settings-apps', `<div class="thinkt-settings-loading">${i18n._('Loading apps...')}</div>`);
   }
@@ -447,11 +457,13 @@ export class SettingsOverlay {
 
     if (indexerResult.status === 'fulfilled') {
       this.setContent('settings-indexer', this.renderIndexerStatus(indexerResult.value));
+      this.setContent('settings-embedding', this.renderEmbeddingStatus(indexerResult.value));
       return;
     }
 
     const error = this.toError(indexerResult.reason);
     this.setContent('settings-indexer', `<div class="thinkt-settings-muted">${i18n._('Indexer status unavailable: {message}', { message: this.escapeHtml(error.message) })}</div>`);
+    this.setContent('settings-embedding', `<div class="thinkt-settings-muted">${i18n._('Embedding status unavailable: {message}', { message: this.escapeHtml(error.message) })}</div>`);
     this.options.onError?.(error);
   }
 
@@ -584,16 +596,13 @@ export class SettingsOverlay {
     const stateLabel = status.state ?? (running ? i18n._('Running') : i18n._('Idle'));
     const stateClass = running ? 'thinkt-settings-status--online' : 'thinkt-settings-status--idle';
     const watching = status.watching ? i18n._('Yes') : i18n._('No');
-    const syncHtml = this.renderProgressInfo(i18n._('Sync Progress'), status.sync_progress);
-    const embedHtml = this.renderProgressInfo(i18n._('Embedding Progress'), status.embed_progress);
+    const syncHtml = this.renderProgressInfo(i18n._('Sync Progress'), status.sync_progress, {
+      includeProjects: true,
+      includeSessions: true,
+    });
 
     return `
       <div class="thinkt-settings-stat-grid thinkt-settings-stat-grid--indexer">
-        <div class="thinkt-settings-stat-card">
-          <div class="thinkt-settings-stat-label">${i18n._('Model')}</div>
-          <div class="thinkt-settings-stat-value">${this.escapeHtml(status.model ?? '—')}</div>
-          <div class="thinkt-settings-stat-meta">${status.model_dim !== undefined ? `${status.model_dim}d` : '—'}</div>
-        </div>
         <div class="thinkt-settings-stat-card">
           <div class="thinkt-settings-stat-label">${i18n._('Uptime')}</div>
           <div class="thinkt-settings-stat-value">${this.formatUptime(status.uptime_seconds)}</div>
@@ -608,43 +617,94 @@ export class SettingsOverlay {
         </div>
       </div>
       ${syncHtml}
-      ${embedHtml}
-      ${!syncHtml && !embedHtml ? `<div class="thinkt-settings-muted">${i18n._('No active sync or embedding in progress.')}</div>` : ''}
+      ${!syncHtml ? `<div class="thinkt-settings-muted">${i18n._('No active sync in progress.')}</div>` : ''}
     `;
   }
 
-  private renderProgressInfo(title: string, progress?: IndexerStatusProgressInfo): string {
+  private renderEmbeddingStatus(status: IndexerPayload): string {
+    const hasModel = typeof status.model === 'string' && status.model.trim().length > 0;
+    const isEmbeddingRunning = (status.state ?? '').includes('embedding') || status.embed_progress !== undefined;
+    const embeddingStatusLabel = isEmbeddingRunning
+      ? i18n._('Running')
+      : (hasModel ? i18n._('Enabled') : i18n._('Not loaded'));
+    const embeddingStatusClass = isEmbeddingRunning
+      ? 'thinkt-settings-status--online'
+      : (hasModel ? 'thinkt-settings-status--idle' : 'thinkt-settings-status--offline');
+    const modelValue = hasModel ? this.escapeHtml(status.model ?? '') : this.escapeHtml(i18n._('Not loaded'));
+    const modelMeta = status.model_dim !== undefined
+      ? `${status.model_dim}d`
+      : i18n._('No dimension reported');
+    const embedHtml = this.renderProgressInfo(i18n._('Embedding Progress'), status.embed_progress, {
+      includeSessions: true,
+      includeChunks: true,
+    });
+
+    return `
+      <div class="thinkt-settings-stat-grid thinkt-settings-stat-grid--embedding">
+        <div class="thinkt-settings-stat-card">
+          <div class="thinkt-settings-stat-label">${i18n._('Model')}</div>
+          <div class="thinkt-settings-stat-value">${modelValue}</div>
+          <div class="thinkt-settings-stat-meta">${this.escapeHtml(modelMeta)}</div>
+        </div>
+        <div class="thinkt-settings-stat-card">
+          <div class="thinkt-settings-stat-label">${i18n._('Status')}</div>
+          <div class="thinkt-settings-stat-value"><span class="thinkt-settings-status ${embeddingStatusClass}">${this.escapeHtml(embeddingStatusLabel)}</span></div>
+        </div>
+      </div>
+      ${embedHtml}
+      ${!embedHtml ? `<div class="thinkt-settings-muted">${i18n._('No active embedding in progress.')}</div>` : ''}
+    `;
+  }
+
+  private renderProgressInfo(
+    title: string,
+    progress: IndexerStatusProgressInfo | undefined,
+    options: ProgressRenderOptions = {},
+  ): string {
     if (!progress) return '';
 
-    const done = progress.done ?? progress.chunks_done;
-    const total = progress.total ?? progress.chunks_total;
-    const hasTotal = done !== undefined && total !== undefined && total > 0;
-    const pct = hasTotal ? Math.min(100, Math.round((done / total) * 100)) : undefined;
+    const projectBar = options.includeProjects
+      ? this.renderLabeledProgressBar(i18n._('Projects'), progress.project, progress.project_total)
+      : '';
+    const sessionBar = options.includeSessions
+      ? this.renderLabeledProgressBar(i18n._('Sessions'), progress.done, progress.total)
+      : '';
+    const chunkBar = options.includeChunks
+      ? this.renderLabeledProgressBar(i18n._('Chunks'), progress.chunks_done, progress.chunks_total)
+      : '';
+    const fallbackBar = !projectBar && !sessionBar && !chunkBar
+      ? this.renderLabeledProgressBar(i18n._('Sessions'), progress.done ?? progress.chunks_done, progress.total ?? progress.chunks_total)
+      : '';
     const message = progress.message ? `<div class="thinkt-settings-progress-msg">${this.escapeHtml(progress.message)}</div>` : '';
     const meta = progress.project_name
       ? `<div class="thinkt-settings-progress-meta">${i18n._('Project: {projectName}', { projectName: this.escapeHtml(progress.project_name) })}</div>`
       : '';
-
-    const bar = hasTotal && pct !== undefined
-      ? `
-        <div class="thinkt-settings-progress">
-          <div class="thinkt-settings-progress-row">
-            <span>${this.formatNumber(done)} / ${this.formatNumber(total)}</span>
-            <span>${pct}%</span>
-          </div>
-          <div class="thinkt-settings-progress-track">
-            <div class="thinkt-settings-progress-fill" style="width: ${pct}%"></div>
-          </div>
-        </div>
-      `
-      : '';
+    const bars = `${projectBar}${sessionBar}${chunkBar}${fallbackBar}`;
 
     return `
       <div class="thinkt-settings-progress-section">
         <div class="thinkt-settings-subtitle">${this.escapeHtml(title)}</div>
         ${message}
-        ${bar}
+        ${bars}
         ${meta}
+      </div>
+    `;
+  }
+
+  private renderLabeledProgressBar(label: string, done?: number, total?: number): string {
+    if (done === undefined || total === undefined || total <= 0) return '';
+
+    const pct = Math.min(100, Math.round((done / total) * 100));
+    return `
+      <div class="thinkt-settings-progress">
+        <div class="thinkt-settings-progress-label">${this.escapeHtml(label)}</div>
+        <div class="thinkt-settings-progress-row">
+          <span>${this.formatNumber(done)} / ${this.formatNumber(total)}</span>
+          <span>${pct}%</span>
+        </div>
+        <div class="thinkt-settings-progress-track">
+          <div class="thinkt-settings-progress-fill" style="width: ${pct}%"></div>
+        </div>
       </div>
     `;
   }
@@ -872,6 +932,13 @@ export class SettingsOverlay {
   }
 
   private maskToken(token: string): string {
+    const thinktTokenMatch = /^thinkt_(\d{8})_(.+)$/.exec(token);
+    if (thinktTokenMatch) {
+      const created = thinktTokenMatch[1];
+      const tail = token.slice(-4);
+      return `thinkt_${created}_\u2022\u2022\u2022\u2022${tail}`;
+    }
+
     if (token.length <= 8) {
       return token;
     }

@@ -12,13 +12,29 @@ msgstr ""
 "Plural-Forms: \n"
 
 #. js-lingui-explicit-id
-#: src/api/components/SettingsOverlay.ts:799
-msgid "Set (injected)"
+#: src/api/components/SettingsOverlay.ts:153
+#: src/api/components/SettingsOverlay.ts:308
+msgid "Loading embedding status..."
 msgstr ""
 
 #. js-lingui-explicit-id
-#: src/api/components/SettingsOverlay.ts:828
-msgid "Token is provided by the runtime and cannot be displayed in the browser."
+#: src/api/components/SettingsOverlay.ts:466
+msgid "Embedding status unavailable: {message}"
+msgstr ""
+
+#. js-lingui-explicit-id
+#: src/api/components/SettingsOverlay.ts:630
+msgid "No active sync in progress."
+msgstr ""
+
+#. js-lingui-explicit-id
+#: src/api/components/SettingsOverlay.ts:655
+msgid "Status"
+msgstr ""
+
+#. js-lingui-explicit-id
+#: src/api/components/SettingsOverlay.ts:665
+msgid "No active embedding in progress."
 msgstr ""
 
 #. js-lingui-explicit-id
@@ -61,7 +77,8 @@ msgstr "Error de conexión"
 
 #. js-lingui-explicit-id
 #: src/api/components/SearchOverlay.ts:175
-#: src/api/components/SettingsOverlay.ts:543
+#: src/api/components/SettingsOverlay.ts:555
+#: src/api/components/SettingsOverlay.ts:677
 #: src/api/components/TreeProjectBrowser.ts:136
 msgid "Projects"
 msgstr "Proyectos"
@@ -154,8 +171,8 @@ msgstr "Selecciona proyectos en la barra lateral para filtrar"
 #: src/api/components/SearchResultRenderer.ts:96
 #: src/api/components/SearchResultRenderer.ts:181
 #: src/api/components/SessionList.ts:74
-#: src/api/components/SettingsOverlay.ts:653
-#: src/api/components/SettingsOverlay.ts:678
+#: src/api/components/SettingsOverlay.ts:723
+#: src/api/components/SettingsOverlay.ts:748
 msgid "Unknown"
 msgstr "Desconocido"
 
@@ -222,6 +239,86 @@ msgstr ""
 #. js-lingui-explicit-id
 #: src/api/components/SearchResultRenderer.ts:307
 msgid "{weeks}w ago"
+msgstr ""
+
+#. js-lingui-explicit-id
+#: src/api/components/SearchOverlay.ts:144
+msgid "Search Sessions"
+msgstr "Buscar sesiones"
+
+#. js-lingui-explicit-id
+#: src/api/components/SearchOverlay.ts:146
+msgid "Text"
+msgstr ""
+
+#. js-lingui-explicit-id
+#: src/api/components/SearchOverlay.ts:147
+msgid "Semantic"
+msgstr ""
+
+#. js-lingui-explicit-id
+#: src/api/components/ProjectTimelinePanel.ts:106
+#: src/api/components/SearchOverlay.ts:151
+#: src/api/components/SearchOverlay.ts:151
+#: src/api/components/SettingsOverlay.ts:129
+#: src/api/components/SettingsOverlay.ts:129
+msgid "Close"
+msgstr "Cerrar"
+
+#. js-lingui-explicit-id
+#: src/api/components/SearchOverlay.ts:156
+#: src/api/components/SearchOverlay.ts:300
+msgid "Type to search across all sessions..."
+msgstr "Escribe para buscar en todas las sesiones..."
+
+#. js-lingui-explicit-id
+#: src/api/components/SearchOverlay.ts:161
+msgid "Case sensitive"
+msgstr "Sensible a mayúsculas"
+
+#. js-lingui-explicit-id
+#: src/api/components/SearchOverlay.ts:165
+msgid "Regex"
+msgstr "Regex"
+
+#. js-lingui-explicit-id
+#: src/api/components/SearchOverlay.ts:169
+msgid "Ask a question in natural language"
+msgstr ""
+
+#. js-lingui-explicit-id
+#: src/api/components/SearchOverlay.ts:177
+msgid "All"
+msgstr "Todos"
+
+#. js-lingui-explicit-id
+#: src/api/components/SearchOverlay.ts:178
+msgid "None"
+msgstr "Ninguno"
+
+#. js-lingui-explicit-id
+#: src/api/components/SearchOverlay.ts:186
+msgid "Type to search across all indexed sessions"
+msgstr "Escribe para buscar en todas las sesiones indexadas"
+
+#. js-lingui-explicit-id
+#: src/api/components/SearchOverlay.ts:191
+msgid "to navigate"
+msgstr "para navegar"
+
+#. js-lingui-explicit-id
+#: src/api/components/SearchOverlay.ts:191
+msgid "to select"
+msgstr "para seleccionar"
+
+#. js-lingui-explicit-id
+#: src/api/components/SearchOverlay.ts:192
+msgid "Search uses the indexer database"
+msgstr "La búsqueda utiliza la base de datos del indexador"
+
+#. js-lingui-explicit-id
+#: src/api/components/SearchOverlay.ts:301
+msgid "Ask a question about your sessions..."
 msgstr ""
 
 #. js-lingui-explicit-id
@@ -341,413 +438,500 @@ msgid "chunked"
 msgstr "fragmentado"
 
 #. js-lingui-explicit-id
-#: src/api/components/SettingsOverlay.ts:112
+#: src/api/components/ApiViewer.ts:191
+#: src/api/components/ApiViewer.ts:210
+#: src/api/components/TimelineVisualization.ts:195
+msgid "Timeline"
+msgstr "Cronología"
+
+#. js-lingui-explicit-id
+#: src/api/components/TimelineVisualization.ts:197
+msgid "By Project"
+msgstr "Por proyecto"
+
+#. js-lingui-explicit-id
+#: src/api/components/TimelineVisualization.ts:198
+msgid "By Source"
+msgstr "Por fuente"
+
+#. js-lingui-explicit-id
+#: src/api/components/ProjectTimelinePanel.ts:487
+#: src/api/components/TimelineVisualization.ts:1243
+msgid "Loading timeline..."
+msgstr "Cargando cronología..."
+
+#. js-lingui-explicit-id
+#: src/api/components/TimelineVisualization.ts:1251
+msgid "No sessions to display"
+msgstr "No hay sesiones para mostrar"
+
+#. js-lingui-explicit-id
+#: src/api/components/SettingsOverlay.ts:117
 msgid "Settings and Info"
 msgstr ""
 
 #. js-lingui-explicit-id
-#: src/api/components/SettingsOverlay.ts:115
+#: src/api/components/SettingsOverlay.ts:120
 msgid "Info Panels"
 msgstr ""
 
 #. js-lingui-explicit-id
-#: src/api/components/SettingsOverlay.ts:116
+#: src/api/components/SettingsOverlay.ts:121
 msgid "Dashboard"
 msgstr ""
 
 #. js-lingui-explicit-id
-#: src/api/components/SettingsOverlay.ts:117
+#: src/api/components/SettingsOverlay.ts:122
 msgid "Indexer"
 msgstr ""
 
 #. js-lingui-explicit-id
-#: src/api/components/SettingsOverlay.ts:118
-#: src/api/components/SettingsOverlay.ts:150
+#: src/api/components/SettingsOverlay.ts:123
+#: src/api/components/SettingsOverlay.ts:159
 msgid "Sources"
 msgstr ""
 
 #. js-lingui-explicit-id
-#: src/api/components/SettingsOverlay.ts:119
-#: src/api/components/SettingsOverlay.ts:157
+#: src/api/components/SettingsOverlay.ts:124
+#: src/api/components/SettingsOverlay.ts:166
 msgid "Apps"
 msgstr ""
 
 #. js-lingui-explicit-id
-#: src/api/components/SettingsOverlay.ts:120
-#: src/api/components/SettingsOverlay.ts:382
+#: src/api/components/SettingsOverlay.ts:125
+#: src/api/components/SettingsOverlay.ts:392
 msgid "Auth"
 msgstr ""
 
 #. js-lingui-explicit-id
-#: src/api/components/ProjectTimelinePanel.ts:106
-#: src/api/components/SearchOverlay.ts:151
-#: src/api/components/SearchOverlay.ts:151
-#: src/api/components/SettingsOverlay.ts:124
-#: src/api/components/SettingsOverlay.ts:124
-msgid "Close"
-msgstr "Cerrar"
-
-#. js-lingui-explicit-id
-#: src/api/components/SettingsOverlay.ts:132
+#: src/api/components/SettingsOverlay.ts:137
 msgid "System Status"
 msgstr ""
 
 #. js-lingui-explicit-id
-#: src/api/components/SettingsOverlay.ts:133
-#: src/api/components/SettingsOverlay.ts:296
+#: src/api/components/SettingsOverlay.ts:138
+#: src/api/components/SettingsOverlay.ts:305
 msgid "Checking connection..."
 msgstr ""
 
 #. js-lingui-explicit-id
-#: src/api/components/SettingsOverlay.ts:136
+#: src/api/components/SettingsOverlay.ts:141
 msgid "Usage Statistics"
 msgstr ""
 
 #. js-lingui-explicit-id
-#: src/api/components/SettingsOverlay.ts:137
-#: src/api/components/SettingsOverlay.ts:297
+#: src/api/components/SettingsOverlay.ts:142
+#: src/api/components/SettingsOverlay.ts:306
 msgid "Loading stats..."
 msgstr ""
 
 #. js-lingui-explicit-id
-#: src/api/components/SettingsOverlay.ts:143
+#: src/api/components/SettingsOverlay.ts:148
 msgid "Indexer Status"
 msgstr ""
 
 #. js-lingui-explicit-id
-#: src/api/components/SettingsOverlay.ts:144
-#: src/api/components/SettingsOverlay.ts:298
+#: src/api/components/SettingsOverlay.ts:149
+#: src/api/components/SettingsOverlay.ts:307
 msgid "Loading indexer status..."
 msgstr ""
 
 #. js-lingui-explicit-id
-#: src/api/components/SettingsOverlay.ts:151
-#: src/api/components/SettingsOverlay.ts:299
+#: src/api/components/SettingsOverlay.ts:152
+msgid "Embedding Status"
+msgstr ""
+
+#. js-lingui-explicit-id
+#: src/api/components/SettingsOverlay.ts:160
+#: src/api/components/SettingsOverlay.ts:309
 msgid "Loading sources..."
 msgstr ""
 
 #. js-lingui-explicit-id
-#: src/api/components/SettingsOverlay.ts:158
-#: src/api/components/SettingsOverlay.ts:300
+#: src/api/components/SettingsOverlay.ts:167
+#: src/api/components/SettingsOverlay.ts:310
 msgid "Loading apps..."
 msgstr ""
 
 #. js-lingui-explicit-id
-#: src/api/components/SettingsOverlay.ts:164
+#: src/api/components/SettingsOverlay.ts:173
 msgid "API Authentication"
 msgstr ""
 
 #. js-lingui-explicit-id
-#: src/api/components/SettingsOverlay.ts:167
+#: src/api/components/SettingsOverlay.ts:176
 msgid "Current Token"
 msgstr ""
 
 #. js-lingui-explicit-id
-#: src/api/components/SettingsOverlay.ts:168
-#: src/api/components/SettingsOverlay.ts:799
+#: src/api/components/SettingsOverlay.ts:177
+#: src/api/components/SettingsOverlay.ts:869
 msgid "Not set"
 msgstr ""
 
 #. js-lingui-explicit-id
-#: src/api/components/SettingsOverlay.ts:173
-#: src/api/components/SettingsOverlay.ts:174
-#: src/api/components/SettingsOverlay.ts:812
-#: src/api/components/SettingsOverlay.ts:813
-#: src/api/components/SettingsOverlay.ts:820
-#: src/api/components/SettingsOverlay.ts:821
+#: src/api/components/SettingsOverlay.ts:182
+#: src/api/components/SettingsOverlay.ts:183
+#: src/api/components/SettingsOverlay.ts:882
+#: src/api/components/SettingsOverlay.ts:883
+#: src/api/components/SettingsOverlay.ts:890
+#: src/api/components/SettingsOverlay.ts:891
 msgid "Show token"
 msgstr ""
 
 #. js-lingui-explicit-id
-#: src/api/components/SettingsOverlay.ts:176
-#: src/api/components/SettingsOverlay.ts:811
-#: src/api/components/SettingsOverlay.ts:819
+#: src/api/components/SettingsOverlay.ts:185
+#: src/api/components/SettingsOverlay.ts:881
+#: src/api/components/SettingsOverlay.ts:889
 msgid "Show"
 msgstr ""
 
 #. js-lingui-explicit-id
-#: src/api/components/SettingsOverlay.ts:179
+#: src/api/components/SettingsOverlay.ts:188
 msgid "Token"
 msgstr ""
 
 #. js-lingui-explicit-id
-#: src/api/components/SettingsOverlay.ts:184
+#: src/api/components/SettingsOverlay.ts:193
 msgid "Paste bearer token"
 msgstr ""
 
 #. js-lingui-explicit-id
-#: src/api/components/SettingsOverlay.ts:189
+#: src/api/components/SettingsOverlay.ts:198
 msgid "Save Token"
 msgstr ""
 
 #. js-lingui-explicit-id
-#: src/api/components/SettingsOverlay.ts:190
+#: src/api/components/SettingsOverlay.ts:199
 msgid "Clear Token"
 msgstr ""
 
 #. js-lingui-explicit-id
-#: src/api/components/SettingsOverlay.ts:321
-#: src/api/components/SettingsOverlay.ts:322
-#: src/api/components/SettingsOverlay.ts:326
-#: src/api/components/SettingsOverlay.ts:328
-#: src/api/components/SettingsOverlay.ts:337
+#: src/api/components/SettingsOverlay.ts:331
+#: src/api/components/SettingsOverlay.ts:332
+#: src/api/components/SettingsOverlay.ts:336
+#: src/api/components/SettingsOverlay.ts:338
+#: src/api/components/SettingsOverlay.ts:347
 msgid "Unavailable"
 msgstr ""
 
 #. js-lingui-explicit-id
-#: src/api/components/SettingsOverlay.ts:329
+#: src/api/components/SettingsOverlay.ts:339
+#: src/api/components/SettingsOverlay.ts:639
 msgid "Enabled"
 msgstr ""
 
 #. js-lingui-explicit-id
-#: src/api/components/SettingsOverlay.ts:329
+#: src/api/components/SettingsOverlay.ts:339
 msgid "Disabled"
 msgstr ""
 
 #. js-lingui-explicit-id
-#: src/api/components/SettingsOverlay.ts:336
-#: src/api/components/SettingsOverlay.ts:401
-#: src/api/components/SettingsOverlay.ts:421
+#: src/api/components/SettingsOverlay.ts:346
+#: src/api/components/SettingsOverlay.ts:411
+#: src/api/components/SettingsOverlay.ts:431
 msgid "Server Info"
 msgstr ""
 
 #. js-lingui-explicit-id
-#: src/api/components/SettingsOverlay.ts:342
+#: src/api/components/SettingsOverlay.ts:352
 msgid "Sources endpoint reachable"
 msgstr ""
 
 #. js-lingui-explicit-id
-#: src/api/components/SettingsOverlay.ts:348
-#: src/api/components/SettingsOverlay.ts:659
+#: src/api/components/SettingsOverlay.ts:358
+#: src/api/components/SettingsOverlay.ts:729
 msgid "Online"
 msgstr ""
 
 #. js-lingui-explicit-id
-#: src/api/components/SettingsOverlay.ts:349
-#: src/api/components/SettingsOverlay.ts:659
+#: src/api/components/SettingsOverlay.ts:359
+#: src/api/components/SettingsOverlay.ts:729
 msgid "Offline"
 msgstr ""
 
 #. js-lingui-explicit-id
-#: src/api/components/SettingsOverlay.ts:352
+#: src/api/components/SettingsOverlay.ts:362
 msgid "Server"
 msgstr ""
 
 #. js-lingui-explicit-id
-#: src/api/components/SettingsOverlay.ts:358
+#: src/api/components/SettingsOverlay.ts:368
 msgid "Fingerprint"
 msgstr ""
 
 #. js-lingui-explicit-id
-#: src/api/components/SettingsOverlay.ts:362
+#: src/api/components/SettingsOverlay.ts:372
 msgid "Version"
 msgstr ""
 
 #. js-lingui-explicit-id
-#: src/api/components/SettingsOverlay.ts:366
+#: src/api/components/SettingsOverlay.ts:376
 msgid "Revision"
 msgstr ""
 
 #. js-lingui-explicit-id
-#: src/api/components/SettingsOverlay.ts:370
+#: src/api/components/SettingsOverlay.ts:380
 msgid "Started At"
 msgstr ""
 
 #. js-lingui-explicit-id
-#: src/api/components/SettingsOverlay.ts:374
+#: src/api/components/SettingsOverlay.ts:384
 msgid "Server Uptime"
 msgstr ""
 
 #. js-lingui-explicit-id
-#: src/api/components/SettingsOverlay.ts:378
+#: src/api/components/SettingsOverlay.ts:388
 msgid "PID"
 msgstr ""
 
 #. js-lingui-explicit-id
-#: src/api/components/SettingsOverlay.ts:393
-#: src/api/components/SettingsOverlay.ts:413
+#: src/api/components/SettingsOverlay.ts:403
+#: src/api/components/SettingsOverlay.ts:423
 msgid "API Connection"
 msgstr ""
 
 #. js-lingui-explicit-id
-#: src/api/components/SettingsOverlay.ts:438
+#: src/api/components/SettingsOverlay.ts:448
 msgid "Failed to load stats: {message}"
 msgstr ""
 
 #. js-lingui-explicit-id
-#: src/api/components/SettingsOverlay.ts:454
+#: src/api/components/SettingsOverlay.ts:465
 msgid "Indexer status unavailable: {message}"
 msgstr ""
 
 #. js-lingui-explicit-id
-#: src/api/components/SettingsOverlay.ts:485
+#: src/api/components/SettingsOverlay.ts:497
 msgid "Failed to load sources: {message}"
 msgstr ""
 
 #. js-lingui-explicit-id
-#: src/api/components/SettingsOverlay.ts:492
+#: src/api/components/SettingsOverlay.ts:504
 msgid "No sources found."
 msgstr ""
 
 #. js-lingui-explicit-id
-#: src/api/components/SettingsOverlay.ts:510
+#: src/api/components/SettingsOverlay.ts:522
 msgid "Failed to load apps: {message}"
 msgstr ""
 
 #. js-lingui-explicit-id
-#: src/api/components/SettingsOverlay.ts:520
+#: src/api/components/SettingsOverlay.ts:532
 msgid "No apps configured."
 msgstr ""
 
 #. js-lingui-explicit-id
-#: src/api/components/SettingsOverlay.ts:525
+#: src/api/components/SettingsOverlay.ts:537
 msgid "Default terminal: {app}"
 msgstr ""
 
 #. js-lingui-explicit-id
-#: src/api/components/SettingsOverlay.ts:542
+#: src/api/components/SettingsOverlay.ts:554
+#: src/api/components/SettingsOverlay.ts:680
+#: src/api/components/SettingsOverlay.ts:686
 msgid "Sessions"
 msgstr ""
 
 #. js-lingui-explicit-id
-#: src/api/components/SettingsOverlay.ts:544
+#: src/api/components/SettingsOverlay.ts:556
 msgid "Entries"
 msgstr ""
 
 #. js-lingui-explicit-id
-#: src/api/components/SettingsOverlay.ts:545
+#: src/api/components/SettingsOverlay.ts:557
 msgid "Total Tokens"
 msgstr ""
 
 #. js-lingui-explicit-id
-#: src/api/components/SettingsOverlay.ts:550
+#: src/api/components/SettingsOverlay.ts:562
 msgid "Top Tools Used"
 msgstr ""
 
 #. js-lingui-explicit-id
-#: src/api/components/SettingsOverlay.ts:567
+#: src/api/components/SettingsOverlay.ts:579
 msgid "No tool usage yet."
 msgstr ""
 
 #. js-lingui-explicit-id
-#: src/api/components/SettingsOverlay.ts:584
+#: src/api/components/SettingsOverlay.ts:596
+#: src/api/components/SettingsOverlay.ts:638
 msgid "Running"
 msgstr ""
 
 #. js-lingui-explicit-id
-#: src/api/components/SettingsOverlay.ts:584
+#: src/api/components/SettingsOverlay.ts:596
 msgid "Idle"
 msgstr ""
 
 #. js-lingui-explicit-id
-#: src/api/components/SettingsOverlay.ts:586
+#: src/api/components/SettingsOverlay.ts:598
 msgid "Yes"
 msgstr ""
 
 #. js-lingui-explicit-id
-#: src/api/components/SettingsOverlay.ts:586
+#: src/api/components/SettingsOverlay.ts:598
 msgid "No"
 msgstr ""
 
 #. js-lingui-explicit-id
-#: src/api/components/SettingsOverlay.ts:587
+#: src/api/components/SettingsOverlay.ts:600
+#: src/api/components/SettingsOverlay.ts:639
+#: src/api/components/SettingsOverlay.ts:643
+msgid "Not loaded"
+msgstr ""
+
+#. js-lingui-explicit-id
+#: src/api/components/SettingsOverlay.ts:603
+#: src/api/components/SettingsOverlay.ts:646
+msgid "No dimension reported"
+msgstr ""
+
+#. js-lingui-explicit-id
+#: src/api/components/SettingsOverlay.ts:604
 msgid "Sync Progress"
 msgstr ""
 
 #. js-lingui-explicit-id
-#: src/api/components/SettingsOverlay.ts:588
-msgid "Embedding Progress"
-msgstr ""
-
-#. js-lingui-explicit-id
-#: src/api/components/SettingsOverlay.ts:593
+#: src/api/components/SettingsOverlay.ts:612
+#: src/api/components/SettingsOverlay.ts:659
 msgid "Model"
 msgstr ""
 
 #. js-lingui-explicit-id
-#: src/api/components/SettingsOverlay.ts:598
+#: src/api/components/SettingsOverlay.ts:617
 msgid "Uptime"
 msgstr ""
 
 #. js-lingui-explicit-id
-#: src/api/components/SettingsOverlay.ts:602
+#: src/api/components/SettingsOverlay.ts:621
 msgid "Watching"
 msgstr ""
 
 #. js-lingui-explicit-id
-#: src/api/components/SettingsOverlay.ts:606
+#: src/api/components/SettingsOverlay.ts:625
 msgid "State"
 msgstr ""
 
 #. js-lingui-explicit-id
-#: src/api/components/SettingsOverlay.ts:612
-msgid "No active sync or embedding in progress."
+#: src/api/components/SettingsOverlay.ts:647
+msgid "Embedding Progress"
 msgstr ""
 
 #. js-lingui-explicit-id
-#: src/api/components/SettingsOverlay.ts:625
-msgid "Project: {projectName}"
-msgstr ""
-
-#. js-lingui-explicit-id
-#: src/api/components/SettingsOverlay.ts:670
-msgid "Resumable"
-msgstr ""
-
-#. js-lingui-explicit-id
-#: src/api/components/SettingsOverlay.ts:689
-msgid "terminal"
+#: src/api/components/SettingsOverlay.ts:683
+msgid "Chunks"
 msgstr ""
 
 #. js-lingui-explicit-id
 #: src/api/components/SettingsOverlay.ts:690
+msgid "Project: {projectName}"
+msgstr ""
+
+#. js-lingui-explicit-id
+#: src/api/components/SettingsOverlay.ts:740
+msgid "Resumable"
+msgstr ""
+
+#. js-lingui-explicit-id
+#: src/api/components/SettingsOverlay.ts:759
+msgid "terminal"
+msgstr ""
+
+#. js-lingui-explicit-id
+#: src/api/components/SettingsOverlay.ts:760
 msgid "default"
 msgstr ""
 
 #. js-lingui-explicit-id
-#: src/api/components/SettingsOverlay.ts:692
+#: src/api/components/SettingsOverlay.ts:762
 msgid "enabled"
 msgstr ""
 
 #. js-lingui-explicit-id
-#: src/api/components/SettingsOverlay.ts:692
+#: src/api/components/SettingsOverlay.ts:762
 msgid "disabled"
 msgstr ""
 
 #. js-lingui-explicit-id
-#: src/api/components/SettingsOverlay.ts:723
+#: src/api/components/SettingsOverlay.ts:793
 msgid "Unknown error"
 msgstr ""
 
 #. js-lingui-explicit-id
-#: src/api/components/SettingsOverlay.ts:778
+#: src/api/components/SettingsOverlay.ts:848
 msgid "Failed to load server info: HTTP {status}"
 msgstr ""
 
 #. js-lingui-explicit-id
-#: src/api/components/SettingsOverlay.ts:783
+#: src/api/components/SettingsOverlay.ts:853
 msgid "Invalid server info response"
 msgstr ""
 
 #. js-lingui-explicit-id
-#: src/api/components/SettingsOverlay.ts:815
+#: src/api/components/SettingsOverlay.ts:869
+msgid "Set (injected)"
+msgstr ""
+
+#. js-lingui-explicit-id
+#: src/api/components/SettingsOverlay.ts:885
 msgid "Hide"
 msgstr ""
 
 #. js-lingui-explicit-id
-#: src/api/components/SettingsOverlay.ts:816
-#: src/api/components/SettingsOverlay.ts:817
+#: src/api/components/SettingsOverlay.ts:886
+#: src/api/components/SettingsOverlay.ts:887
 msgid "Hide token"
 msgstr ""
 
 #. js-lingui-explicit-id
-#: src/api/components/SettingsOverlay.ts:846
+#: src/api/components/SettingsOverlay.ts:898
+msgid "Token is provided by the runtime and cannot be displayed in the browser."
+msgstr ""
+
+#. js-lingui-explicit-id
+#: src/api/components/SettingsOverlay.ts:916
 msgid "Auth token updated."
 msgstr ""
 
 #. js-lingui-explicit-id
-#: src/api/components/SettingsOverlay.ts:854
+#: src/api/components/SettingsOverlay.ts:924
 msgid "Auth token cleared."
+msgstr ""
+
+#. js-lingui-explicit-id
+#: src/api/components/ProjectBrowser.ts:137
+#: src/api/components/ProjectBrowser.ts:595
+#: src/api/components/ProjectFilterBar.ts:77
+#: src/api/components/ProjectFilterBar.ts:346
+msgid "Filter projects..."
+msgstr "Filtrar proyectos..."
+
+#. js-lingui-explicit-id
+#: src/api/components/ProjectFilterBar.ts:86
+#: src/api/components/ProjectFilterBar.ts:293
+msgid "All Sources"
+msgstr "Todas las fuentes"
+
+#. js-lingui-explicit-id
+#: src/api/components/ProjectFilterBar.ts:131
+#: src/api/components/ProjectFilterBar.ts:349
+msgid "Include Deleted"
+msgstr ""
+
+#. js-lingui-explicit-id
+#: src/api/components/ProjectFilterBar.ts:298
+msgid "{count} Sources"
+msgstr ""
+
+#. js-lingui-explicit-id
+#: src/api/components/ProjectFilterBar.ts:313
+msgid "Name A-Z"
+msgstr ""
+
+#. js-lingui-explicit-id
+#: src/api/components/ProjectFilterBar.ts:314
+msgid "Name Z-A"
 msgstr ""
 
 #. js-lingui-explicit-id
@@ -806,121 +990,9 @@ msgid "{hours}h {mins}m"
 msgstr "{hours}h {mins}m"
 
 #. js-lingui-explicit-id
-#: src/api/components/ProjectTimelinePanel.ts:487
-#: src/api/components/TimelineVisualization.ts:1243
-msgid "Loading timeline..."
-msgstr "Cargando cronología..."
-
-#. js-lingui-explicit-id
 #: src/api/components/ProjectTimelinePanel.ts:493
 msgid "No sessions with timing data"
 msgstr "No hay sesiones con datos de tiempo"
-
-#. js-lingui-explicit-id
-#: src/api/components/SearchOverlay.ts:144
-msgid "Search Sessions"
-msgstr "Buscar sesiones"
-
-#. js-lingui-explicit-id
-#: src/api/components/SearchOverlay.ts:146
-msgid "Text"
-msgstr ""
-
-#. js-lingui-explicit-id
-#: src/api/components/SearchOverlay.ts:147
-msgid "Semantic"
-msgstr ""
-
-#. js-lingui-explicit-id
-#: src/api/components/SearchOverlay.ts:156
-#: src/api/components/SearchOverlay.ts:300
-msgid "Type to search across all sessions..."
-msgstr "Escribe para buscar en todas las sesiones..."
-
-#. js-lingui-explicit-id
-#: src/api/components/SearchOverlay.ts:161
-msgid "Case sensitive"
-msgstr "Sensible a mayúsculas"
-
-#. js-lingui-explicit-id
-#: src/api/components/SearchOverlay.ts:165
-msgid "Regex"
-msgstr "Regex"
-
-#. js-lingui-explicit-id
-#: src/api/components/SearchOverlay.ts:169
-msgid "Ask a question in natural language"
-msgstr ""
-
-#. js-lingui-explicit-id
-#: src/api/components/SearchOverlay.ts:177
-msgid "All"
-msgstr "Todos"
-
-#. js-lingui-explicit-id
-#: src/api/components/SearchOverlay.ts:178
-msgid "None"
-msgstr "Ninguno"
-
-#. js-lingui-explicit-id
-#: src/api/components/SearchOverlay.ts:186
-msgid "Type to search across all indexed sessions"
-msgstr "Escribe para buscar en todas las sesiones indexadas"
-
-#. js-lingui-explicit-id
-#: src/api/components/SearchOverlay.ts:191
-msgid "to navigate"
-msgstr "para navegar"
-
-#. js-lingui-explicit-id
-#: src/api/components/SearchOverlay.ts:191
-msgid "to select"
-msgstr "para seleccionar"
-
-#. js-lingui-explicit-id
-#: src/api/components/SearchOverlay.ts:192
-msgid "Search uses the indexer database"
-msgstr "La búsqueda utiliza la base de datos del indexador"
-
-#. js-lingui-explicit-id
-#: src/api/components/SearchOverlay.ts:301
-msgid "Ask a question about your sessions..."
-msgstr ""
-
-#. js-lingui-explicit-id
-#: src/api/components/ProjectBrowser.ts:137
-#: src/api/components/ProjectBrowser.ts:595
-#: src/api/components/ProjectFilterBar.ts:77
-#: src/api/components/ProjectFilterBar.ts:346
-msgid "Filter projects..."
-msgstr "Filtrar proyectos..."
-
-#. js-lingui-explicit-id
-#: src/api/components/ProjectFilterBar.ts:86
-#: src/api/components/ProjectFilterBar.ts:293
-msgid "All Sources"
-msgstr "Todas las fuentes"
-
-#. js-lingui-explicit-id
-#: src/api/components/ProjectFilterBar.ts:131
-#: src/api/components/ProjectFilterBar.ts:349
-msgid "Include Deleted"
-msgstr ""
-
-#. js-lingui-explicit-id
-#: src/api/components/ProjectFilterBar.ts:298
-msgid "{count} Sources"
-msgstr ""
-
-#. js-lingui-explicit-id
-#: src/api/components/ProjectFilterBar.ts:313
-msgid "Name A-Z"
-msgstr ""
-
-#. js-lingui-explicit-id
-#: src/api/components/ProjectFilterBar.ts:314
-msgid "Name Z-A"
-msgstr ""
 
 #. js-lingui-explicit-id
 #: src/api/components/ProjectBrowser.ts:407
@@ -953,28 +1025,6 @@ msgstr "Lista"
 #: src/api/components/ApiViewer.ts:209
 msgid "Tree"
 msgstr "Árbol"
-
-#. js-lingui-explicit-id
-#: src/api/components/ApiViewer.ts:191
-#: src/api/components/ApiViewer.ts:210
-#: src/api/components/TimelineVisualization.ts:195
-msgid "Timeline"
-msgstr "Cronología"
-
-#. js-lingui-explicit-id
-#: src/api/components/TimelineVisualization.ts:197
-msgid "By Project"
-msgstr "Por proyecto"
-
-#. js-lingui-explicit-id
-#: src/api/components/TimelineVisualization.ts:198
-msgid "By Source"
-msgstr "Por fuente"
-
-#. js-lingui-explicit-id
-#: src/api/components/TimelineVisualization.ts:1251
-msgid "No sessions to display"
-msgstr "No hay sesiones para mostrar"
 
 #. js-lingui-explicit-id
 #: src/api/components/ConversationView.ts:239
@@ -1106,6 +1156,11 @@ msgstr "Ninguna conversación cargada"
 #: src/api/components/ConversationView.ts:879
 msgid "Select a session to view the conversation"
 msgstr "Selecciona una sesión para ver la conversación"
+
+#. js-lingui-explicit-id
+#: src/api/components/SettingsOverlay.ts:639
+#~ msgid "No active sync or embedding in progress."
+#~ msgstr ""
 
 #. js-lingui-explicit-id
 #: src/api/components/SettingsOverlay.ts:397

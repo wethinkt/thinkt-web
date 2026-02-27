@@ -186,7 +186,11 @@
 }
 
 .thinkt-settings-stat-grid--indexer {
-  grid-template-columns: 2fr 1fr 1fr 1fr;
+  grid-template-columns: repeat(3, minmax(150px, 1fr));
+}
+
+.thinkt-settings-stat-grid--embedding {
+  grid-template-columns: repeat(2, minmax(180px, 1fr));
 }
 
 .thinkt-settings-stat-card {
@@ -558,6 +562,13 @@
   margin-top: 4px;
 }
 
+.thinkt-settings-progress-label {
+  color: var(--thinkt-muted-color, #64748b);
+  font-size: 11px;
+  font-weight: 600;
+  margin-bottom: 2px;
+}
+
 .thinkt-settings-progress-row {
   display: flex;
   justify-content: space-between;
@@ -635,6 +646,10 @@
   }
 
   .thinkt-settings-stat-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .thinkt-settings-stat-grid--embedding {
     grid-template-columns: 1fr;
   }
 }
