@@ -70,6 +70,7 @@ export class ProjectTimelinePanel {
   // Dimensions
   private readonly rowHeight = 50;
   private readonly blobRadius = 7;
+  private readonly minEndMarkerGapPx = 8;
   private readonly padding = { top: 30, right: 30, bottom: 20, left: 80 };
   private abortController = new AbortController();
 
@@ -336,7 +337,7 @@ export class ProjectTimelinePanel {
   private drawRow(
     row: SourceRow,
     index: number,
-    _width: number,
+    width: number,
     timeScale: (time: Date) => number
   ): void {
     const y = this.padding.top + index * this.rowHeight + this.rowHeight / 2;
@@ -358,11 +359,15 @@ export class ProjectTimelinePanel {
     // Draw sessions
     for (const session of row.sessions) {
       const startX = timeScale(session.startTime);
-      const endX = timeScale(session.endTime);
-      const isInstant = Math.abs(endX - startX) < 4;
+      const rawEndX = timeScale(session.endTime);
+      const hasDuration = session.endTime.getTime() > session.startTime.getTime();
+      const maxX = width - this.padding.right;
+      const endX = hasDuration
+        ? Math.min(maxX, Math.max(rawEndX, startX + this.minEndMarkerGapPx))
+        : startX;
 
       // Duration line (if session has duration)
-      if (!isInstant) {
+      if (hasDuration && endX > startX) {
         const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
         line.setAttribute('x1', String(startX));
         line.setAttribute('y1', String(y));
@@ -386,19 +391,17 @@ export class ProjectTimelinePanel {
       this.attachInteraction(startCircle, session, 'start');
       rowGroup.appendChild(startCircle);
 
-      // End bubble (filled) - only if session has duration
-      if (!isInstant) {
-        const endCircle = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
-        endCircle.setAttribute('cx', String(endX));
-        endCircle.setAttribute('cy', String(y));
-        endCircle.setAttribute('r', String(this.blobRadius));
-        endCircle.setAttribute('fill', row.color);
-        endCircle.setAttribute('stroke', row.color);
-        endCircle.setAttribute('stroke-width', '2');
-        endCircle.setAttribute('cursor', 'pointer');
-        this.attachInteraction(endCircle, session, 'end');
-        rowGroup.appendChild(endCircle);
-      }
+      // End bubble (filled) - always draw so end markers remain visible.
+      const endCircle = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+      endCircle.setAttribute('cx', String(endX));
+      endCircle.setAttribute('cy', String(y));
+      endCircle.setAttribute('r', String(hasDuration ? this.blobRadius : Math.max(3, this.blobRadius - 3)));
+      endCircle.setAttribute('fill', row.color);
+      endCircle.setAttribute('stroke', row.color);
+      endCircle.setAttribute('stroke-width', hasDuration ? '2' : '1.5');
+      endCircle.setAttribute('cursor', 'pointer');
+      this.attachInteraction(endCircle, session, 'end');
+      rowGroup.appendChild(endCircle);
     }
 
     this.svg!.appendChild(rowGroup);
@@ -409,13 +412,15 @@ export class ProjectTimelinePanel {
     session: SessionWithTiming,
     point: 'start' | 'end'
   ): void {
+    const baseRadius = Number(element.getAttribute('r') ?? this.blobRadius);
+
     element.addEventListener('mouseenter', (e) => {
-      element.setAttribute('r', String(this.blobRadius + 2));
+      element.setAttribute('r', String(baseRadius + 2));
       this.showTooltip(e, session, point);
     });
 
     element.addEventListener('mouseleave', () => {
-      element.setAttribute('r', String(this.blobRadius));
+      element.setAttribute('r', String(baseRadius));
       this.hideTooltip();
     });
 
@@ -449,11 +454,37 @@ export class ProjectTimelinePanel {
       </div>
     `;
 
-    this.tooltip.style.display = 'block';
-
     const rect = (event.target as SVGElement).getBoundingClientRect();
-    this.tooltip.style.left = `${rect.left}px`;
-    this.tooltip.style.top = `${rect.bottom + 8}px`;
+    const margin = 8;
+
+    this.tooltip.style.display = 'block';
+    this.tooltip.style.visibility = 'hidden';
+    this.tooltip.style.left = '0px';
+    this.tooltip.style.top = '0px';
+
+    const tooltipRect = this.tooltip.getBoundingClientRect();
+    const viewportWidth = window.innerWidth;
+    const viewportHeight = window.innerHeight;
+
+    let left = rect.left;
+    if (left + tooltipRect.width > viewportWidth - margin) {
+      left = viewportWidth - tooltipRect.width - margin;
+    }
+    if (left < margin) {
+      left = margin;
+    }
+
+    let top = rect.bottom + margin;
+    if (top + tooltipRect.height > viewportHeight - margin) {
+      top = rect.top - tooltipRect.height - margin;
+    }
+    if (top < margin) {
+      top = margin;
+    }
+
+    this.tooltip.style.left = `${left + window.scrollX}px`;
+    this.tooltip.style.top = `${top + window.scrollY}px`;
+    this.tooltip.style.visibility = 'visible';
   }
 
   private hideTooltip(): void {
