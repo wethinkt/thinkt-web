@@ -227,7 +227,8 @@ export class ConversationView {
   private async fetchAvailableApps(): Promise<void> {
     if (!this.client) return;
     try {
-      this.availableApps = await this.client.getOpenInApps();
+      const appsResponse = await this.client.getOpenInApps();
+      this.availableApps = appsResponse.apps ?? [];
       this.renderToolbar();
     } catch {
       // Silently fall back to no app items

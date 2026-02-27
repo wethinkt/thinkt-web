@@ -1,0 +1,621 @@
+.thinkt-settings-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  padding-top: 4vh;
+  background: rgba(0, 0, 0, 0.72);
+  backdrop-filter: blur(4px);
+  animation: thinkt-settings-fade-in 0.15s ease;
+}
+
+.thinkt-settings-overlay.closing {
+  animation: thinkt-settings-fade-out 0.15s ease forwards;
+}
+
+@keyframes thinkt-settings-fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes thinkt-settings-fade-out {
+  from { opacity: 1; }
+  to { opacity: 0; }
+}
+
+.thinkt-settings-modal {
+  width: min(1100px, 92vw);
+  max-height: 90vh;
+  display: flex;
+  flex-direction: column;
+  background: var(--thinkt-bg-secondary, #0f1115);
+  border: 1px solid var(--thinkt-border-color, rgba(255, 255, 255, 0.12));
+  border-radius: var(--radius-lg, 14px);
+  box-shadow: 0 26px 60px rgba(0, 0, 0, 0.45);
+  overflow: hidden;
+}
+
+.thinkt-settings-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 16px;
+  border-bottom: 1px solid var(--thinkt-border-color, rgba(255, 255, 255, 0.1));
+}
+
+.thinkt-settings-title-wrap {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  min-width: 0;
+}
+
+.thinkt-settings-title {
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--thinkt-text-primary, #f8fafc);
+}
+
+.thinkt-settings-tabs {
+  display: inline-flex;
+  gap: 6px;
+  padding: 4px;
+  border-radius: 10px;
+  background: var(--thinkt-bg-tertiary, #181a1f);
+  border: 1px solid var(--thinkt-border-color, rgba(255, 255, 255, 0.1));
+}
+
+.thinkt-settings-tab {
+  border: none;
+  background: transparent;
+  color: var(--thinkt-text-secondary, #94a3b8);
+  font-size: 12px;
+  font-weight: 600;
+  padding: 7px 12px;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.12s ease;
+}
+
+.thinkt-settings-tab:hover {
+  color: var(--thinkt-text-primary, #f8fafc);
+  background: var(--thinkt-hover-bg, rgba(255, 255, 255, 0.05));
+}
+
+.thinkt-settings-tab.active {
+  color: #fff;
+  background: var(--thinkt-accent-color, #6366f1);
+}
+
+.thinkt-settings-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.thinkt-settings-close-btn {
+  width: 28px;
+  height: 28px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  border-radius: 8px;
+  border: 1px solid var(--thinkt-border-color-light, rgba(255, 255, 255, 0.16));
+  background: var(--thinkt-bg-tertiary, #181a1f);
+  border-color: rgba(239, 68, 68, 0.45);
+  color: #fca5a5;
+  cursor: pointer;
+  font-size: 18px;
+  line-height: 1;
+  transition: all 0.12s ease;
+}
+
+.thinkt-settings-close-btn:focus {
+  outline: none;
+  box-shadow: 0 0 0 2px rgba(239, 68, 68, 0.25);
+  color: #fca5a5;
+}
+
+.thinkt-settings-close-btn:hover {
+  border-color: rgba(239, 68, 68, 0.8);
+  color: #fecaca;
+  background: rgba(239, 68, 68, 0.1);
+}
+
+.thinkt-settings-body {
+  padding: 16px;
+  overflow: auto;
+  min-height: 0;
+}
+
+.thinkt-settings-panel {
+  display: none;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.thinkt-settings-panel.active {
+  display: flex;
+}
+
+.thinkt-settings-section {
+  background: var(--thinkt-bg-tertiary, #181a1f);
+  border: 1px solid var(--thinkt-border-color, rgba(255, 255, 255, 0.1));
+  border-radius: 12px;
+  padding: 14px;
+}
+
+.thinkt-settings-section h3 {
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--thinkt-text-secondary, #94a3b8);
+  margin-bottom: 10px;
+}
+
+.thinkt-settings-loading {
+  color: var(--thinkt-muted-color, #64748b);
+  font-size: 13px;
+}
+
+.thinkt-settings-error {
+  color: #fca5a5;
+  font-size: 13px;
+}
+
+.thinkt-settings-muted {
+  color: var(--thinkt-muted-color, #64748b);
+  font-size: 13px;
+}
+
+.thinkt-settings-note {
+  color: var(--thinkt-text-secondary, #94a3b8);
+  font-size: 12px;
+  margin-bottom: 10px;
+}
+
+.thinkt-settings-stat-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(150px, 1fr));
+  gap: 10px;
+}
+
+.thinkt-settings-stat-card {
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid var(--thinkt-border-color, rgba(255, 255, 255, 0.1));
+  border-radius: 10px;
+  padding: 12px;
+}
+
+.thinkt-settings-stat-label {
+  color: var(--thinkt-text-secondary, #94a3b8);
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.thinkt-settings-stat-value {
+  color: var(--thinkt-text-primary, #f8fafc);
+  font-size: 20px;
+  font-weight: 700;
+  margin-top: 4px;
+  word-break: break-word;
+}
+
+.thinkt-settings-stat-meta {
+  margin-top: 4px;
+  color: var(--thinkt-muted-color, #64748b);
+  font-size: 11px;
+}
+
+.thinkt-settings-subtitle {
+  color: var(--thinkt-text-secondary, #94a3b8);
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-top: 12px;
+  margin-bottom: 8px;
+}
+
+.thinkt-settings-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.thinkt-settings-list-item {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  align-items: center;
+  padding: 10px 12px;
+  border: 1px solid var(--thinkt-border-color, rgba(255, 255, 255, 0.1));
+  border-radius: 9px;
+  background: rgba(255, 255, 255, 0.02);
+}
+
+.thinkt-settings-list-content {
+  min-width: 0;
+}
+
+.thinkt-settings-list-title {
+  color: var(--thinkt-text-primary, #f8fafc);
+  font-size: 13px;
+  font-weight: 600;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+}
+
+.thinkt-settings-list-meta {
+  color: var(--thinkt-muted-color, #64748b);
+  font-size: 12px;
+  margin-top: 3px;
+  word-break: break-word;
+}
+
+.thinkt-settings-system-detail {
+  margin-top: 4px;
+  color: var(--thinkt-text-secondary, #94a3b8);
+  font-size: 12px;
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.thinkt-settings-system-key {
+  color: var(--thinkt-muted-color, #64748b);
+  font-weight: 600;
+}
+
+.thinkt-settings-auth {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.thinkt-settings-auth-current {
+  font-size: 12px;
+  color: var(--thinkt-text-secondary, #94a3b8);
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+.thinkt-settings-auth-token {
+  font-family: var(--thinkt-font-mono, 'SF Mono', Monaco, 'Cascadia Code', monospace);
+  color: var(--thinkt-text-primary, #f8fafc);
+  word-break: break-all;
+}
+
+.thinkt-settings-auth-toggle {
+  margin-left: 2px;
+  border: 1px solid var(--thinkt-border-color-light, rgba(255, 255, 255, 0.16));
+  background: var(--thinkt-bg-tertiary, #181a1f);
+  color: var(--thinkt-text-secondary, #94a3b8);
+  font-size: 11px;
+  font-weight: 600;
+  padding: 3px 8px;
+  border-radius: 999px;
+  cursor: pointer;
+  transition: all 0.12s ease;
+}
+
+.thinkt-settings-auth-toggle:hover:not(:disabled) {
+  color: var(--thinkt-text-primary, #f8fafc);
+  border-color: var(--thinkt-accent-color, #6366f1);
+}
+
+.thinkt-settings-auth-toggle:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.thinkt-settings-auth-label {
+  font-size: 12px;
+  color: var(--thinkt-text-secondary, #94a3b8);
+  font-weight: 600;
+}
+
+.thinkt-settings-auth-input {
+  width: 100%;
+  padding: 9px 10px;
+  border-radius: 8px;
+  border: 1px solid var(--thinkt-border-color-light, rgba(255, 255, 255, 0.16));
+  background: var(--thinkt-bg-secondary, #0f1115);
+  color: var(--thinkt-text-primary, #f8fafc);
+  font-size: 13px;
+  font-family: var(--thinkt-font-mono, 'SF Mono', Monaco, 'Cascadia Code', monospace);
+}
+
+.thinkt-settings-auth-input:focus {
+  outline: none;
+  border-color: var(--thinkt-accent-color, #6366f1);
+  box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.2);
+}
+
+.thinkt-settings-auth-actions {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.thinkt-settings-auth-btn {
+  border: 1px solid var(--thinkt-border-color-light, rgba(255, 255, 255, 0.16));
+  background: var(--thinkt-bg-tertiary, #181a1f);
+  color: var(--thinkt-text-secondary, #94a3b8);
+  font-size: 12px;
+  font-weight: 600;
+  padding: 7px 10px;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.12s ease;
+}
+
+.thinkt-settings-auth-btn:hover {
+  color: var(--thinkt-text-primary, #f8fafc);
+  border-color: var(--thinkt-accent-color, #6366f1);
+}
+
+.thinkt-settings-auth-btn--danger {
+  border-color: rgba(239, 68, 68, 0.45);
+  color: #fca5a5;
+}
+
+.thinkt-settings-auth-btn--danger:hover {
+  border-color: rgba(239, 68, 68, 0.8);
+  color: #fecaca;
+  background: rgba(239, 68, 68, 0.1);
+}
+
+.thinkt-settings-list-badges {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.thinkt-settings-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 8px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 600;
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  color: var(--thinkt-text-secondary, #94a3b8);
+  background: rgba(255, 255, 255, 0.02);
+}
+
+.thinkt-settings-badge--source {
+  border-color: rgba(148, 163, 184, 0.45);
+  color: #cbd5e1;
+}
+
+.thinkt-settings-badge--source-claude {
+  color: var(--thinkt-source-claude-color, #d97750);
+  border-color: var(--thinkt-source-claude-border, rgba(217, 119, 80, 0.4));
+  background: var(--thinkt-source-claude-bg, rgba(217, 119, 80, 0.15));
+}
+
+.thinkt-settings-badge--source-kimi {
+  color: var(--thinkt-source-kimi-color, #19c39b);
+  border-color: rgba(25, 195, 155, 0.45);
+  background: var(--thinkt-source-kimi-bg, rgba(25, 195, 155, 0.15));
+}
+
+.thinkt-settings-badge--source-gemini {
+  color: var(--thinkt-source-gemini-color, #6366f1);
+  border-color: rgba(99, 102, 241, 0.45);
+  background: var(--thinkt-source-gemini-bg, rgba(99, 102, 241, 0.15));
+}
+
+.thinkt-settings-badge--source-copilot {
+  color: #60a5fa;
+  border-color: rgba(96, 165, 250, 0.45);
+  background: rgba(96, 165, 250, 0.14);
+}
+
+.thinkt-settings-badge--source-codex {
+  color: #f472b6;
+  border-color: rgba(244, 114, 182, 0.45);
+  background: rgba(244, 114, 182, 0.14);
+}
+
+.thinkt-settings-badge--source-qwen {
+  color: #f59e0b;
+  border-color: rgba(245, 158, 11, 0.45);
+  background: rgba(245, 158, 11, 0.14);
+}
+
+.thinkt-settings-badge--source-thinkt {
+  color: #a78bfa;
+  border-color: rgba(167, 139, 250, 0.45);
+  background: rgba(167, 139, 250, 0.14);
+}
+
+.thinkt-settings-badge--source-other {
+  color: #cbd5e1;
+  border-color: rgba(148, 163, 184, 0.45);
+  background: rgba(148, 163, 184, 0.12);
+}
+
+.thinkt-settings-badge--terminal {
+  border-color: rgba(20, 184, 166, 0.4);
+  color: #2dd4bf;
+  background: rgba(20, 184, 166, 0.12);
+}
+
+.thinkt-settings-badge--default {
+  border-color: rgba(245, 158, 11, 0.45);
+  color: #fbbf24;
+  background: rgba(245, 158, 11, 0.13);
+}
+
+.thinkt-settings-status {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 8px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 700;
+  border: 1px solid transparent;
+}
+
+.thinkt-settings-status--online {
+  color: #34d399;
+  border-color: rgba(52, 211, 153, 0.4);
+  background: rgba(16, 185, 129, 0.12);
+}
+
+.thinkt-settings-status--offline {
+  color: #fca5a5;
+  border-color: rgba(248, 113, 113, 0.45);
+  background: rgba(239, 68, 68, 0.1);
+}
+
+.thinkt-settings-status--idle {
+  color: var(--thinkt-text-secondary, #94a3b8);
+  border-color: rgba(148, 163, 184, 0.3);
+  background: rgba(148, 163, 184, 0.08);
+}
+
+.thinkt-settings-tools {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.thinkt-settings-tool-row {
+  display: grid;
+  grid-template-columns: 220px minmax(80px, 1fr) 70px;
+  gap: 10px;
+  align-items: center;
+}
+
+.thinkt-settings-tool-name {
+  color: var(--thinkt-text-primary, #f8fafc);
+  font-size: 12px;
+  font-family: var(--thinkt-font-mono, 'SF Mono', Monaco, 'Cascadia Code', monospace);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.thinkt-settings-tool-bar {
+  height: 8px;
+  border-radius: 999px;
+  overflow: hidden;
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.thinkt-settings-tool-fill {
+  height: 100%;
+  background: var(--thinkt-accent-color, #6366f1);
+}
+
+.thinkt-settings-tool-count {
+  color: var(--thinkt-text-secondary, #94a3b8);
+  font-size: 12px;
+  text-align: right;
+}
+
+.thinkt-settings-progress-section {
+  margin-top: 10px;
+}
+
+.thinkt-settings-progress-msg {
+  color: var(--thinkt-text-secondary, #94a3b8);
+  font-size: 12px;
+  margin-bottom: 6px;
+}
+
+.thinkt-settings-progress {
+  margin-top: 4px;
+}
+
+.thinkt-settings-progress-row {
+  display: flex;
+  justify-content: space-between;
+  color: var(--thinkt-text-secondary, #94a3b8);
+  font-size: 11px;
+  margin-bottom: 4px;
+}
+
+.thinkt-settings-progress-track {
+  height: 7px;
+  border-radius: 999px;
+  overflow: hidden;
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.thinkt-settings-progress-fill {
+  height: 100%;
+  background: var(--thinkt-accent-color, #6366f1);
+}
+
+.thinkt-settings-progress-meta {
+  margin-top: 6px;
+  color: var(--thinkt-muted-color, #64748b);
+  font-size: 11px;
+}
+
+@media (max-width: 900px) {
+  .thinkt-settings-header {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .thinkt-settings-actions {
+    justify-content: flex-end;
+  }
+
+  .thinkt-settings-stat-grid {
+    grid-template-columns: repeat(2, minmax(130px, 1fr));
+  }
+
+  .thinkt-settings-tool-row {
+    grid-template-columns: 1fr;
+    gap: 5px;
+  }
+
+  .thinkt-settings-tool-count {
+    text-align: left;
+  }
+}
+
+@media (max-width: 640px) {
+  .thinkt-settings-overlay {
+    padding-top: 0;
+  }
+
+  .thinkt-settings-modal {
+    width: 100vw;
+    max-height: 100vh;
+    height: 100vh;
+    border-radius: 0;
+    border-left: none;
+    border-right: none;
+  }
+
+  .thinkt-settings-body {
+    padding: 12px;
+  }
+
+  .thinkt-settings-section {
+    padding: 12px;
+  }
+
+  .thinkt-settings-stat-grid {
+    grid-template-columns: 1fr;
+  }
+}

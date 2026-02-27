@@ -43,6 +43,13 @@ export {
   type SearchOverlayOptions,
 } from './SearchOverlay';
 
+// Settings Overlay (global settings/info panels)
+export {
+  SettingsOverlay,
+  type SettingsOverlayElements,
+  type SettingsOverlayOptions,
+} from './SettingsOverlay';
+
 // Search sub-components
 export { SearchProjectFilter, type SearchProjectFilterOptions, type ProjectInfo } from './SearchProjectFilter';
 export { SearchResultRenderer, type SearchResultRendererOptions } from './SearchResultRenderer';

@@ -140,12 +140,16 @@ export class SearchOverlay {
       <div class="thinkt-search-modal">
         <div class="thinkt-search-header">
           <div class="thinkt-search-title">
-            <span>${i18n._('Search Sessions')}</span>
-            <div class="thinkt-search-mode-toggle">
-              <button class="thinkt-search-mode-btn active" data-mode="text">${i18n._('Text')}</button>
-              <button class="thinkt-search-mode-btn" data-mode="semantic">${i18n._('Semantic')}</button>
+            <div class="thinkt-search-title-main">
+              <span>${i18n._('Search Sessions')}</span>
+              <div class="thinkt-search-mode-toggle">
+                <button class="thinkt-search-mode-btn active" data-mode="text">${i18n._('Text')}</button>
+                <button class="thinkt-search-mode-btn" data-mode="semantic">${i18n._('Semantic')}</button>
+              </div>
             </div>
-            <kbd>${i18n._('esc')}</kbd>
+            <div class="thinkt-search-close-wrap">
+              <button id="search-close-btn" type="button" class="thinkt-search-close-btn" aria-label="${i18n._('Close')}" title="${i18n._('Close')} - ESC">&times;</button>
+            </div>
           </div>
           <div class="thinkt-search-input-wrapper">
             <span class="thinkt-search-icon">🔍</span>
@@ -234,6 +238,9 @@ export class SearchOverlay {
       this.input.addEventListener('input', () => this.handleSearchInput(), { signal: this.abortController.signal });
       this.input.addEventListener('keydown', (e: KeyboardEvent) => this.handleKeydown(e), { signal: this.abortController.signal });
     }
+
+    const closeBtn = this.overlay.querySelector<HTMLButtonElement>('#search-close-btn');
+    closeBtn?.addEventListener('click', () => this.close(), { signal: this.abortController.signal });
 
     // Option checkboxes
     const caseSensitiveCheckbox = this.overlay.querySelector<HTMLInputElement>('#search-case-sensitive');

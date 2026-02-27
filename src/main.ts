@@ -7,7 +7,7 @@
 
 /// <reference types="vite/client" />
 
-import { ApiViewer, SearchOverlay, configureDefaultClient, getDefaultClient } from './api';
+import { ApiViewer, SearchOverlay, SettingsOverlay, configureDefaultClient, getDefaultClient } from './api';
 import { i18n } from '@lingui/core';
 import { getApiBaseUrl, getApiToken } from './config';
 import { initI18n, changeLocale, SUPPORTED_LOCALES, type SupportedLocale } from './i18n';
@@ -20,8 +20,10 @@ import './styles.css';
 
 let apiViewer: ApiViewer | null = null;
 let searchOverlay: SearchOverlay | null = null;
+let settingsOverlay: SettingsOverlay | null = null;
 let connectionIntervalId: ReturnType<typeof setInterval> | null = null;
 let languageSelector: LanguageSelector<SupportedLocale> | null = null;
+let removeGlobalSettingsButtonListener: (() => void) | null = null;
 let removeGlobalSearchButtonListener: (() => void) | null = null;
 let currentSessionTitle: string | null = null;
 let currentConnectionStatus: { status: 'connected' | 'error' | 'connecting'; message?: string } = {
@@ -37,6 +39,7 @@ async function init(): Promise<void> {
   const currentLocale = await initI18n();
   document.documentElement.lang = currentLocale;
   setupLanguageSelector(currentLocale);
+  setupGlobalSettingsButton();
   setupGlobalSearchButton();
   updateConnectionStatus('connecting');
 
@@ -150,6 +153,34 @@ function updateSearchButtonTooltip(): void {
   button.setAttribute('aria-label', tooltip);
 }
 
+function updateSettingsButtonTooltip(): void {
+  const button = document.getElementById('global-settings-button');
+  if (!(button instanceof HTMLButtonElement)) return;
+
+  const tooltip = i18n._('Open settings and info');
+  button.title = tooltip;
+  button.setAttribute('aria-label', tooltip);
+}
+
+function setupGlobalSettingsButton(): void {
+  removeGlobalSettingsButtonListener?.();
+  removeGlobalSettingsButtonListener = null;
+
+  const button = document.getElementById('global-settings-button');
+  if (!(button instanceof HTMLButtonElement)) return;
+
+  const handleClick = (): void => {
+    openSettingsOverlay();
+  };
+
+  button.addEventListener('click', handleClick);
+  removeGlobalSettingsButtonListener = () => {
+    button.removeEventListener('click', handleClick);
+  };
+
+  updateSettingsButtonTooltip();
+}
+
 function setupGlobalSearchButton(): void {
   removeGlobalSearchButtonListener?.();
   removeGlobalSearchButtonListener = null;
@@ -225,8 +256,8 @@ function setupKeyboardShortcuts(): void {
 
     // Escape - Focus app container for keyboard nav (if search is not open)
     if (e.key === 'Escape') {
-      if (searchOverlay?.isOpened()) {
-        // SearchOverlay handles its own escape
+      if (searchOverlay?.isOpened() || settingsOverlay?.isOpened()) {
+        // Overlay components handle their own escape
         return;
       }
       document.getElementById('app')?.focus();
@@ -258,6 +289,8 @@ function openSearchOverlay(): void {
     return;
   }
 
+  settingsOverlay?.close();
+
   searchOverlay = new SearchOverlay({
     elements: {
       container: document.body,
@@ -274,6 +307,28 @@ function openSearchOverlay(): void {
   });
 
   searchOverlay.open();
+}
+
+function openSettingsOverlay(): void {
+  if (settingsOverlay?.isOpened()) {
+    return;
+  }
+
+  searchOverlay?.close();
+
+  settingsOverlay = new SettingsOverlay({
+    elements: {
+      container: document.body,
+    },
+    onClose: () => {
+      settingsOverlay = null;
+    },
+    onError: (error) => {
+      console.error('[THINKT] Settings overlay error:', error);
+    },
+  });
+
+  settingsOverlay.open();
 }
 
 async function loadSessionFromSearch(
@@ -354,6 +409,7 @@ function refreshLocalizedTopBarText(): void {
   if (currentSessionTitle) {
     updateWindowTitle(currentSessionTitle);
   }
+  updateSettingsButtonTooltip();
   updateSearchButtonTooltip();
   updateConnectionStatus(currentConnectionStatus.status, currentConnectionStatus.message);
 }
@@ -369,12 +425,16 @@ function dispose(): void {
   }
   languageSelector?.dispose();
   languageSelector = null;
+  removeGlobalSettingsButtonListener?.();
+  removeGlobalSettingsButtonListener = null;
   removeGlobalSearchButtonListener?.();
   removeGlobalSearchButtonListener = null;
   apiViewer?.dispose();
   apiViewer = null;
   searchOverlay?.dispose();
   searchOverlay = null;
+  settingsOverlay?.dispose();
+  settingsOverlay = null;
 }
 
 // ============================================

@@ -97,6 +97,7 @@
       gap: 8px;
     }
 
+    #global-settings-button,
     #global-search-button {
       width: 28px;
       height: 28px;
@@ -113,6 +114,13 @@
       transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
     }
 
+    #global-settings-button {
+      font-size: 22px;
+      line-height: 1;
+      padding: 0;
+    }
+
+    #global-settings-button:hover,
     #global-search-button:hover {
       background: rgba(255, 255, 255, 0.08);
       border-color: rgba(255, 255, 255, 0.15);
@@ -120,10 +128,12 @@
       transform: translateY(-1px);
     }
 
+    #global-settings-button:active,
     #global-search-button:active {
       transform: translateY(0) scale(0.96);
     }
 
+    #global-settings-button:focus,
     #global-search-button:focus {
       outline: none;
       border-color: #8b5cf6;
@@ -209,6 +219,10 @@
       <span class="brand-name">thinkt</span>
     </a>
     <div id="top-bar-right">
+      <button id="global-settings-button" type="button" title="Open settings and info"
+        aria-label="Open settings and info">
+        ⚙
+      </button>
       <button id="global-search-button" type="button" title="Open search dialog (Cmd/Ctrl+K)"
         aria-label="Open search dialog (Cmd/Ctrl+K)">
         🔍

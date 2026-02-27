@@ -187,6 +187,43 @@ body {
   gap: 8px;
 }
 
+#global-settings-button,
+#global-search-button {
+  width: 28px;
+  height: 28px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  color: var(--text-primary);
+  cursor: pointer;
+  font-size: 13px;
+  line-height: 1;
+  transition: all 0.2s ease;
+}
+
+#global-settings-button {
+  font-size: 22px;
+  line-height: 1;
+  padding: 0;
+}
+
+#global-settings-button:hover,
+#global-search-button:hover {
+  background: rgba(255, 255, 255, 0.08);
+  border-color: var(--border-color-light);
+  color: #fff;
+}
+
+#global-settings-button:focus,
+#global-search-button:focus {
+  outline: none;
+  border-color: var(--accent-primary);
+  box-shadow: 0 0 0 2px rgba(139, 92, 246, 0.25);
+}
+
 #lang-select {
   background: rgba(255, 255, 255, 0.03);
   border: 1px solid var(--border-color);
