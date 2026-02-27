@@ -164,11 +164,18 @@ body {
   width: 100%;
 }
 
+.thinkt-sidebar-brand-group {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
 #brand-link {
   text-decoration: none;
 }
 
-#brand-link .brand-name {
+.thinkt-sidebar-brand-label {
   font-size: 14px;
   font-weight: 700;
   font-family: var(--font-heading);
@@ -187,8 +194,8 @@ body {
   gap: 8px;
 }
 
-#global-settings-button,
-#global-search-button {
+.thinkt-sidebar-brand-btn,
+.thinkt-sidebar-brand-action-btn {
   width: 28px;
   height: 28px;
   display: inline-flex;
@@ -204,21 +211,29 @@ body {
   transition: all 0.2s ease;
 }
 
-#global-settings-button {
-  font-size: 22px;
+.thinkt-sidebar-brand-btn {
+  border-radius: 6px;
+  background: rgba(255, 255, 255, 0.04);
+  font-size: 15px;
   line-height: 1;
   padding: 0;
 }
 
-#global-settings-button:hover,
-#global-search-button:hover {
+.thinkt-sidebar-brand-action-btn {
+  font-size: 14px;
+  line-height: 1;
+  padding: 0;
+}
+
+.thinkt-sidebar-brand-btn:hover,
+.thinkt-sidebar-brand-action-btn:hover {
   background: rgba(255, 255, 255, 0.08);
   border-color: var(--border-color-light);
   color: #fff;
 }
 
-#global-settings-button:focus,
-#global-search-button:focus {
+.thinkt-sidebar-brand-btn:focus,
+.thinkt-sidebar-brand-action-btn:focus {
   outline: none;
   border-color: var(--accent-primary);
   box-shadow: 0 0 0 2px rgba(139, 92, 246, 0.25);

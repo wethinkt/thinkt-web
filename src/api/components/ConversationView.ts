@@ -47,6 +47,10 @@ export interface ConversationViewOptions {
   isTimelinePanelVisible?: () => boolean;
   /** Whether timeline panel can be toggled */
   canToggleTimelinePanel?: () => boolean;
+  /** Toggle sidebar visibility */
+  onToggleSidebar?: () => void;
+  /** Whether sidebar is collapsed */
+  isSidebarCollapsed?: () => boolean;
 }
 
 /**
@@ -76,6 +80,8 @@ export class ConversationView {
   private onToggleTimelinePanel: (() => void) | null = null;
   private isTimelinePanelVisible: (() => boolean) | null = null;
   private canToggleTimelinePanel: (() => boolean) | null = null;
+  private onToggleSidebar: (() => void) | null = null;
+  private isSidebarCollapsed: (() => boolean) | null = null;
 
   // Filter state (default: show user and assistant, hide thinking/tools)
   private filterState: FilterState = {
@@ -118,6 +124,8 @@ export class ConversationView {
     this.onToggleTimelinePanel = options.onToggleTimelinePanel ?? null;
     this.isTimelinePanelVisible = options.isTimelinePanelVisible ?? null;
     this.canToggleTimelinePanel = options.canToggleTimelinePanel ?? null;
+    this.onToggleSidebar = options.onToggleSidebar ?? null;
+    this.isSidebarCollapsed = options.isSidebarCollapsed ?? null;
     this.init();
     void this.fetchAvailableApps();
   }
@@ -241,6 +249,10 @@ export class ConversationView {
   private renderToolbar(): void {
     const path = this.currentProjectPath ?? i18n._('No project selected');
     const entryCount = this.currentEntryCount;
+    const showCollapsedSidebarControl = this.isSidebarCollapsed?.() ?? false;
+    const openSidebarLabel = i18n._('Open sidebar');
+    const openSettingsLabel = i18n._('Open settings and info');
+    const openSearchLabel = i18n._('Open search dialog ({shortcut})', { shortcut: this.getSearchShortcutLabel() });
     const canResumeSession = this.canResumeSession?.() ?? false;
     const resumeBtn = this.onResumeSession && canResumeSession
       ? `<button class="thinkt-conversation-view__toolbar-btn" id="toolbar-resume-btn">${i18n._('Resume')}</button>`
@@ -263,7 +275,40 @@ export class ConversationView {
         </div>
       `).join('');
 
+    const collapsedSidebarControl = showCollapsedSidebarControl
+      ? `
+          <div class="thinkt-sidebar-brand-group">
+            <span class="thinkt-sidebar-brand-label">thinkt</span>
+            <button
+              class="thinkt-sidebar-brand-btn"
+              id="toolbar-sidebar-btn"
+              title="${escapeHtml(openSidebarLabel)}"
+              aria-label="${escapeHtml(openSidebarLabel)}"
+            >
+              ☰
+            </button>
+            <button
+              class="thinkt-sidebar-brand-action-btn"
+              id="toolbar-settings-btn"
+              title="${escapeHtml(openSettingsLabel)}"
+              aria-label="${escapeHtml(openSettingsLabel)}"
+            >
+              ⚙
+            </button>
+            <button
+              class="thinkt-sidebar-brand-action-btn"
+              id="toolbar-search-btn"
+              title="${escapeHtml(openSearchLabel)}"
+              aria-label="${escapeHtml(openSearchLabel)}"
+            >
+              🔍
+            </button>
+          </div>
+        `
+      : '';
+
     this.toolbarContainer.innerHTML = `
+      ${collapsedSidebarControl}
       <div class="thinkt-conversation-view__toolbar-path">
         <span class="thinkt-conversation-view__toolbar-path-icon">\u{1F4C1}</span>
         <span class="thinkt-conversation-view__toolbar-path-text" title="${escapeHtml(path)}">${escapeHtml(path)}</span>
@@ -292,6 +337,33 @@ export class ConversationView {
   }
 
   private setupToolbarActions(): void {
+    const sidebarBtn = this.toolbarContainer.querySelector('#toolbar-sidebar-btn') as HTMLElement | null;
+    if (sidebarBtn) {
+      sidebarBtn.addEventListener('click', () => {
+        this.onToggleSidebar?.();
+      });
+    }
+
+    const settingsBtn = this.toolbarContainer.querySelector('#toolbar-settings-btn') as HTMLButtonElement | null;
+    if (settingsBtn) {
+      settingsBtn.addEventListener('click', () => {
+        const globalSettings = document.getElementById('global-settings-button');
+        if (globalSettings instanceof HTMLButtonElement) {
+          globalSettings.click();
+        }
+      });
+    }
+
+    const searchBtn = this.toolbarContainer.querySelector('#toolbar-search-btn') as HTMLButtonElement | null;
+    if (searchBtn) {
+      searchBtn.addEventListener('click', () => {
+        const globalSearch = document.getElementById('global-search-button');
+        if (globalSearch instanceof HTMLButtonElement) {
+          globalSearch.click();
+        }
+      });
+    }
+
     const resumeBtn = this.toolbarContainer.querySelector('#toolbar-resume-btn') as HTMLElement | null;
     if (resumeBtn) {
       resumeBtn.addEventListener('click', () => {
@@ -328,6 +400,12 @@ export class ConversationView {
         dropdown.classList.remove('open');
       });
     });
+  }
+
+  private getSearchShortcutLabel(): string {
+    const platform = navigator.platform.toLowerCase();
+    const isApplePlatform = platform.includes('mac') || platform.includes('iphone') || platform.includes('ipad');
+    return isApplePlatform ? 'Cmd+K' : 'Ctrl+K';
   }
 
   private async handleResumeAction(): Promise<void> {

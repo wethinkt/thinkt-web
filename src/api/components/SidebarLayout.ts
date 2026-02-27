@@ -25,6 +25,7 @@ export interface SidebarLayoutOptions {
   signal: AbortSignal;
   initialView: ProjectViewMode;
   onLocaleChanged?: () => void;
+  onSidebarCollapsedChange?: (collapsed: boolean) => void;
 }
 
 // ============================================
@@ -49,6 +50,7 @@ export class SidebarLayout {
   private readonly minProjectPaneHeight = MIN_PROJECT_PANE_HEIGHT_PX;
   private readonly minSessionPaneHeight = MIN_SESSION_PANE_HEIGHT_PX;
   private currentView: ProjectViewMode;
+  private sidebarCollapsed = false;
 
   constructor(private options: SidebarLayoutOptions) {
     this.currentView = options.initialView;
@@ -235,6 +237,29 @@ export class SidebarLayout {
     const overlay = container.querySelector('.thinkt-sidebar-overlay');
     sidebar?.classList.remove('thinkt-api-viewer__sidebar--open');
     overlay?.classList.remove('thinkt-sidebar-overlay--open');
+  }
+
+  isSidebarCollapsed(): boolean {
+    return this.sidebarCollapsed;
+  }
+
+  setSidebarCollapsed(collapsed: boolean): void {
+    if (this.sidebarCollapsed === collapsed) {
+      return;
+    }
+
+    this.sidebarCollapsed = collapsed;
+    this.options.elements.container.classList.toggle('thinkt-api-viewer--sidebar-collapsed', collapsed);
+    if (collapsed) {
+      this.closeMobileSidebar();
+    }
+    this.options.onSidebarCollapsedChange?.(collapsed);
+  }
+
+  toggleSidebarCollapsed(): boolean {
+    const next = !this.sidebarCollapsed;
+    this.setSidebarCollapsed(next);
+    return next;
   }
 
   // ============================================

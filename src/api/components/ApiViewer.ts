@@ -158,6 +158,7 @@ export class ApiViewer {
       signal: this.abortController.signal,
       initialView: this.currentProjectView,
       onLocaleChanged: () => this.refreshI18n(),
+      onSidebarCollapsedChange: (collapsed) => this.handleSidebarCollapsedChange(collapsed),
     });
 
     // Create view switcher (inserted into sidebar before projects)
@@ -395,6 +396,8 @@ export class ApiViewer {
       onToggleTimelinePanel: () => { this.handleTimelinePanelToggle(); },
       isTimelinePanelVisible: () => this.isTimelinePanelVisible(),
       canToggleTimelinePanel: () => Boolean(this.currentProject?.id),
+      onToggleSidebar: () => this.toggleSidebar(),
+      isSidebarCollapsed: () => this.isSidebarCollapsed(),
     });
 
     if (this.elements.timelinePanelContainer) {
@@ -697,6 +700,11 @@ export class ApiViewer {
     this.updateConnectionStatus(false, error.message);
   }
 
+  private handleSidebarCollapsedChange(collapsed: boolean): void {
+    this.conversationView?.refreshToolbar();
+    window.dispatchEvent(new CustomEvent('thinkt:sidebar-collapsed-change', { detail: { collapsed } }));
+  }
+
   // ============================================
   // Public API
   // ============================================
@@ -821,6 +829,14 @@ export class ApiViewer {
 
   scrollToEntry(entryIndex: number): void {
     this.conversationView?.scrollToEntry(entryIndex);
+  }
+
+  toggleSidebar(): void {
+    this.layout.toggleSidebarCollapsed();
+  }
+
+  isSidebarCollapsed(): boolean {
+    return this.layout.isSidebarCollapsed();
   }
 
   // ============================================

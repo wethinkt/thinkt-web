@@ -36,7 +36,7 @@
     "@lingui/core": "^5.9.1",
     "@lingui/message-utils": "^5.9.1",
     "@lingui/vite-plugin": "^5.9.1",
-    "@wethinkt/ts-thinkt": "^0.1.17",
+    "@wethinkt/ts-thinkt": "^0.1.18",
     "marked": "^17.0.1"
   }
 }

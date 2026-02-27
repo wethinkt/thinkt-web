@@ -108,6 +108,22 @@
   background: var(--thinkt-accent-color, #6366f1);
 }
 
+.thinkt-api-viewer--sidebar-collapsed .thinkt-api-viewer__sidebar {
+  width: 0 !important;
+  min-width: 0;
+  max-width: 0;
+  border-right: none;
+  overflow: hidden;
+}
+
+.thinkt-api-viewer--sidebar-collapsed .thinkt-api-viewer__resizer {
+  width: 0;
+  min-width: 0;
+  max-width: 0;
+  opacity: 0;
+  pointer-events: none;
+}
+
 /* View Switcher */
 .thinkt-view-switcher {
   display: flex;

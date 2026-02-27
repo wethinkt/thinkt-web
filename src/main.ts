@@ -23,6 +23,7 @@ let searchOverlay: SearchOverlay | null = null;
 let settingsOverlay: SettingsOverlay | null = null;
 let connectionIntervalId: ReturnType<typeof setInterval> | null = null;
 let languageSelector: LanguageSelector<SupportedLocale> | null = null;
+let removeGlobalSidebarButtonListener: (() => void) | null = null;
 let removeGlobalSettingsButtonListener: (() => void) | null = null;
 let removeGlobalSearchButtonListener: (() => void) | null = null;
 let currentSessionTitle: string | null = null;
@@ -39,6 +40,7 @@ async function init(): Promise<void> {
   const currentLocale = await initI18n();
   document.documentElement.lang = currentLocale;
   setupLanguageSelector(currentLocale);
+  setupGlobalSidebarButton();
   setupGlobalSettingsButton();
   setupGlobalSearchButton();
   updateConnectionStatus('connecting');
@@ -168,6 +170,15 @@ function updateSearchButtonTooltip(): void {
   button.setAttribute('aria-label', tooltip);
 }
 
+function updateSidebarButtonTooltip(): void {
+  const button = document.getElementById('global-sidebar-button');
+  if (!(button instanceof HTMLButtonElement)) return;
+
+  const tooltip = i18n._('Toggle sidebar panel');
+  button.title = tooltip;
+  button.setAttribute('aria-label', tooltip);
+}
+
 function updateSettingsButtonTooltip(): void {
   const button = document.getElementById('global-settings-button');
   if (!(button instanceof HTMLButtonElement)) return;
@@ -175,6 +186,30 @@ function updateSettingsButtonTooltip(): void {
   const tooltip = i18n._('Open settings and info');
   button.title = tooltip;
   button.setAttribute('aria-label', tooltip);
+}
+
+function setupGlobalSidebarButton(): void {
+  removeGlobalSidebarButtonListener?.();
+  removeGlobalSidebarButtonListener = null;
+
+  const button = document.getElementById('global-sidebar-button');
+  if (!(button instanceof HTMLButtonElement)) return;
+
+  const handleClick = (): void => {
+    apiViewer?.toggleSidebar();
+  };
+  const handleSidebarStateChange = (): void => {
+    updateSidebarButtonTooltip();
+  };
+
+  button.addEventListener('click', handleClick);
+  window.addEventListener('thinkt:sidebar-collapsed-change', handleSidebarStateChange as EventListener);
+  removeGlobalSidebarButtonListener = () => {
+    button.removeEventListener('click', handleClick);
+    window.removeEventListener('thinkt:sidebar-collapsed-change', handleSidebarStateChange as EventListener);
+  };
+
+  updateSidebarButtonTooltip();
 }
 
 function setupGlobalSettingsButton(): void {
@@ -490,6 +525,7 @@ function refreshLocalizedTopBarText(): void {
   if (currentSessionTitle) {
     updateWindowTitle(currentSessionTitle);
   }
+  updateSidebarButtonTooltip();
   updateSettingsButtonTooltip();
   updateSearchButtonTooltip();
   updateConnectionStatus(currentConnectionStatus.status, currentConnectionStatus.message);
@@ -506,6 +542,8 @@ function dispose(): void {
   }
   languageSelector?.dispose();
   languageSelector = null;
+  removeGlobalSidebarButtonListener?.();
+  removeGlobalSidebarButtonListener = null;
   removeGlobalSettingsButtonListener?.();
   removeGlobalSettingsButtonListener = null;
   removeGlobalSearchButtonListener?.();
