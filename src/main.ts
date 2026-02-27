@@ -9,7 +9,7 @@
 
 import { ApiViewer, SearchOverlay, SettingsOverlay, configureDefaultClient, getDefaultClient } from './api';
 import { i18n } from '@lingui/core';
-import { getApiBaseUrl, getApiToken } from './config';
+import { getApiBaseUrl, getApiToken, getInitialSessionTarget } from './config';
 import { initI18n, changeLocale, SUPPORTED_LOCALES, type SupportedLocale } from './i18n';
 import { LanguageSelector } from './components/LanguageSelector';
 import './styles.css';
@@ -84,6 +84,20 @@ async function init(): Promise<void> {
 
   // Setup keyboard shortcuts
   setupKeyboardShortcuts();
+
+  const initialSessionTarget = getInitialSessionTarget();
+  if (initialSessionTarget) {
+    void loadSessionFromSearch(
+      {
+        path: initialSessionTarget.sessionPath,
+        session_path: initialSessionTarget.sessionPath,
+        session_id: initialSessionTarget.sessionId,
+        project_name: initialSessionTarget.projectName,
+        project_id: initialSessionTarget.projectId,
+      },
+      initialSessionTarget.lineNum,
+    );
+  }
 
   // Setup connection status monitoring
   setupConnectionMonitoring();
@@ -332,7 +346,7 @@ function openSettingsOverlay(): void {
 }
 
 async function loadSessionFromSearch(
-  result: { path?: string; session_path?: string; session_id?: string; project_name?: string },
+  result: { path?: string; session_path?: string; session_id?: string; project_name?: string; project_id?: string },
   lineNum?: number
 ): Promise<void> {
   const path = result.path ?? result.session_path;
@@ -344,7 +358,22 @@ async function loadSessionFromSearch(
   try {
     // Step 1: Find and select the project
     const projectBrowser = apiViewer?.getProjectBrowser();
-    if (projectBrowser && result.project_name) {
+    if (projectBrowser && result.project_id) {
+      let project = projectBrowser.getProjects().find(
+        p => p.id === result.project_id
+      );
+
+      if (!project) {
+        await apiViewer?.refreshProjects();
+        project = projectBrowser.getProjects().find(
+          p => p.id === result.project_id
+        );
+      }
+
+      if (project?.id) {
+        await apiViewer?.selectProject(project.id);
+      }
+    } else if (projectBrowser && result.project_name) {
       // Try to find project by name
       let project = projectBrowser.getProjects().find(
         p => p.name === result.project_name
