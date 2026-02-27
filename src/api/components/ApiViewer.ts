@@ -534,6 +534,7 @@ export class ApiViewer {
       void this.sessionList?.setProjectId(project.id, project.source);
     }
     this.conversationView?.setProjectPath(project.path ?? project.name ?? null, 0);
+    this.conversationView?.setSessionContext(null);
 
     if (this.currentProjectView === 'list' && project.id) {
       this.showProjectTimelinePanel(project.id, project.source);
@@ -576,6 +577,7 @@ export class ApiViewer {
     } as Project;
     this.currentSession = null;
     this.conversationView?.setProjectPath(project.projectPath ?? project.projectName, 0);
+    this.conversationView?.setSessionContext(null);
     this.conversationView?.clear();
     this.conversationView?.refreshToolbar();
   }
@@ -596,6 +598,10 @@ export class ApiViewer {
       if (!sessionPath) {
         throw new Error('Session has no path');
       }
+      this.conversationView?.setSessionContext({
+        source: session.source ?? this.currentProject?.source ?? null,
+        model: session.model ?? null,
+      });
 
       // Stream entries progressively — renders as chunks arrive
       this.conversationView?.beginProgressiveDisplay();

@@ -70,6 +70,7 @@ npm run i18n         # Extract + compile translations
 
 - API base URL:
   - Query: `?api-url=http://host:port`
+  - Must parse as absolute URL (`new URL(...)`), invalid values are ignored
   - Then global/meta/env/same-origin fallback
 - Auth token:
   - Hash first: `#token=...`
@@ -77,6 +78,13 @@ npm run i18n         # Extract + compile translations
 - Initial session target (hash preferred over query):
   - Required: `session_path` (aliases: `path`, `session`)
   - Optional: `session_id`, `project_name` (`project`), `project_id`, `line_num` (`line`)
+  - Values are trimmed; `line_num` must be a positive integer
+
+Session-target load behavior in `main.ts`:
+- Prefer `project_id` selection over `project_name` when both exist.
+- Refresh projects once and retry project selection if not immediately found.
+- Load session by `session_path`, then optionally select `session_id`.
+- If `line_num` exists, scroll approximately to entry index `line - 1`.
 
 If you add URL parameters, update both `README.md` and this file.
 

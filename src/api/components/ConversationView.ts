@@ -15,7 +15,7 @@ import { i18n } from '@lingui/core';
 import CONVERSATION_STYLES from './conversation-styles.css?inline';
 import { escapeHtml, formatToolSummary, renderMarkdown, formatDuration } from './conversation-renderers';
 import { injectStyleSheet } from './style-manager';
-import { exportAsHtml, exportAsMarkdown, downloadFile, getSafeFilename } from './export';
+import { exportAsHtml, exportAsMarkdown, exportAsRawJson, downloadFile, getSafeFilename } from './export';
 
 // ============================================
 // Constants
@@ -93,6 +93,8 @@ export class ConversationView {
 
   // Current session entries for export
   private currentEntries: Entry[] = [];
+  private currentSessionSource: string | null = null;
+  private currentSessionModel: string | null = null;
 
   // Tool result index: toolUseId → ToolResultBlock
   private toolResultIndex: Map<string, ToolResultBlock> = new Map();
@@ -371,13 +373,27 @@ export class ConversationView {
     this.renderToolbar();
   }
 
+  setSessionContext(session: { source?: string | null; model?: string | null } | null): void {
+    this.currentSessionSource = session?.source?.trim() || null;
+    this.currentSessionModel = session?.model?.trim() || null;
+    this.renderFilterBar();
+    this.setupFilters();
+    this.applyFilters();
+  }
+
   // ============================================
   // Filter Bar
   // ============================================
 
   private renderFilterBar(): void {
     const hasEntries = this.currentEntries.length > 0;
+    const sourceBadge = this.renderSourceBadge();
+    const modelBadge = this.renderModelBadge();
+    const sessionContextHtml = (sourceBadge || modelBadge)
+      ? `<div class="thinkt-conversation-view__session-context">${sourceBadge}${modelBadge}</div>`
+      : '';
     this.filterContainer.innerHTML = `
+      ${sessionContextHtml}
       <span class="thinkt-conversation-view__filter-label">${i18n._('Show:')}</span>
       <button class="thinkt-conversation-view__filter-btn ${this.filterState.user ? 'active' : ''}" data-filter="user">
         ${i18n._('User')}
@@ -408,11 +424,39 @@ export class ConversationView {
           <div class="thinkt-conversation-view__export-dropdown-item" data-format="markdown">
             <span class="icon">📝</span> ${i18n._('Export as Markdown')}
           </div>
+          <div class="thinkt-conversation-view__export-dropdown-item" data-format="raw-json">
+            <span class="icon">{}</span> ${i18n._('Export as Raw JSON')}
+          </div>
         </div>
       </div>
     `;
 
     this.setupExportHandlers();
+  }
+
+  private renderSourceBadge(): string {
+    const source = this.currentSessionSource?.trim();
+    if (!source) return '';
+    const sourceClass = this.getSourceBadgeClass(source);
+    return `<span class="thinkt-conversation-view__session-badge thinkt-conversation-view__session-badge--source ${sourceClass}">${escapeHtml(source)}</span>`;
+  }
+
+  private renderModelBadge(): string {
+    const model = this.currentSessionModel?.trim();
+    if (!model) return '';
+    return `<span class="thinkt-conversation-view__session-badge thinkt-conversation-view__session-badge--model" title="${escapeHtml(model)}">${escapeHtml(model)}</span>`;
+  }
+
+  private getSourceBadgeClass(sourceName: string): string {
+    const source = sourceName.trim().toLowerCase();
+    if (source === 'claude') return 'thinkt-conversation-view__session-badge--source-claude';
+    if (source === 'kimi') return 'thinkt-conversation-view__session-badge--source-kimi';
+    if (source === 'gemini') return 'thinkt-conversation-view__session-badge--source-gemini';
+    if (source === 'copilot') return 'thinkt-conversation-view__session-badge--source-copilot';
+    if (source === 'codex') return 'thinkt-conversation-view__session-badge--source-codex';
+    if (source === 'qwen') return 'thinkt-conversation-view__session-badge--source-qwen';
+    if (source === 'thinkt') return 'thinkt-conversation-view__session-badge--source-thinkt';
+    return 'thinkt-conversation-view__session-badge--source-other';
   }
 
   private setupExportHandlers(): void {
@@ -486,6 +530,11 @@ export class ConversationView {
     } else if (format === 'markdown') {
       const md = exportAsMarkdown(this.currentEntries, title, exportFilters);
       downloadFile(md, `${safeFilename}.md`, 'text/markdown');
+    } else if (format === 'raw-json') {
+      const json = exportAsRawJson(this.currentEntries, title, exportFilters, {
+        sourcePath: this.currentProjectPath ?? undefined,
+      });
+      downloadFile(json, `${safeFilename}.json`, 'application/json');
     }
   }
 
@@ -886,6 +935,8 @@ export class ConversationView {
    * Clear the view
    */
   clear(): void {
+    this.currentSessionSource = null;
+    this.currentSessionModel = null;
     this.showEmpty();
   }
 

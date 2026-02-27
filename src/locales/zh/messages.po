@@ -12,73 +12,52 @@ msgstr ""
 "Plural-Forms: \n"
 
 #. js-lingui-explicit-id
-#: src/api/components/SettingsOverlay.ts:153
-#: src/api/components/SettingsOverlay.ts:308
-msgid "Loading embedding status..."
+#: src/api/components/ConversationView.ts:428
+msgid "Export as Raw JSON"
 msgstr ""
 
 #. js-lingui-explicit-id
-#: src/api/components/SettingsOverlay.ts:466
-msgid "Embedding status unavailable: {message}"
-msgstr ""
-
-#. js-lingui-explicit-id
-#: src/api/components/SettingsOverlay.ts:630
-msgid "No active sync in progress."
-msgstr ""
-
-#. js-lingui-explicit-id
-#: src/api/components/SettingsOverlay.ts:655
-msgid "Status"
-msgstr ""
-
-#. js-lingui-explicit-id
-#: src/api/components/SettingsOverlay.ts:665
-msgid "No active embedding in progress."
-msgstr ""
-
-#. js-lingui-explicit-id
-#: src/main.ts:137
+#: src/main.ts:151
 msgid "{sessionTitle} - THINKT"
 msgstr "{sessionTitle} - THINKT"
 
 #. js-lingui-explicit-id
-#: src/main.ts:151
+#: src/main.ts:165
 msgid "Open search dialog ({shortcut})"
 msgstr ""
 
 #. js-lingui-explicit-id
-#: src/main.ts:160
+#: src/main.ts:174
 msgid "Open settings and info"
 msgstr ""
 
 #. js-lingui-explicit-id
 #: src/api/components/ApiViewer.ts:484
-#: src/main.ts:218
+#: src/main.ts:232
 msgid "Connected"
 msgstr "已连接"
 
 #. js-lingui-explicit-id
-#: src/main.ts:220
+#: src/main.ts:234
 msgid "Connecting..."
 msgstr "连接中..."
 
 #. js-lingui-explicit-id
 #: src/api/components/ApiViewer.ts:484
-#: src/main.ts:221
+#: src/main.ts:235
 msgid "Disconnected"
 msgstr "已断开"
 
 #. js-lingui-explicit-id
 #: src/api/components/ApiViewer.ts:471
-#: src/main.ts:404
+#: src/main.ts:433
 msgid "Connection failed"
 msgstr "连接失败"
 
 #. js-lingui-explicit-id
 #: src/api/components/SearchOverlay.ts:175
 #: src/api/components/SettingsOverlay.ts:555
-#: src/api/components/SettingsOverlay.ts:677
+#: src/api/components/SettingsOverlay.ts:667
 #: src/api/components/TreeProjectBrowser.ts:136
 msgid "Projects"
 msgstr "项目"
@@ -151,175 +130,15 @@ msgid "Retry"
 msgstr "重试"
 
 #. js-lingui-explicit-id
-#: src/api/components/SearchResultRenderer.ts:52
-msgid "No results found"
-msgstr "未找到结果"
-
-#. js-lingui-explicit-id
-#: src/api/components/SearchResultRenderer.ts:59
-msgid "No results for selected projects"
-msgstr "所选项目没有结果"
-
-#. js-lingui-explicit-id
-#: src/api/components/SearchResultRenderer.ts:60
-msgid "Select projects from the sidebar to filter"
-msgstr "从侧边栏选择项目以进行筛选"
-
-#. js-lingui-explicit-id
 #: src/api/components/ProjectBrowser.ts:465
 #: src/api/components/ProjectTimelinePanel.ts:436
 #: src/api/components/SearchResultRenderer.ts:96
 #: src/api/components/SearchResultRenderer.ts:181
 #: src/api/components/SessionList.ts:74
-#: src/api/components/SettingsOverlay.ts:723
-#: src/api/components/SettingsOverlay.ts:748
+#: src/api/components/SettingsOverlay.ts:713
+#: src/api/components/SettingsOverlay.ts:738
 msgid "Unknown"
 msgstr "未知"
-
-#. js-lingui-explicit-id
-#: src/api/components/SearchResultRenderer.ts:100
-msgid "{count, plural, one {# match} other {# matches}}"
-msgstr "{count} 个匹配"
-
-#. js-lingui-explicit-id
-#: src/api/components/SearchResultRenderer.ts:132
-msgid "No semantic matches found"
-msgstr ""
-
-#. js-lingui-explicit-id
-#: src/api/components/SearchResultRenderer.ts:177
-msgid "Loading preview..."
-msgstr ""
-
-#. js-lingui-explicit-id
-#: src/api/components/SearchResultRenderer.ts:229
-msgid "Searching..."
-msgstr "正在搜索..."
-
-#. js-lingui-explicit-id
-#: src/api/components/SearchResultRenderer.ts:240
-msgid "Indexer not available"
-msgstr "索引器不可用"
-
-#. js-lingui-explicit-id
-#: src/api/components/SearchResultRenderer.ts:241
-msgid "The search feature requires the thinkt-indexer to be installed and configured."
-msgstr "搜索功能需要安装并配置 thinkt-indexer。"
-
-#. js-lingui-explicit-id
-#: src/api/components/SearchResultRenderer.ts:292
-msgid "High"
-msgstr ""
-
-#. js-lingui-explicit-id
-#: src/api/components/SearchResultRenderer.ts:293
-msgid "Medium"
-msgstr ""
-
-#. js-lingui-explicit-id
-#: src/api/components/SearchResultRenderer.ts:294
-msgid "Low"
-msgstr ""
-
-#. js-lingui-explicit-id
-#: src/api/components/SearchResultRenderer.ts:304
-msgid "today"
-msgstr ""
-
-#. js-lingui-explicit-id
-#: src/api/components/SearchResultRenderer.ts:305
-msgid "yesterday"
-msgstr ""
-
-#. js-lingui-explicit-id
-#: src/api/components/SearchResultRenderer.ts:306
-msgid "{days}d ago"
-msgstr ""
-
-#. js-lingui-explicit-id
-#: src/api/components/SearchResultRenderer.ts:307
-msgid "{weeks}w ago"
-msgstr ""
-
-#. js-lingui-explicit-id
-#: src/api/components/SearchOverlay.ts:144
-msgid "Search Sessions"
-msgstr "搜索会话"
-
-#. js-lingui-explicit-id
-#: src/api/components/SearchOverlay.ts:146
-msgid "Text"
-msgstr ""
-
-#. js-lingui-explicit-id
-#: src/api/components/SearchOverlay.ts:147
-msgid "Semantic"
-msgstr ""
-
-#. js-lingui-explicit-id
-#: src/api/components/ProjectTimelinePanel.ts:106
-#: src/api/components/SearchOverlay.ts:151
-#: src/api/components/SearchOverlay.ts:151
-#: src/api/components/SettingsOverlay.ts:129
-#: src/api/components/SettingsOverlay.ts:129
-msgid "Close"
-msgstr "关闭"
-
-#. js-lingui-explicit-id
-#: src/api/components/SearchOverlay.ts:156
-#: src/api/components/SearchOverlay.ts:300
-msgid "Type to search across all sessions..."
-msgstr "输入以搜索所有会话..."
-
-#. js-lingui-explicit-id
-#: src/api/components/SearchOverlay.ts:161
-msgid "Case sensitive"
-msgstr "区分大小写"
-
-#. js-lingui-explicit-id
-#: src/api/components/SearchOverlay.ts:165
-msgid "Regex"
-msgstr "正则表达式"
-
-#. js-lingui-explicit-id
-#: src/api/components/SearchOverlay.ts:169
-msgid "Ask a question in natural language"
-msgstr ""
-
-#. js-lingui-explicit-id
-#: src/api/components/SearchOverlay.ts:177
-msgid "All"
-msgstr "全部"
-
-#. js-lingui-explicit-id
-#: src/api/components/SearchOverlay.ts:178
-msgid "None"
-msgstr "无"
-
-#. js-lingui-explicit-id
-#: src/api/components/SearchOverlay.ts:186
-msgid "Type to search across all indexed sessions"
-msgstr "输入以在所有已索引的会话中搜索"
-
-#. js-lingui-explicit-id
-#: src/api/components/SearchOverlay.ts:191
-msgid "to navigate"
-msgstr "进行导航"
-
-#. js-lingui-explicit-id
-#: src/api/components/SearchOverlay.ts:191
-msgid "to select"
-msgstr "进行选择"
-
-#. js-lingui-explicit-id
-#: src/api/components/SearchOverlay.ts:192
-msgid "Search uses the indexer database"
-msgstr "搜索使用索引器数据库"
-
-#. js-lingui-explicit-id
-#: src/api/components/SearchOverlay.ts:301
-msgid "Ask a question about your sessions..."
-msgstr ""
 
 #. js-lingui-explicit-id
 #: src/api/components/SessionList.ts:87
@@ -438,6 +257,267 @@ msgid "chunked"
 msgstr "分块"
 
 #. js-lingui-explicit-id
+#: src/api/components/SearchResultRenderer.ts:52
+msgid "No results found"
+msgstr "未找到结果"
+
+#. js-lingui-explicit-id
+#: src/api/components/SearchResultRenderer.ts:59
+msgid "No results for selected projects"
+msgstr "所选项目没有结果"
+
+#. js-lingui-explicit-id
+#: src/api/components/SearchResultRenderer.ts:60
+msgid "Select projects from the sidebar to filter"
+msgstr "从侧边栏选择项目以进行筛选"
+
+#. js-lingui-explicit-id
+#: src/api/components/SearchResultRenderer.ts:100
+msgid "{count, plural, one {# match} other {# matches}}"
+msgstr "{count} 个匹配"
+
+#. js-lingui-explicit-id
+#: src/api/components/SearchResultRenderer.ts:132
+msgid "No semantic matches found"
+msgstr ""
+
+#. js-lingui-explicit-id
+#: src/api/components/SearchResultRenderer.ts:177
+msgid "Loading preview..."
+msgstr ""
+
+#. js-lingui-explicit-id
+#: src/api/components/SearchResultRenderer.ts:229
+msgid "Searching..."
+msgstr "正在搜索..."
+
+#. js-lingui-explicit-id
+#: src/api/components/SearchResultRenderer.ts:240
+msgid "Indexer not available"
+msgstr "索引器不可用"
+
+#. js-lingui-explicit-id
+#: src/api/components/SearchResultRenderer.ts:241
+msgid "The search feature requires the thinkt-indexer to be installed and configured."
+msgstr "搜索功能需要安装并配置 thinkt-indexer。"
+
+#. js-lingui-explicit-id
+#: src/api/components/SearchResultRenderer.ts:292
+msgid "High"
+msgstr ""
+
+#. js-lingui-explicit-id
+#: src/api/components/SearchResultRenderer.ts:293
+msgid "Medium"
+msgstr ""
+
+#. js-lingui-explicit-id
+#: src/api/components/SearchResultRenderer.ts:294
+msgid "Low"
+msgstr ""
+
+#. js-lingui-explicit-id
+#: src/api/components/SearchResultRenderer.ts:304
+msgid "today"
+msgstr ""
+
+#. js-lingui-explicit-id
+#: src/api/components/SearchResultRenderer.ts:305
+msgid "yesterday"
+msgstr ""
+
+#. js-lingui-explicit-id
+#: src/api/components/SearchResultRenderer.ts:306
+msgid "{days}d ago"
+msgstr ""
+
+#. js-lingui-explicit-id
+#: src/api/components/SearchResultRenderer.ts:307
+msgid "{weeks}w ago"
+msgstr ""
+
+#. js-lingui-explicit-id
+#: src/api/components/ProjectBrowser.ts:137
+#: src/api/components/ProjectBrowser.ts:595
+#: src/api/components/ProjectFilterBar.ts:77
+#: src/api/components/ProjectFilterBar.ts:346
+msgid "Filter projects..."
+msgstr "筛选项目..."
+
+#. js-lingui-explicit-id
+#: src/api/components/ProjectFilterBar.ts:86
+#: src/api/components/ProjectFilterBar.ts:293
+msgid "All Sources"
+msgstr "全部来源"
+
+#. js-lingui-explicit-id
+#: src/api/components/ProjectFilterBar.ts:131
+#: src/api/components/ProjectFilterBar.ts:349
+msgid "Include Deleted"
+msgstr ""
+
+#. js-lingui-explicit-id
+#: src/api/components/ProjectFilterBar.ts:298
+msgid "{count} Sources"
+msgstr ""
+
+#. js-lingui-explicit-id
+#: src/api/components/ProjectFilterBar.ts:313
+msgid "Name A-Z"
+msgstr ""
+
+#. js-lingui-explicit-id
+#: src/api/components/ProjectFilterBar.ts:314
+msgid "Name Z-A"
+msgstr ""
+
+#. js-lingui-explicit-id
+#: src/api/components/ProjectTimelinePanel.ts:105
+msgid "Project Timeline"
+msgstr "项目时间线"
+
+#. js-lingui-explicit-id
+#: src/api/components/ProjectTimelinePanel.ts:106
+#: src/api/components/SearchOverlay.ts:151
+#: src/api/components/SearchOverlay.ts:151
+#: src/api/components/SettingsOverlay.ts:129
+#: src/api/components/SettingsOverlay.ts:129
+msgid "Close"
+msgstr "关闭"
+
+#. js-lingui-explicit-id
+#: src/api/components/ProjectTimelinePanel.ts:123
+msgid "Start"
+msgstr "开始"
+
+#. js-lingui-explicit-id
+#: src/api/components/ProjectTimelinePanel.ts:127
+msgid "End"
+msgstr "结束"
+
+#. js-lingui-explicit-id
+#: src/api/components/ProjectTimelinePanel.ts:131
+msgid "Session duration"
+msgstr "会话时长"
+
+#. js-lingui-explicit-id
+#: src/api/components/ProjectTimelinePanel.ts:438
+msgid "Started"
+msgstr "已开始"
+
+#. js-lingui-explicit-id
+#: src/api/components/ProjectTimelinePanel.ts:438
+msgid "Ended"
+msgstr "已结束"
+
+#. js-lingui-explicit-id
+#: src/api/components/ProjectTimelinePanel.ts:446
+msgid "Duration: {duration}"
+msgstr "时长：{duration}"
+
+#. js-lingui-explicit-id
+#: src/api/components/ProjectTimelinePanel.ts:448
+msgid "Source: {source}"
+msgstr "来源：{source}"
+
+#. js-lingui-explicit-id
+#: src/api/components/ProjectTimelinePanel.ts:474
+msgid "< 1 min"
+msgstr "< 1 分钟"
+
+#. js-lingui-explicit-id
+#: src/api/components/ProjectTimelinePanel.ts:475
+msgid "{count} min"
+msgstr "{count} 分钟"
+
+#. js-lingui-explicit-id
+#: src/api/components/ProjectTimelinePanel.ts:478
+msgid "{hours}h {mins}m"
+msgstr "{hours} 小时 {mins} 分钟"
+
+#. js-lingui-explicit-id
+#: src/api/components/ProjectTimelinePanel.ts:487
+#: src/api/components/TimelineVisualization.ts:1243
+msgid "Loading timeline..."
+msgstr "正在加载时间线..."
+
+#. js-lingui-explicit-id
+#: src/api/components/ProjectTimelinePanel.ts:493
+msgid "No sessions with timing data"
+msgstr "没有包含时间数据的会话"
+
+#. js-lingui-explicit-id
+#: src/api/components/SearchOverlay.ts:144
+msgid "Search Sessions"
+msgstr "搜索会话"
+
+#. js-lingui-explicit-id
+#: src/api/components/SearchOverlay.ts:146
+msgid "Text"
+msgstr ""
+
+#. js-lingui-explicit-id
+#: src/api/components/SearchOverlay.ts:147
+msgid "Semantic"
+msgstr ""
+
+#. js-lingui-explicit-id
+#: src/api/components/SearchOverlay.ts:156
+#: src/api/components/SearchOverlay.ts:300
+msgid "Type to search across all sessions..."
+msgstr "输入以搜索所有会话..."
+
+#. js-lingui-explicit-id
+#: src/api/components/SearchOverlay.ts:161
+msgid "Case sensitive"
+msgstr "区分大小写"
+
+#. js-lingui-explicit-id
+#: src/api/components/SearchOverlay.ts:165
+msgid "Regex"
+msgstr "正则表达式"
+
+#. js-lingui-explicit-id
+#: src/api/components/SearchOverlay.ts:169
+msgid "Ask a question in natural language"
+msgstr ""
+
+#. js-lingui-explicit-id
+#: src/api/components/SearchOverlay.ts:177
+msgid "All"
+msgstr "全部"
+
+#. js-lingui-explicit-id
+#: src/api/components/SearchOverlay.ts:178
+msgid "None"
+msgstr "无"
+
+#. js-lingui-explicit-id
+#: src/api/components/SearchOverlay.ts:186
+msgid "Type to search across all indexed sessions"
+msgstr "输入以在所有已索引的会话中搜索"
+
+#. js-lingui-explicit-id
+#: src/api/components/SearchOverlay.ts:191
+msgid "to navigate"
+msgstr "进行导航"
+
+#. js-lingui-explicit-id
+#: src/api/components/SearchOverlay.ts:191
+msgid "to select"
+msgstr "进行选择"
+
+#. js-lingui-explicit-id
+#: src/api/components/SearchOverlay.ts:192
+msgid "Search uses the indexer database"
+msgstr "搜索使用索引器数据库"
+
+#. js-lingui-explicit-id
+#: src/api/components/SearchOverlay.ts:301
+msgid "Ask a question about your sessions..."
+msgstr ""
+
+#. js-lingui-explicit-id
 #: src/api/components/ApiViewer.ts:191
 #: src/api/components/ApiViewer.ts:210
 #: src/api/components/TimelineVisualization.ts:195
@@ -453,12 +533,6 @@ msgstr "按项目"
 #: src/api/components/TimelineVisualization.ts:198
 msgid "By Source"
 msgstr "按来源"
-
-#. js-lingui-explicit-id
-#: src/api/components/ProjectTimelinePanel.ts:487
-#: src/api/components/TimelineVisualization.ts:1243
-msgid "Loading timeline..."
-msgstr "正在加载时间线..."
 
 #. js-lingui-explicit-id
 #: src/api/components/TimelineVisualization.ts:1251
@@ -542,6 +616,12 @@ msgid "Embedding Status"
 msgstr ""
 
 #. js-lingui-explicit-id
+#: src/api/components/SettingsOverlay.ts:153
+#: src/api/components/SettingsOverlay.ts:308
+msgid "Loading embedding status..."
+msgstr ""
+
+#. js-lingui-explicit-id
 #: src/api/components/SettingsOverlay.ts:160
 #: src/api/components/SettingsOverlay.ts:309
 msgid "Loading sources..."
@@ -565,24 +645,24 @@ msgstr ""
 
 #. js-lingui-explicit-id
 #: src/api/components/SettingsOverlay.ts:177
-#: src/api/components/SettingsOverlay.ts:869
+#: src/api/components/SettingsOverlay.ts:859
 msgid "Not set"
 msgstr ""
 
 #. js-lingui-explicit-id
 #: src/api/components/SettingsOverlay.ts:182
 #: src/api/components/SettingsOverlay.ts:183
-#: src/api/components/SettingsOverlay.ts:882
-#: src/api/components/SettingsOverlay.ts:883
-#: src/api/components/SettingsOverlay.ts:890
-#: src/api/components/SettingsOverlay.ts:891
+#: src/api/components/SettingsOverlay.ts:872
+#: src/api/components/SettingsOverlay.ts:873
+#: src/api/components/SettingsOverlay.ts:880
+#: src/api/components/SettingsOverlay.ts:881
 msgid "Show token"
 msgstr ""
 
 #. js-lingui-explicit-id
 #: src/api/components/SettingsOverlay.ts:185
-#: src/api/components/SettingsOverlay.ts:881
-#: src/api/components/SettingsOverlay.ts:889
+#: src/api/components/SettingsOverlay.ts:871
+#: src/api/components/SettingsOverlay.ts:879
 msgid "Show"
 msgstr ""
 
@@ -617,7 +697,7 @@ msgstr ""
 
 #. js-lingui-explicit-id
 #: src/api/components/SettingsOverlay.ts:339
-#: src/api/components/SettingsOverlay.ts:639
+#: src/api/components/SettingsOverlay.ts:629
 msgid "Enabled"
 msgstr ""
 
@@ -640,13 +720,13 @@ msgstr ""
 
 #. js-lingui-explicit-id
 #: src/api/components/SettingsOverlay.ts:358
-#: src/api/components/SettingsOverlay.ts:729
+#: src/api/components/SettingsOverlay.ts:719
 msgid "Online"
 msgstr ""
 
 #. js-lingui-explicit-id
 #: src/api/components/SettingsOverlay.ts:359
-#: src/api/components/SettingsOverlay.ts:729
+#: src/api/components/SettingsOverlay.ts:719
 msgid "Offline"
 msgstr ""
 
@@ -702,6 +782,11 @@ msgid "Indexer status unavailable: {message}"
 msgstr ""
 
 #. js-lingui-explicit-id
+#: src/api/components/SettingsOverlay.ts:466
+msgid "Embedding status unavailable: {message}"
+msgstr ""
+
+#. js-lingui-explicit-id
 #: src/api/components/SettingsOverlay.ts:497
 msgid "Failed to load sources: {message}"
 msgstr ""
@@ -728,8 +813,8 @@ msgstr ""
 
 #. js-lingui-explicit-id
 #: src/api/components/SettingsOverlay.ts:554
-#: src/api/components/SettingsOverlay.ts:680
-#: src/api/components/SettingsOverlay.ts:686
+#: src/api/components/SettingsOverlay.ts:670
+#: src/api/components/SettingsOverlay.ts:676
 msgid "Sessions"
 msgstr ""
 
@@ -755,7 +840,7 @@ msgstr ""
 
 #. js-lingui-explicit-id
 #: src/api/components/SettingsOverlay.ts:596
-#: src/api/components/SettingsOverlay.ts:638
+#: src/api/components/SettingsOverlay.ts:628
 msgid "Running"
 msgstr ""
 
@@ -775,224 +860,141 @@ msgid "No"
 msgstr ""
 
 #. js-lingui-explicit-id
-#: src/api/components/SettingsOverlay.ts:600
-#: src/api/components/SettingsOverlay.ts:639
-#: src/api/components/SettingsOverlay.ts:643
-msgid "Not loaded"
-msgstr ""
-
-#. js-lingui-explicit-id
-#: src/api/components/SettingsOverlay.ts:603
-#: src/api/components/SettingsOverlay.ts:646
-msgid "No dimension reported"
-msgstr ""
-
-#. js-lingui-explicit-id
-#: src/api/components/SettingsOverlay.ts:604
+#: src/api/components/SettingsOverlay.ts:599
 msgid "Sync Progress"
 msgstr ""
 
 #. js-lingui-explicit-id
-#: src/api/components/SettingsOverlay.ts:612
-#: src/api/components/SettingsOverlay.ts:659
-msgid "Model"
-msgstr ""
-
-#. js-lingui-explicit-id
-#: src/api/components/SettingsOverlay.ts:617
+#: src/api/components/SettingsOverlay.ts:607
 msgid "Uptime"
 msgstr ""
 
 #. js-lingui-explicit-id
-#: src/api/components/SettingsOverlay.ts:621
+#: src/api/components/SettingsOverlay.ts:611
 msgid "Watching"
 msgstr ""
 
 #. js-lingui-explicit-id
-#: src/api/components/SettingsOverlay.ts:625
+#: src/api/components/SettingsOverlay.ts:615
 msgid "State"
 msgstr ""
 
 #. js-lingui-explicit-id
-#: src/api/components/SettingsOverlay.ts:647
+#: src/api/components/SettingsOverlay.ts:620
+msgid "No active sync in progress."
+msgstr ""
+
+#. js-lingui-explicit-id
+#: src/api/components/SettingsOverlay.ts:629
+#: src/api/components/SettingsOverlay.ts:633
+msgid "Not loaded"
+msgstr ""
+
+#. js-lingui-explicit-id
+#: src/api/components/SettingsOverlay.ts:636
+msgid "No dimension reported"
+msgstr ""
+
+#. js-lingui-explicit-id
+#: src/api/components/SettingsOverlay.ts:637
 msgid "Embedding Progress"
 msgstr ""
 
 #. js-lingui-explicit-id
-#: src/api/components/SettingsOverlay.ts:683
+#: src/api/components/SettingsOverlay.ts:645
+msgid "Model"
+msgstr ""
+
+#. js-lingui-explicit-id
+#: src/api/components/SettingsOverlay.ts:650
+msgid "Status"
+msgstr ""
+
+#. js-lingui-explicit-id
+#: src/api/components/SettingsOverlay.ts:655
+msgid "No active embedding in progress."
+msgstr ""
+
+#. js-lingui-explicit-id
+#: src/api/components/SettingsOverlay.ts:673
 msgid "Chunks"
 msgstr ""
 
 #. js-lingui-explicit-id
-#: src/api/components/SettingsOverlay.ts:690
+#: src/api/components/SettingsOverlay.ts:680
 msgid "Project: {projectName}"
 msgstr ""
 
 #. js-lingui-explicit-id
-#: src/api/components/SettingsOverlay.ts:740
+#: src/api/components/SettingsOverlay.ts:730
 msgid "Resumable"
 msgstr ""
 
 #. js-lingui-explicit-id
-#: src/api/components/SettingsOverlay.ts:759
+#: src/api/components/SettingsOverlay.ts:749
 msgid "terminal"
 msgstr ""
 
 #. js-lingui-explicit-id
-#: src/api/components/SettingsOverlay.ts:760
+#: src/api/components/SettingsOverlay.ts:750
 msgid "default"
 msgstr ""
 
 #. js-lingui-explicit-id
-#: src/api/components/SettingsOverlay.ts:762
+#: src/api/components/SettingsOverlay.ts:752
 msgid "enabled"
 msgstr ""
 
 #. js-lingui-explicit-id
-#: src/api/components/SettingsOverlay.ts:762
+#: src/api/components/SettingsOverlay.ts:752
 msgid "disabled"
 msgstr ""
 
 #. js-lingui-explicit-id
-#: src/api/components/SettingsOverlay.ts:793
+#: src/api/components/SettingsOverlay.ts:783
 msgid "Unknown error"
 msgstr ""
 
 #. js-lingui-explicit-id
-#: src/api/components/SettingsOverlay.ts:848
+#: src/api/components/SettingsOverlay.ts:838
 msgid "Failed to load server info: HTTP {status}"
 msgstr ""
 
 #. js-lingui-explicit-id
-#: src/api/components/SettingsOverlay.ts:853
+#: src/api/components/SettingsOverlay.ts:843
 msgid "Invalid server info response"
 msgstr ""
 
 #. js-lingui-explicit-id
-#: src/api/components/SettingsOverlay.ts:869
+#: src/api/components/SettingsOverlay.ts:859
 msgid "Set (injected)"
 msgstr ""
 
 #. js-lingui-explicit-id
-#: src/api/components/SettingsOverlay.ts:885
+#: src/api/components/SettingsOverlay.ts:875
 msgid "Hide"
 msgstr ""
 
 #. js-lingui-explicit-id
-#: src/api/components/SettingsOverlay.ts:886
-#: src/api/components/SettingsOverlay.ts:887
+#: src/api/components/SettingsOverlay.ts:876
+#: src/api/components/SettingsOverlay.ts:877
 msgid "Hide token"
 msgstr ""
 
 #. js-lingui-explicit-id
-#: src/api/components/SettingsOverlay.ts:898
+#: src/api/components/SettingsOverlay.ts:888
 msgid "Token is provided by the runtime and cannot be displayed in the browser."
 msgstr ""
 
 #. js-lingui-explicit-id
-#: src/api/components/SettingsOverlay.ts:916
+#: src/api/components/SettingsOverlay.ts:906
 msgid "Auth token updated."
 msgstr ""
 
 #. js-lingui-explicit-id
-#: src/api/components/SettingsOverlay.ts:924
+#: src/api/components/SettingsOverlay.ts:914
 msgid "Auth token cleared."
 msgstr ""
-
-#. js-lingui-explicit-id
-#: src/api/components/ProjectBrowser.ts:137
-#: src/api/components/ProjectBrowser.ts:595
-#: src/api/components/ProjectFilterBar.ts:77
-#: src/api/components/ProjectFilterBar.ts:346
-msgid "Filter projects..."
-msgstr "筛选项目..."
-
-#. js-lingui-explicit-id
-#: src/api/components/ProjectFilterBar.ts:86
-#: src/api/components/ProjectFilterBar.ts:293
-msgid "All Sources"
-msgstr "全部来源"
-
-#. js-lingui-explicit-id
-#: src/api/components/ProjectFilterBar.ts:131
-#: src/api/components/ProjectFilterBar.ts:349
-msgid "Include Deleted"
-msgstr ""
-
-#. js-lingui-explicit-id
-#: src/api/components/ProjectFilterBar.ts:298
-msgid "{count} Sources"
-msgstr ""
-
-#. js-lingui-explicit-id
-#: src/api/components/ProjectFilterBar.ts:313
-msgid "Name A-Z"
-msgstr ""
-
-#. js-lingui-explicit-id
-#: src/api/components/ProjectFilterBar.ts:314
-msgid "Name Z-A"
-msgstr ""
-
-#. js-lingui-explicit-id
-#: src/api/components/ProjectTimelinePanel.ts:105
-msgid "Project Timeline"
-msgstr "项目时间线"
-
-#. js-lingui-explicit-id
-#: src/api/components/ProjectTimelinePanel.ts:123
-msgid "Start"
-msgstr "开始"
-
-#. js-lingui-explicit-id
-#: src/api/components/ProjectTimelinePanel.ts:127
-msgid "End"
-msgstr "结束"
-
-#. js-lingui-explicit-id
-#: src/api/components/ProjectTimelinePanel.ts:131
-msgid "Session duration"
-msgstr "会话时长"
-
-#. js-lingui-explicit-id
-#: src/api/components/ProjectTimelinePanel.ts:438
-msgid "Started"
-msgstr "已开始"
-
-#. js-lingui-explicit-id
-#: src/api/components/ProjectTimelinePanel.ts:438
-msgid "Ended"
-msgstr "已结束"
-
-#. js-lingui-explicit-id
-#: src/api/components/ProjectTimelinePanel.ts:446
-msgid "Duration: {duration}"
-msgstr "时长：{duration}"
-
-#. js-lingui-explicit-id
-#: src/api/components/ProjectTimelinePanel.ts:448
-msgid "Source: {source}"
-msgstr "来源：{source}"
-
-#. js-lingui-explicit-id
-#: src/api/components/ProjectTimelinePanel.ts:474
-msgid "< 1 min"
-msgstr "< 1 分钟"
-
-#. js-lingui-explicit-id
-#: src/api/components/ProjectTimelinePanel.ts:475
-msgid "{count} min"
-msgstr "{count} 分钟"
-
-#. js-lingui-explicit-id
-#: src/api/components/ProjectTimelinePanel.ts:478
-msgid "{hours}h {mins}m"
-msgstr "{hours} 小时 {mins} 分钟"
-
-#. js-lingui-explicit-id
-#: src/api/components/ProjectTimelinePanel.ts:493
-msgid "No sessions with timing data"
-msgstr "没有包含时间数据的会话"
 
 #. js-lingui-explicit-id
 #: src/api/components/ProjectBrowser.ts:407
@@ -1027,133 +1029,133 @@ msgid "Tree"
 msgstr "树形"
 
 #. js-lingui-explicit-id
-#: src/api/components/ConversationView.ts:239
+#: src/api/components/ConversationView.ts:241
 msgid "No project selected"
 msgstr "未选择项目"
 
 #. js-lingui-explicit-id
-#: src/api/components/ConversationView.ts:243
+#: src/api/components/ConversationView.ts:245
 msgid "Resume"
 msgstr "继续"
 
 #. js-lingui-explicit-id
-#: src/api/components/ConversationView.ts:250
+#: src/api/components/ConversationView.ts:252
 msgid "Hide Timeline"
 msgstr "隐藏时间线"
 
 #. js-lingui-explicit-id
-#: src/api/components/ConversationView.ts:250
+#: src/api/components/ConversationView.ts:252
 msgid "Show Timeline"
 msgstr "显示时间线"
 
 #. js-lingui-explicit-id
-#: src/api/components/ConversationView.ts:259
+#: src/api/components/ConversationView.ts:261
 msgid "Open in"
 msgstr "在...中打开"
 
 #. js-lingui-explicit-id
-#: src/api/components/ConversationView.ts:270
+#: src/api/components/ConversationView.ts:272
 msgid "{count, plural, one {# entry} other {# entries}}"
 msgstr "{count} 条记录"
 
 #. js-lingui-explicit-id
-#: src/api/components/ConversationView.ts:275
+#: src/api/components/ConversationView.ts:277
 msgid "Open"
 msgstr "打开"
 
 #. js-lingui-explicit-id
-#: src/api/components/ConversationView.ts:280
+#: src/api/components/ConversationView.ts:282
 msgid "Copy Path"
 msgstr "复制路径"
 
 #. js-lingui-explicit-id
-#: src/api/components/ConversationView.ts:381
+#: src/api/components/ConversationView.ts:397
 msgid "Show:"
 msgstr "显示："
 
 #. js-lingui-explicit-id
-#: src/api/components/ConversationView.ts:383
+#: src/api/components/ConversationView.ts:399
 msgid "User"
 msgstr "用户"
 
 #. js-lingui-explicit-id
-#: src/api/components/ConversationView.ts:386
+#: src/api/components/ConversationView.ts:402
 msgid "Assistant"
 msgstr "助手"
 
 #. js-lingui-explicit-id
-#: src/api/components/ConversationView.ts:389
-#: src/api/components/ConversationView.ts:797
+#: src/api/components/ConversationView.ts:405
+#: src/api/components/ConversationView.ts:846
 msgid "Thinking"
 msgstr "思考"
 
 #. js-lingui-explicit-id
-#: src/api/components/ConversationView.ts:392
+#: src/api/components/ConversationView.ts:408
 msgid "Tool Use"
 msgstr "工具调用"
 
 #. js-lingui-explicit-id
-#: src/api/components/ConversationView.ts:395
+#: src/api/components/ConversationView.ts:411
 msgid "Tool Result"
 msgstr "工具结果"
 
 #. js-lingui-explicit-id
-#: src/api/components/ConversationView.ts:398
+#: src/api/components/ConversationView.ts:414
 msgid "System"
 msgstr "系统"
 
 #. js-lingui-explicit-id
-#: src/api/components/ConversationView.ts:402
+#: src/api/components/ConversationView.ts:418
 msgid "Export"
 msgstr "导出"
 
 #. js-lingui-explicit-id
-#: src/api/components/ConversationView.ts:406
+#: src/api/components/ConversationView.ts:422
 msgid "Export as HTML"
 msgstr "导出为 HTML"
 
 #. js-lingui-explicit-id
-#: src/api/components/ConversationView.ts:409
+#: src/api/components/ConversationView.ts:425
 msgid "Export as Markdown"
 msgstr "导出为 Markdown"
 
 #. js-lingui-explicit-id
-#: src/api/components/ConversationView.ts:465
-#: src/api/components/ConversationView.ts:466
+#: src/api/components/ConversationView.ts:509
+#: src/api/components/ConversationView.ts:510
 msgid "conversation"
 msgstr "会话"
 
 #. js-lingui-explicit-id
-#: src/api/components/ConversationView.ts:763
-#: src/api/components/ConversationView.ts:839
-#: src/api/components/ConversationView.ts:861
+#: src/api/components/ConversationView.ts:812
+#: src/api/components/ConversationView.ts:888
+#: src/api/components/ConversationView.ts:910
 msgid "Copy"
 msgstr "复制"
 
 #. js-lingui-explicit-id
-#: src/api/components/ConversationView.ts:772
-#: src/api/components/ConversationView.ts:835
+#: src/api/components/ConversationView.ts:821
+#: src/api/components/ConversationView.ts:884
 msgid "Error"
 msgstr "错误"
 
 #. js-lingui-explicit-id
-#: src/api/components/ConversationView.ts:772
-#: src/api/components/ConversationView.ts:835
+#: src/api/components/ConversationView.ts:821
+#: src/api/components/ConversationView.ts:884
 msgid "Result"
 msgstr "结果"
 
 #. js-lingui-explicit-id
-#: src/api/components/ConversationView.ts:860
+#: src/api/components/ConversationView.ts:909
 msgid "Input"
 msgstr "输入"
 
 #. js-lingui-explicit-id
-#: src/api/components/ConversationView.ts:878
+#: src/api/components/ConversationView.ts:927
 msgid "No conversation loaded"
 msgstr "未加载会话内容"
 
 #. js-lingui-explicit-id
-#: src/api/components/ConversationView.ts:879
+#: src/api/components/ConversationView.ts:928
 msgid "Select a session to view the conversation"
 msgstr "选择一个会话以查看对话"
 

@@ -306,3 +306,68 @@ describe('exportAsMarkdown', () => {
     expect(md).toContain('Assistant message');
   });
 });
+
+describe('exportAsRawJson', () => {
+  const createEntry = (role: 'user' | 'assistant' | 'system', contentBlocks: Entry['contentBlocks']): Entry => ({
+    role,
+    contentBlocks,
+    timestamp: new Date('2024-01-15T10:30:00Z'),
+    uuid: `test-${Math.random()}`,
+    source: 'claude',
+  });
+
+  it('should export a structured payload with schema and version', async () => {
+    const { exportAsRawJson } = await loadExport();
+    const entries: Entry[] = [
+      createEntry('user', [{ type: 'text', text: 'Hello!' }]),
+      createEntry('assistant', [{ type: 'text', text: 'Hi there!' }]),
+    ];
+
+    const json = exportAsRawJson(entries, 'Test Conversation', undefined, { sourcePath: '/tmp/session.jsonl' });
+    const payload = JSON.parse(json) as {
+      schema: string;
+      version: number;
+      title: string;
+      sourcePath?: string;
+      entries: Entry[];
+      visibleEntries: Entry[];
+      exportedAt: string;
+    };
+
+    expect(payload.schema).toBe('thinkt.conversation.export');
+    expect(payload.version).toBe(1);
+    expect(payload.title).toBe('Test Conversation');
+    expect(payload.sourcePath).toBe('/tmp/session.jsonl');
+    expect(payload.entries.length).toBe(2);
+    expect(payload.visibleEntries.length).toBe(2);
+    expect(Number.isNaN(Date.parse(payload.exportedAt))).toBe(false);
+  });
+
+  it('should include visibleEntries filtered by role and block type', async () => {
+    const { exportAsRawJson } = await loadExport();
+    const entries: Entry[] = [
+      createEntry('user', [{ type: 'text', text: 'User message' }]),
+      createEntry('assistant', [
+        { type: 'text', text: 'Assistant message' },
+        { type: 'thinking', thinking: 'Private chain' },
+      ]),
+    ];
+
+    const filters = {
+      user: false,
+      assistant: true,
+      thinking: false,
+      toolUse: true,
+      toolResult: true,
+      system: false,
+    };
+
+    const json = exportAsRawJson(entries, 'Filtered', filters);
+    const payload = JSON.parse(json) as { visibleEntries: Entry[] };
+
+    expect(payload.visibleEntries.length).toBe(1);
+    expect(payload.visibleEntries[0]?.role).toBe('assistant');
+    expect(payload.visibleEntries[0]?.contentBlocks?.some((b) => b.type === 'thinking')).toBe(false);
+    expect(payload.visibleEntries[0]?.contentBlocks?.some((b) => b.type === 'text')).toBe(true);
+  });
+});

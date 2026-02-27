@@ -20,6 +20,83 @@ export interface ExportFilterState {
   system: boolean;
 }
 
+export interface RawJsonExportPayload {
+  schema: 'thinkt.conversation.export';
+  version: 1;
+  exportedAt: string;
+  title: string;
+  sourcePath?: string;
+  filters: ExportFilterState;
+  entries: Entry[];
+  visibleEntries: Entry[];
+}
+
+export interface RawJsonExportOptions {
+  sourcePath?: string;
+}
+
+function getDefaultExportFilters(): ExportFilterState {
+  return {
+    user: true,
+    assistant: true,
+    thinking: true,
+    toolUse: true,
+    toolResult: true,
+    system: false,
+  };
+}
+
+function normalizeExportFilters(filterState?: ExportFilterState): ExportFilterState {
+  return filterState ?? getDefaultExportFilters();
+}
+
+function isRoleVisible(role: string | undefined, filters: ExportFilterState): boolean {
+  const normalizedRole = (role || 'unknown').toLowerCase();
+  if (normalizedRole === 'user') return filters.user;
+  if (normalizedRole === 'assistant') return filters.assistant;
+  if (normalizedRole === 'system') return filters.system;
+  return false;
+}
+
+function filterVisibleEntries(entries: Entry[], filters: ExportFilterState): Entry[] {
+  const visibleEntries: Entry[] = [];
+
+  for (const entry of entries) {
+    if (!isRoleVisible(entry.role, filters)) {
+      continue;
+    }
+
+    const contentBlocks = entry.contentBlocks ?? [];
+    if (contentBlocks.length === 0) {
+      if (entry.text && entry.text.trim()) {
+        visibleEntries.push({ ...entry });
+      }
+      continue;
+    }
+
+    const visibleBlocks = contentBlocks.filter((block) => {
+      switch (block.type) {
+        case 'text':
+          return Boolean(block.text && block.text.trim());
+        case 'thinking':
+          return filters.thinking;
+        case 'tool_use':
+          return filters.toolUse;
+        case 'tool_result':
+          return filters.toolResult;
+        default:
+          return true;
+      }
+    });
+
+    if (visibleBlocks.length > 0) {
+      visibleEntries.push({ ...entry, contentBlocks: visibleBlocks });
+    }
+  }
+
+  return visibleEntries;
+}
+
 /**
  * Get a safe filename from the conversation title
  */
@@ -53,15 +130,7 @@ export function downloadFile(content: string, filename: string, mimeType: string
  * Each block type (thinking, tool, output) gets its own box
  */
 export function exportAsHtml(entries: Entry[], title: string, filterState?: ExportFilterState): string {
-  // Default: show user/assistant/thinking/tool/toolResult (exclude system)
-  const filters = filterState ?? {
-    user: true,
-    assistant: true,
-    thinking: true,
-    toolUse: true,
-    toolResult: true,
-    system: false,
-  };
+  const filters = normalizeExportFilters(filterState);
 
   let html = `<!DOCTYPE html>
 <html lang="en">
@@ -253,15 +322,7 @@ function renderToolResultBlockToHtml(toolResult: ToolResultBlock): string {
  * Each block type (thinking, tool, output) shown separately
  */
 export function exportAsMarkdown(entries: Entry[], title: string, filterState?: ExportFilterState): string {
-  // Default: show user/assistant/thinking/tool/toolResult (exclude system)
-  const filters = filterState ?? {
-    user: true,
-    assistant: true,
-    thinking: true,
-    toolUse: true,
-    toolResult: true,
-    system: false,
-  };
+  const filters = normalizeExportFilters(filterState);
 
   let md = `# ${title}\n\n`;
 
@@ -370,3 +431,26 @@ export function exportAsMarkdown(entries: Entry[], title: string, filterState?: 
   return md;
 }
 
+/**
+ * Generate raw JSON export of the conversation.
+ */
+export function exportAsRawJson(
+  entries: Entry[],
+  title: string,
+  filterState?: ExportFilterState,
+  options?: RawJsonExportOptions,
+): string {
+  const filters = normalizeExportFilters(filterState);
+  const payload: RawJsonExportPayload = {
+    schema: 'thinkt.conversation.export',
+    version: 1,
+    exportedAt: new Date().toISOString(),
+    title,
+    ...(options?.sourcePath ? { sourcePath: options.sourcePath } : {}),
+    filters,
+    entries,
+    visibleEntries: filterVisibleEntries(entries, filters),
+  };
+
+  return JSON.stringify(payload, null, 2);
+}

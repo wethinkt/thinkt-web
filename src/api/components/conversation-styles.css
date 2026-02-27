@@ -47,6 +47,84 @@
   white-space: nowrap;
 }
 
+.thinkt-conversation-view__session-context {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-right: 2px;
+}
+
+.thinkt-conversation-view__session-badge {
+  display: inline-flex;
+  align-items: center;
+  max-width: 260px;
+  padding: 2px 8px;
+  border: 1px solid transparent;
+  border-radius: 999px;
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.2px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.thinkt-conversation-view__session-badge--model {
+  background: rgba(255, 255, 255, 0.03);
+  border-color: var(--thinkt-border-color, #333);
+  color: var(--thinkt-text-color, #d5d7db);
+  font-family: var(--thinkt-font-mono, 'SF Mono', Monaco, 'Cascadia Code', monospace);
+  font-weight: 500;
+}
+
+.thinkt-conversation-view__session-badge--source-claude {
+  color: var(--thinkt-source-claude-color, #d97750);
+  border-color: var(--thinkt-source-claude-border, rgba(217, 119, 80, 0.4));
+  background: var(--thinkt-source-claude-bg, rgba(217, 119, 80, 0.15));
+}
+
+.thinkt-conversation-view__session-badge--source-kimi {
+  color: var(--thinkt-source-kimi-color, #19c39b);
+  border-color: rgba(25, 195, 155, 0.4);
+  background: var(--thinkt-source-kimi-bg, rgba(25, 195, 155, 0.15));
+}
+
+.thinkt-conversation-view__session-badge--source-gemini {
+  color: var(--thinkt-source-gemini-color, #6366f1);
+  border-color: rgba(99, 102, 241, 0.4);
+  background: var(--thinkt-source-gemini-bg, rgba(99, 102, 241, 0.15));
+}
+
+.thinkt-conversation-view__session-badge--source-copilot {
+  color: #60a5fa;
+  border-color: rgba(96, 165, 250, 0.4);
+  background: rgba(96, 165, 250, 0.15);
+}
+
+.thinkt-conversation-view__session-badge--source-codex {
+  color: #22d3ee;
+  border-color: rgba(34, 211, 238, 0.4);
+  background: rgba(34, 211, 238, 0.14);
+}
+
+.thinkt-conversation-view__session-badge--source-qwen {
+  color: #f59e0b;
+  border-color: rgba(245, 158, 11, 0.4);
+  background: rgba(245, 158, 11, 0.15);
+}
+
+.thinkt-conversation-view__session-badge--source-thinkt {
+  color: #a855f7;
+  border-color: rgba(168, 85, 247, 0.4);
+  background: rgba(168, 85, 247, 0.15);
+}
+
+.thinkt-conversation-view__session-badge--source-other {
+  color: var(--thinkt-text-color, #e0e0e0);
+  border-color: var(--thinkt-border-color, #333);
+  background: rgba(255, 255, 255, 0.04);
+}
+
 .thinkt-conversation-view__filter-btn {
   display: flex;
   align-items: center;

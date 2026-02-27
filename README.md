@@ -77,7 +77,7 @@ Behavior details:
 
 ### API base URL
 
-Priority order:
+`api-url` is resolved once at startup in this order:
 1. Query parameter: `?api-url=http://host:port`
 2. Global variable: `window.THINKT_API_URL`
 3. Meta tag: `<meta name="thinkt-api-url" content="...">`
@@ -85,9 +85,14 @@ Priority order:
 5. Same origin (`window.location.origin`)
 6. Fallback: `http://localhost:8784`
 
+Validation behavior:
+- `api-url` must be an absolute URL parseable by `new URL(...)`.
+- Invalid `api-url` is ignored and resolution continues to the next source.
+- Query params are checked only for `api-url`; hash is not used for API base URL.
+
 ### Auth token
 
-`token` is read with this precedence:
+`token` is read at startup with this precedence:
 1. URL fragment (hash): `#token=...`
 2. Query parameter fallback: `?token=...`
 
@@ -95,21 +100,47 @@ Hash is preferred because fragments are not sent to the server in HTTP requests.
 
 ### Deep-link session target
 
-The app can open a target session at startup. Parameters are read from hash first, then query.
+The app can open a target session at startup. Params are read per-key from hash first, then query.
 
-Required:
-- `session_path` or alias `path` or `session`
+Parameter reference:
 
-Optional:
-- `session_id`
-- `project_name` or alias `project`
-- `project_id`
-- `line_num` or alias `line`
+| Purpose | Primary key | Aliases | Required | Notes |
+|---------|-------------|---------|----------|-------|
+| Session path | `session_path` | `path`, `session` | Yes (for deep-link) | First non-empty value wins |
+| Session id | `session_id` | - | No | Used to select/highlight in session list |
+| Project name | `project_name` | `project` | No | Used if `project_id` is not provided |
+| Project id | `project_id` | - | No | Preferred project selector |
+| Entry line | `line_num` | `line` | No | Must parse as positive integer (`> 0`) |
+
+Normalization and parsing:
+- Values are trimmed; empty values are treated as missing.
+- `line_num`/`line` is parsed as base-10 int; invalid/zero/negative values are ignored.
+- If no session path exists after alias resolution, deep-link loading is skipped.
+
+Deep-link load flow (`main.ts`):
+1. If `project_id` exists, try selecting by ID.
+2. Else if `project_name` exists, try selecting by exact name.
+3. If project not found, refresh projects once and retry.
+4. Load session by `session_path`.
+5. If `session_id` exists, select that session in the list.
+6. If `line_num`/`line` exists, scroll approximately to entry index `line - 1`.
+
+Failure behavior:
+- Missing/invalid optional params are ignored.
+- Deep-link errors are logged and do not crash app initialization.
 
 Examples:
 - `/#session_path=/abs/path/to/session.jsonl`
 - `/#session_path=/abs/path/to/session.jsonl&project_id=abc123&session_id=s1&line_num=42`
 - `/?api-url=http://localhost:8784#token=thinkt_20260227_example&session=/abs/path/to/session.jsonl`
+- `/?session_path=/a.jsonl#session_path=/b.jsonl` (hash wins, so `/b.jsonl` is used)
+- `/#session_path=%2FUsers%2Falice%2FMy%20Sessions%2Fs1.jsonl` (URL-encoded path)
+
+### Hash/query coexistence rules
+
+- For deep-link keys and `token`, hash takes precedence over query.
+- For `api-url`, query and non-URL config sources are used; hash is ignored.
+- Settings Auth tab updates only `#token` and preserves other hash keys when possible.
 
 ## Authentication (Runtime + Auth Tab)
 
