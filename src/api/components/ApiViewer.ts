@@ -132,6 +132,7 @@ export class ApiViewer {
     includeDeleted: false,
   };
   private sessionLoadController: AbortController | null = null;
+  private readonly initialized: Promise<void>;
   private abortController = new AbortController();
   private disposed = false;
 
@@ -174,7 +175,7 @@ export class ApiViewer {
       onFiltersChanged: () => this.applyProjectFilters(),
     });
 
-    void this.initializeComponentsAsync();
+    this.initialized = this.initializeComponentsAsync();
   }
 
   // ============================================
@@ -414,8 +415,8 @@ export class ApiViewer {
       });
     }
 
-    // Restore persisted project selection
-    void this.restorePersistedProject();
+    // Restore persisted project selection before signaling ready.
+    await this.restorePersistedProject();
   }
 
   private async restorePersistedProject(): Promise<void> {
@@ -704,6 +705,10 @@ export class ApiViewer {
     return this.currentProject;
   }
 
+  whenReady(): Promise<void> {
+    return this.initialized;
+  }
+
   getCurrentSession(): LoadedSession | null {
     return this.currentSession;
   }
@@ -776,18 +781,38 @@ export class ApiViewer {
   }
 
   async selectProject(projectId: string): Promise<void> {
-    const project = this.projectBrowser?.getProjects().find(p => p.id === projectId);
-    if (project) {
-      this.projectBrowser?.selectProjectById(projectId);
-      this.handleProjectSelect(project);
-    } else {
+    let project = this.projectBrowser?.getProjects().find(p => p.id === projectId);
+    if (!project) {
       await this.refreshProjects();
-      const refreshedProject = this.projectBrowser?.getProjects().find(p => p.id === projectId);
-      if (refreshedProject) {
-        this.projectBrowser?.selectProjectById(projectId);
-        this.handleProjectSelect(refreshedProject);
-      }
+      project = this.projectBrowser?.getProjects().find(p => p.id === projectId);
     }
+    if (!project) {
+      const projects = await this.client.getProjects(undefined, {
+        includeDeleted: this.projectFilters.includeDeleted,
+      });
+      project = projects.find((p) => p.id === projectId);
+    }
+    if (!project) return;
+
+    this.projectBrowser?.selectProjectById(projectId);
+    this.handleProjectSelect(project);
+  }
+
+  async selectProjectByName(projectName: string): Promise<void> {
+    let project = this.projectBrowser?.getProjects().find(p => p.name === projectName);
+    if (!project) {
+      await this.refreshProjects();
+      project = this.projectBrowser?.getProjects().find(p => p.name === projectName);
+    }
+    if (!project) {
+      const projects = await this.client.getProjects(undefined, {
+        includeDeleted: this.projectFilters.includeDeleted,
+      });
+      project = projects.find((p) => p.name === projectName);
+    }
+    if (!project?.id) return;
+
+    await this.selectProject(project.id);
   }
 
   selectSessionById(sessionId: string): void {

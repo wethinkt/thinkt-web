@@ -87,6 +87,7 @@ async function init(): Promise<void> {
 
   const initialSessionTarget = getInitialSessionTarget();
   if (initialSessionTarget) {
+    await apiViewer.whenReady();
     void loadSessionFromSearch(
       {
         path: initialSessionTarget.sessionPath,
@@ -349,6 +350,10 @@ async function loadSessionFromSearch(
   result: { path?: string; session_path?: string; session_id?: string; project_name?: string; project_id?: string },
   lineNum?: number
 ): Promise<void> {
+  const viewer = apiViewer;
+  if (!viewer) return;
+  await viewer.whenReady();
+
   const path = result.path ?? result.session_path;
   if (!path) {
     console.error('[THINKT] Search result has no path');
@@ -356,49 +361,29 @@ async function loadSessionFromSearch(
   }
 
   try {
+    const resolvedTarget = await resolveSessionTarget(path);
+    const targetProjectId = result.project_id ?? resolvedTarget?.project_id;
+    const targetProjectName = result.project_name ?? resolvedTarget?.project_name;
+    const targetPath = resolvedTarget?.session_path ?? path;
+    const targetSessionId = result.session_id ?? resolvedTarget?.session_id;
+
     // Step 1: Find and select the project
-    const projectBrowser = apiViewer?.getProjectBrowser();
-    if (projectBrowser && result.project_id) {
-      let project = projectBrowser.getProjects().find(
-        p => p.id === result.project_id
-      );
-
-      if (!project) {
-        await apiViewer?.refreshProjects();
-        project = projectBrowser.getProjects().find(
-          p => p.id === result.project_id
-        );
-      }
-
-      if (project?.id) {
-        await apiViewer?.selectProject(project.id);
-      }
-    } else if (projectBrowser && result.project_name) {
-      // Try to find project by name
-      let project = projectBrowser.getProjects().find(
-        p => p.name === result.project_name
-      );
-      
-      // If not found, refresh projects and try again
-      if (!project) {
-        await apiViewer?.refreshProjects();
-        project = projectBrowser.getProjects().find(
-          p => p.name === result.project_name
-        );
-      }
-      
-      // Select the project (this loads sessions)
-      if (project?.id) {
-        await apiViewer?.selectProject(project.id);
-      }
+    if (targetProjectId) {
+      await viewer.selectProject(targetProjectId);
+    } else if (targetProjectName) {
+      await viewer.selectProjectByName(targetProjectName);
     }
 
     // Step 2: Load the session (this loads entries and updates conversation view)
-    await apiViewer?.loadSession(path);
+    await viewer.loadSession(targetPath);
 
     // Step 3: Select the session in the session list UI
-    if (result.session_id) {
-      apiViewer?.selectSessionById(result.session_id);
+    const loadedSessionId = viewer.getCurrentSession()?.meta.id;
+    const selectedSessionId = targetSessionId ?? loadedSessionId;
+    if (selectedSessionId) {
+      viewer.selectSessionById(selectedSessionId);
+    } else {
+      console.warn('[THINKT] Unable to resolve target session id for sidebar selection');
     }
 
     // Step 4: Scroll to the matching entry if line number is available
@@ -406,10 +391,77 @@ async function loadSessionFromSearch(
       // Small delay to ensure DOM is updated
       await new Promise(resolve => setTimeout(resolve, 100));
       const approxEntryIndex = Math.max(0, lineNum - 1);
-      apiViewer?.scrollToEntry(approxEntryIndex);
+      viewer.scrollToEntry(approxEntryIndex);
     }
   } catch (error) {
     console.error('[THINKT] Failed to load session from search:', error);
+  }
+}
+
+type SessionResolveTarget = {
+  project_id?: string;
+  project_name?: string;
+  project_source?: string;
+  session_id?: string;
+  session_path?: string;
+  workspace_id?: string;
+};
+
+type SessionResolverClient = {
+  resolveSession?: (path: string, signal?: AbortSignal) => Promise<SessionResolveTarget>;
+};
+
+function normalizeBaseUrl(baseUrl: string): string {
+  return baseUrl.endsWith('/') ? baseUrl.slice(0, -1) : baseUrl;
+}
+
+function normalizeApiVersion(apiVersion: string): string {
+  return apiVersion.startsWith('/') ? apiVersion : `/${apiVersion}`;
+}
+
+async function resolveSessionTarget(sessionPath: string): Promise<SessionResolveTarget | null> {
+  const client = getDefaultClient();
+  const maybeResolveSession = (client as SessionResolverClient).resolveSession;
+
+  // Prefer native client method when available (newer ts-thinkt builds).
+  if (typeof maybeResolveSession === 'function') {
+    try {
+      return await maybeResolveSession.call(client, sessionPath);
+    } catch {
+      return null;
+    }
+  }
+
+  try {
+    // Compatibility path for older ts-thinkt dist builds: call /sessions/resolve directly.
+    const config = client.getConfig();
+    const baseUrl = normalizeBaseUrl(config.baseUrl);
+    const apiVersion = normalizeApiVersion(config.apiVersion);
+    const url = new URL(`${baseUrl}${apiVersion}/sessions/resolve`);
+    url.searchParams.set('path', sessionPath);
+
+    const headers = new Headers({ Accept: 'application/json' });
+    if (config.token && config.token.trim().length > 0) {
+      headers.set('Authorization', `Bearer ${config.token}`);
+    }
+
+    const response = await (config.fetch ?? fetch)(url.toString(), {
+      method: 'GET',
+      headers,
+    });
+
+    if (!response.ok) {
+      return null;
+    }
+
+    const payload = (await response.json()) as SessionResolveTarget | null;
+    if (!payload || typeof payload !== 'object') {
+      return null;
+    }
+
+    return payload;
+  } catch {
+    return null;
   }
 }
 
