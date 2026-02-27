@@ -12,8 +12,23 @@ msgstr ""
 "Plural-Forms: \n"
 
 #. js-lingui-explicit-id
-#: src/api/components/ConversationView.ts:428
-msgid "Export as Raw JSON"
+#: src/api/components/ConversationView.ts:607
+msgid "Everything is hidden by current filters"
+msgstr ""
+
+#. js-lingui-explicit-id
+#: src/api/components/ConversationView.ts:608
+msgid "Adjust the Show filters to view conversation entries"
+msgstr ""
+
+#. js-lingui-explicit-id
+#: src/api/components/ConversationView.ts:982
+msgid "This session has no conversation entries"
+msgstr ""
+
+#. js-lingui-explicit-id
+#: src/api/components/ConversationView.ts:983
+msgid "No messages were found in this session."
 msgstr ""
 
 #. js-lingui-explicit-id
@@ -130,133 +145,6 @@ msgid "Retry"
 msgstr "重试"
 
 #. js-lingui-explicit-id
-#: src/api/components/ProjectBrowser.ts:465
-#: src/api/components/ProjectTimelinePanel.ts:436
-#: src/api/components/SearchResultRenderer.ts:96
-#: src/api/components/SearchResultRenderer.ts:181
-#: src/api/components/SessionList.ts:74
-#: src/api/components/SettingsOverlay.ts:713
-#: src/api/components/SettingsOverlay.ts:738
-msgid "Unknown"
-msgstr "未知"
-
-#. js-lingui-explicit-id
-#: src/api/components/SessionList.ts:87
-msgid "just now"
-msgstr "刚刚"
-
-#. js-lingui-explicit-id
-#: src/api/components/SessionList.ts:88
-msgid "{count}m ago"
-msgstr "{count}分钟前"
-
-#. js-lingui-explicit-id
-#: src/api/components/SessionList.ts:89
-msgid "{count}h ago"
-msgstr "{count}小时前"
-
-#. js-lingui-explicit-id
-#: src/api/components/SessionList.ts:90
-msgid "{count}d ago"
-msgstr "{count}天前"
-
-#. js-lingui-explicit-id
-#: src/api/components/SessionList.ts:91
-msgid "{count}w ago"
-msgstr "{count}周前"
-
-#. js-lingui-explicit-id
-#: src/api/components/SessionList.ts:92
-msgid "{count}mo ago"
-msgstr "{count}个月前"
-
-#. js-lingui-explicit-id
-#: src/api/components/SessionList.ts:93
-msgid "{count}y ago"
-msgstr "{count}年前"
-
-#. js-lingui-explicit-id
-#: src/api/components/SessionList.ts:95
-msgid "Invalid"
-msgstr "无效"
-
-#. js-lingui-explicit-id
-#: src/api/components/SessionList.ts:178
-#: src/api/components/SessionList.ts:700
-msgid "Filter sessions..."
-msgstr "筛选会话..."
-
-#. js-lingui-explicit-id
-#: src/api/components/ProjectBrowser.ts:163
-#: src/api/components/SessionList.ts:197
-msgid "Loading..."
-msgstr "加载中..."
-
-#. js-lingui-explicit-id
-#: src/api/components/SessionList.ts:197
-msgid "Select a project"
-msgstr "选择一个项目"
-
-#. js-lingui-explicit-id
-#: src/api/components/SessionList.ts:214
-#: src/api/components/SessionList.ts:445
-#: src/api/components/SessionList.ts:704
-msgid "Loading sessions..."
-msgstr "正在加载会话..."
-
-#. js-lingui-explicit-id
-#: src/api/components/ProjectFilterBar.ts:311
-#: src/api/components/SessionList.ts:416
-msgid "Newest"
-msgstr ""
-
-#. js-lingui-explicit-id
-#: src/api/components/ProjectFilterBar.ts:312
-#: src/api/components/SessionList.ts:417
-msgid "Oldest"
-msgstr ""
-
-#. js-lingui-explicit-id
-#: src/api/components/SessionList.ts:443
-msgid "Select a project to view sessions"
-msgstr "选择一个项目以查看会话"
-
-#. js-lingui-explicit-id
-#: src/api/components/SessionList.ts:452
-msgid "Showing {showing} of {total} sessions"
-msgstr "显示 {total} 个中的 {showing} 个会话"
-
-#. js-lingui-explicit-id
-#: src/api/components/SessionList.ts:471
-msgid "Select a project to view its sessions"
-msgstr "选择一个项目以查看其会话"
-
-#. js-lingui-explicit-id
-#: src/api/components/SessionList.ts:480
-msgid "No sessions found for this project"
-msgstr "未找到该项目的会话"
-
-#. js-lingui-explicit-id
-#: src/api/components/SessionList.ts:481
-msgid "No sessions match your search"
-msgstr "没有与搜索匹配的会话"
-
-#. js-lingui-explicit-id
-#: src/api/components/SessionList.ts:513
-msgid "Unknown Session"
-msgstr "未知会话"
-
-#. js-lingui-explicit-id
-#: src/api/components/SessionList.ts:523
-msgid "{count, plural, one {msg} other {msgs}}"
-msgstr "条消息"
-
-#. js-lingui-explicit-id
-#: src/api/components/SessionList.ts:540
-msgid "chunked"
-msgstr "分块"
-
-#. js-lingui-explicit-id
 #: src/api/components/SearchResultRenderer.ts:52
 msgid "No results found"
 msgstr "未找到结果"
@@ -270,6 +158,17 @@ msgstr "所选项目没有结果"
 #: src/api/components/SearchResultRenderer.ts:60
 msgid "Select projects from the sidebar to filter"
 msgstr "从侧边栏选择项目以进行筛选"
+
+#. js-lingui-explicit-id
+#: src/api/components/ProjectBrowser.ts:465
+#: src/api/components/ProjectTimelinePanel.ts:436
+#: src/api/components/SearchResultRenderer.ts:96
+#: src/api/components/SearchResultRenderer.ts:181
+#: src/api/components/SessionList.ts:74
+#: src/api/components/SettingsOverlay.ts:713
+#: src/api/components/SettingsOverlay.ts:738
+msgid "Unknown"
+msgstr "未知"
 
 #. js-lingui-explicit-id
 #: src/api/components/SearchResultRenderer.ts:100
@@ -362,6 +261,18 @@ msgid "{count} Sources"
 msgstr ""
 
 #. js-lingui-explicit-id
+#: src/api/components/ProjectFilterBar.ts:311
+#: src/api/components/SessionList.ts:416
+msgid "Newest"
+msgstr ""
+
+#. js-lingui-explicit-id
+#: src/api/components/ProjectFilterBar.ts:312
+#: src/api/components/SessionList.ts:417
+msgid "Oldest"
+msgstr ""
+
+#. js-lingui-explicit-id
 #: src/api/components/ProjectFilterBar.ts:313
 msgid "Name A-Z"
 msgstr ""
@@ -370,81 +281,6 @@ msgstr ""
 #: src/api/components/ProjectFilterBar.ts:314
 msgid "Name Z-A"
 msgstr ""
-
-#. js-lingui-explicit-id
-#: src/api/components/ProjectTimelinePanel.ts:105
-msgid "Project Timeline"
-msgstr "项目时间线"
-
-#. js-lingui-explicit-id
-#: src/api/components/ProjectTimelinePanel.ts:106
-#: src/api/components/SearchOverlay.ts:151
-#: src/api/components/SearchOverlay.ts:151
-#: src/api/components/SettingsOverlay.ts:129
-#: src/api/components/SettingsOverlay.ts:129
-msgid "Close"
-msgstr "关闭"
-
-#. js-lingui-explicit-id
-#: src/api/components/ProjectTimelinePanel.ts:123
-msgid "Start"
-msgstr "开始"
-
-#. js-lingui-explicit-id
-#: src/api/components/ProjectTimelinePanel.ts:127
-msgid "End"
-msgstr "结束"
-
-#. js-lingui-explicit-id
-#: src/api/components/ProjectTimelinePanel.ts:131
-msgid "Session duration"
-msgstr "会话时长"
-
-#. js-lingui-explicit-id
-#: src/api/components/ProjectTimelinePanel.ts:438
-msgid "Started"
-msgstr "已开始"
-
-#. js-lingui-explicit-id
-#: src/api/components/ProjectTimelinePanel.ts:438
-msgid "Ended"
-msgstr "已结束"
-
-#. js-lingui-explicit-id
-#: src/api/components/ProjectTimelinePanel.ts:446
-msgid "Duration: {duration}"
-msgstr "时长：{duration}"
-
-#. js-lingui-explicit-id
-#: src/api/components/ProjectTimelinePanel.ts:448
-msgid "Source: {source}"
-msgstr "来源：{source}"
-
-#. js-lingui-explicit-id
-#: src/api/components/ProjectTimelinePanel.ts:474
-msgid "< 1 min"
-msgstr "< 1 分钟"
-
-#. js-lingui-explicit-id
-#: src/api/components/ProjectTimelinePanel.ts:475
-msgid "{count} min"
-msgstr "{count} 分钟"
-
-#. js-lingui-explicit-id
-#: src/api/components/ProjectTimelinePanel.ts:478
-msgid "{hours}h {mins}m"
-msgstr "{hours} 小时 {mins} 分钟"
-
-#. js-lingui-explicit-id
-#: src/api/components/ProjectTimelinePanel.ts:487
-#: src/api/components/TimelineVisualization.ts:1243
-msgid "Loading timeline..."
-msgstr "正在加载时间线..."
-
-#. js-lingui-explicit-id
-#: src/api/components/ProjectTimelinePanel.ts:493
-msgid "No sessions with timing data"
-msgstr "没有包含时间数据的会话"
 
 #. js-lingui-explicit-id
 #: src/api/components/SearchOverlay.ts:144
@@ -460,6 +296,15 @@ msgstr ""
 #: src/api/components/SearchOverlay.ts:147
 msgid "Semantic"
 msgstr ""
+
+#. js-lingui-explicit-id
+#: src/api/components/ProjectTimelinePanel.ts:106
+#: src/api/components/SearchOverlay.ts:151
+#: src/api/components/SearchOverlay.ts:151
+#: src/api/components/SettingsOverlay.ts:129
+#: src/api/components/SettingsOverlay.ts:129
+msgid "Close"
+msgstr "关闭"
 
 #. js-lingui-explicit-id
 #: src/api/components/SearchOverlay.ts:156
@@ -516,28 +361,6 @@ msgstr "搜索使用索引器数据库"
 #: src/api/components/SearchOverlay.ts:301
 msgid "Ask a question about your sessions..."
 msgstr ""
-
-#. js-lingui-explicit-id
-#: src/api/components/ApiViewer.ts:191
-#: src/api/components/ApiViewer.ts:210
-#: src/api/components/TimelineVisualization.ts:195
-msgid "Timeline"
-msgstr "时间线"
-
-#. js-lingui-explicit-id
-#: src/api/components/TimelineVisualization.ts:197
-msgid "By Project"
-msgstr "按项目"
-
-#. js-lingui-explicit-id
-#: src/api/components/TimelineVisualization.ts:198
-msgid "By Source"
-msgstr "按来源"
-
-#. js-lingui-explicit-id
-#: src/api/components/TimelineVisualization.ts:1251
-msgid "No sessions to display"
-msgstr "没有可显示的会话"
 
 #. js-lingui-explicit-id
 #: src/api/components/SettingsOverlay.ts:117
@@ -997,6 +820,198 @@ msgid "Auth token cleared."
 msgstr ""
 
 #. js-lingui-explicit-id
+#: src/api/components/SessionList.ts:87
+msgid "just now"
+msgstr "刚刚"
+
+#. js-lingui-explicit-id
+#: src/api/components/SessionList.ts:88
+msgid "{count}m ago"
+msgstr "{count}分钟前"
+
+#. js-lingui-explicit-id
+#: src/api/components/SessionList.ts:89
+msgid "{count}h ago"
+msgstr "{count}小时前"
+
+#. js-lingui-explicit-id
+#: src/api/components/SessionList.ts:90
+msgid "{count}d ago"
+msgstr "{count}天前"
+
+#. js-lingui-explicit-id
+#: src/api/components/SessionList.ts:91
+msgid "{count}w ago"
+msgstr "{count}周前"
+
+#. js-lingui-explicit-id
+#: src/api/components/SessionList.ts:92
+msgid "{count}mo ago"
+msgstr "{count}个月前"
+
+#. js-lingui-explicit-id
+#: src/api/components/SessionList.ts:93
+msgid "{count}y ago"
+msgstr "{count}年前"
+
+#. js-lingui-explicit-id
+#: src/api/components/SessionList.ts:95
+msgid "Invalid"
+msgstr "无效"
+
+#. js-lingui-explicit-id
+#: src/api/components/SessionList.ts:178
+#: src/api/components/SessionList.ts:700
+msgid "Filter sessions..."
+msgstr "筛选会话..."
+
+#. js-lingui-explicit-id
+#: src/api/components/ProjectBrowser.ts:163
+#: src/api/components/SessionList.ts:197
+msgid "Loading..."
+msgstr "加载中..."
+
+#. js-lingui-explicit-id
+#: src/api/components/SessionList.ts:197
+msgid "Select a project"
+msgstr "选择一个项目"
+
+#. js-lingui-explicit-id
+#: src/api/components/SessionList.ts:214
+#: src/api/components/SessionList.ts:445
+#: src/api/components/SessionList.ts:704
+msgid "Loading sessions..."
+msgstr "正在加载会话..."
+
+#. js-lingui-explicit-id
+#: src/api/components/SessionList.ts:443
+msgid "Select a project to view sessions"
+msgstr "选择一个项目以查看会话"
+
+#. js-lingui-explicit-id
+#: src/api/components/SessionList.ts:452
+msgid "Showing {showing} of {total} sessions"
+msgstr "显示 {total} 个中的 {showing} 个会话"
+
+#. js-lingui-explicit-id
+#: src/api/components/SessionList.ts:471
+msgid "Select a project to view its sessions"
+msgstr "选择一个项目以查看其会话"
+
+#. js-lingui-explicit-id
+#: src/api/components/SessionList.ts:480
+msgid "No sessions found for this project"
+msgstr "未找到该项目的会话"
+
+#. js-lingui-explicit-id
+#: src/api/components/SessionList.ts:481
+msgid "No sessions match your search"
+msgstr "没有与搜索匹配的会话"
+
+#. js-lingui-explicit-id
+#: src/api/components/SessionList.ts:513
+msgid "Unknown Session"
+msgstr "未知会话"
+
+#. js-lingui-explicit-id
+#: src/api/components/SessionList.ts:523
+msgid "{count, plural, one {msg} other {msgs}}"
+msgstr "条消息"
+
+#. js-lingui-explicit-id
+#: src/api/components/SessionList.ts:540
+msgid "chunked"
+msgstr "分块"
+
+#. js-lingui-explicit-id
+#: src/api/components/ApiViewer.ts:191
+#: src/api/components/ApiViewer.ts:210
+#: src/api/components/TimelineVisualization.ts:195
+msgid "Timeline"
+msgstr "时间线"
+
+#. js-lingui-explicit-id
+#: src/api/components/TimelineVisualization.ts:197
+msgid "By Project"
+msgstr "按项目"
+
+#. js-lingui-explicit-id
+#: src/api/components/TimelineVisualization.ts:198
+msgid "By Source"
+msgstr "按来源"
+
+#. js-lingui-explicit-id
+#: src/api/components/ProjectTimelinePanel.ts:487
+#: src/api/components/TimelineVisualization.ts:1243
+msgid "Loading timeline..."
+msgstr "正在加载时间线..."
+
+#. js-lingui-explicit-id
+#: src/api/components/TimelineVisualization.ts:1251
+msgid "No sessions to display"
+msgstr "没有可显示的会话"
+
+#. js-lingui-explicit-id
+#: src/api/components/ProjectTimelinePanel.ts:105
+msgid "Project Timeline"
+msgstr "项目时间线"
+
+#. js-lingui-explicit-id
+#: src/api/components/ProjectTimelinePanel.ts:123
+msgid "Start"
+msgstr "开始"
+
+#. js-lingui-explicit-id
+#: src/api/components/ProjectTimelinePanel.ts:127
+msgid "End"
+msgstr "结束"
+
+#. js-lingui-explicit-id
+#: src/api/components/ProjectTimelinePanel.ts:131
+msgid "Session duration"
+msgstr "会话时长"
+
+#. js-lingui-explicit-id
+#: src/api/components/ProjectTimelinePanel.ts:438
+msgid "Started"
+msgstr "已开始"
+
+#. js-lingui-explicit-id
+#: src/api/components/ProjectTimelinePanel.ts:438
+msgid "Ended"
+msgstr "已结束"
+
+#. js-lingui-explicit-id
+#: src/api/components/ProjectTimelinePanel.ts:446
+msgid "Duration: {duration}"
+msgstr "时长：{duration}"
+
+#. js-lingui-explicit-id
+#: src/api/components/ProjectTimelinePanel.ts:448
+msgid "Source: {source}"
+msgstr "来源：{source}"
+
+#. js-lingui-explicit-id
+#: src/api/components/ProjectTimelinePanel.ts:474
+msgid "< 1 min"
+msgstr "< 1 分钟"
+
+#. js-lingui-explicit-id
+#: src/api/components/ProjectTimelinePanel.ts:475
+msgid "{count} min"
+msgstr "{count} 分钟"
+
+#. js-lingui-explicit-id
+#: src/api/components/ProjectTimelinePanel.ts:478
+msgid "{hours}h {mins}m"
+msgstr "{hours} 小时 {mins} 分钟"
+
+#. js-lingui-explicit-id
+#: src/api/components/ProjectTimelinePanel.ts:493
+msgid "No sessions with timing data"
+msgstr "没有包含时间数据的会话"
+
+#. js-lingui-explicit-id
 #: src/api/components/ProjectBrowser.ts:407
 msgid "{count, plural, one {# project} other {# projects}}"
 msgstr "{count} 个项目"
@@ -1029,133 +1044,138 @@ msgid "Tree"
 msgstr "树形"
 
 #. js-lingui-explicit-id
-#: src/api/components/ConversationView.ts:241
+#: src/api/components/ConversationView.ts:242
 msgid "No project selected"
 msgstr "未选择项目"
 
 #. js-lingui-explicit-id
-#: src/api/components/ConversationView.ts:245
+#: src/api/components/ConversationView.ts:246
 msgid "Resume"
 msgstr "继续"
 
 #. js-lingui-explicit-id
-#: src/api/components/ConversationView.ts:252
+#: src/api/components/ConversationView.ts:253
 msgid "Hide Timeline"
 msgstr "隐藏时间线"
 
 #. js-lingui-explicit-id
-#: src/api/components/ConversationView.ts:252
+#: src/api/components/ConversationView.ts:253
 msgid "Show Timeline"
 msgstr "显示时间线"
 
 #. js-lingui-explicit-id
-#: src/api/components/ConversationView.ts:261
+#: src/api/components/ConversationView.ts:262
 msgid "Open in"
 msgstr "在...中打开"
 
 #. js-lingui-explicit-id
-#: src/api/components/ConversationView.ts:272
+#: src/api/components/ConversationView.ts:273
 msgid "{count, plural, one {# entry} other {# entries}}"
 msgstr "{count} 条记录"
 
 #. js-lingui-explicit-id
-#: src/api/components/ConversationView.ts:277
+#: src/api/components/ConversationView.ts:278
 msgid "Open"
 msgstr "打开"
 
 #. js-lingui-explicit-id
-#: src/api/components/ConversationView.ts:282
+#: src/api/components/ConversationView.ts:283
 msgid "Copy Path"
 msgstr "复制路径"
 
 #. js-lingui-explicit-id
-#: src/api/components/ConversationView.ts:397
+#: src/api/components/ConversationView.ts:398
 msgid "Show:"
 msgstr "显示："
 
 #. js-lingui-explicit-id
-#: src/api/components/ConversationView.ts:399
+#: src/api/components/ConversationView.ts:400
 msgid "User"
 msgstr "用户"
 
 #. js-lingui-explicit-id
-#: src/api/components/ConversationView.ts:402
+#: src/api/components/ConversationView.ts:403
 msgid "Assistant"
 msgstr "助手"
 
 #. js-lingui-explicit-id
-#: src/api/components/ConversationView.ts:405
-#: src/api/components/ConversationView.ts:846
+#: src/api/components/ConversationView.ts:406
+#: src/api/components/ConversationView.ts:888
 msgid "Thinking"
 msgstr "思考"
 
 #. js-lingui-explicit-id
-#: src/api/components/ConversationView.ts:408
+#: src/api/components/ConversationView.ts:409
 msgid "Tool Use"
 msgstr "工具调用"
 
 #. js-lingui-explicit-id
-#: src/api/components/ConversationView.ts:411
+#: src/api/components/ConversationView.ts:412
 msgid "Tool Result"
 msgstr "工具结果"
 
 #. js-lingui-explicit-id
-#: src/api/components/ConversationView.ts:414
+#: src/api/components/ConversationView.ts:415
 msgid "System"
 msgstr "系统"
 
 #. js-lingui-explicit-id
-#: src/api/components/ConversationView.ts:418
+#: src/api/components/ConversationView.ts:419
 msgid "Export"
 msgstr "导出"
 
 #. js-lingui-explicit-id
-#: src/api/components/ConversationView.ts:422
+#: src/api/components/ConversationView.ts:423
 msgid "Export as HTML"
 msgstr "导出为 HTML"
 
 #. js-lingui-explicit-id
-#: src/api/components/ConversationView.ts:425
+#: src/api/components/ConversationView.ts:426
 msgid "Export as Markdown"
 msgstr "导出为 Markdown"
 
 #. js-lingui-explicit-id
-#: src/api/components/ConversationView.ts:509
+#: src/api/components/ConversationView.ts:429
+msgid "Export as Raw JSON"
+msgstr ""
+
+#. js-lingui-explicit-id
 #: src/api/components/ConversationView.ts:510
+#: src/api/components/ConversationView.ts:511
 msgid "conversation"
 msgstr "会话"
 
 #. js-lingui-explicit-id
-#: src/api/components/ConversationView.ts:812
-#: src/api/components/ConversationView.ts:888
-#: src/api/components/ConversationView.ts:910
+#: src/api/components/ConversationView.ts:854
+#: src/api/components/ConversationView.ts:930
+#: src/api/components/ConversationView.ts:952
 msgid "Copy"
 msgstr "复制"
 
 #. js-lingui-explicit-id
-#: src/api/components/ConversationView.ts:821
-#: src/api/components/ConversationView.ts:884
+#: src/api/components/ConversationView.ts:863
+#: src/api/components/ConversationView.ts:926
 msgid "Error"
 msgstr "错误"
 
 #. js-lingui-explicit-id
-#: src/api/components/ConversationView.ts:821
-#: src/api/components/ConversationView.ts:884
+#: src/api/components/ConversationView.ts:863
+#: src/api/components/ConversationView.ts:926
 msgid "Result"
 msgstr "结果"
 
 #. js-lingui-explicit-id
-#: src/api/components/ConversationView.ts:909
+#: src/api/components/ConversationView.ts:951
 msgid "Input"
 msgstr "输入"
 
 #. js-lingui-explicit-id
-#: src/api/components/ConversationView.ts:927
+#: src/api/components/ConversationView.ts:970
 msgid "No conversation loaded"
 msgstr "未加载会话内容"
 
 #. js-lingui-explicit-id
-#: src/api/components/ConversationView.ts:928
+#: src/api/components/ConversationView.ts:971
 msgid "Select a session to view the conversation"
 msgstr "选择一个会话以查看对话"
 

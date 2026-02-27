@@ -599,10 +599,9 @@ export class ApiViewer {
         throw new Error('Session has no path');
       }
       const sessionSource = session.source ?? this.currentProject?.source ?? null;
-      const initialModel = this.resolvePreferredSessionModel(session.model, []);
       this.conversationView?.setSessionContext({
         source: sessionSource,
-        model: initialModel,
+        model: session.model ?? null,
       });
 
       // Stream entries progressively — renders as chunks arrive
@@ -629,12 +628,6 @@ export class ApiViewer {
       if (batch.length > 0) {
         this.conversationView?.appendEntries(batch);
       }
-
-      const resolvedModel = this.resolvePreferredSessionModel(session.model, entries);
-      this.conversationView?.setSessionContext({
-        source: sessionSource,
-        model: resolvedModel,
-      });
 
       // Finalize: link tool results, set up filters
       this.conversationView?.finalizeProgressiveDisplay();
@@ -701,29 +694,6 @@ export class ApiViewer {
     console.error('ApiViewer error:', error);
     this.options.onError?.(error);
     this.updateConnectionStatus(false, error.message);
-  }
-
-  private isRealModelName(model: string | null | undefined): model is string {
-    const value = model?.trim();
-    if (!value) return false;
-    const normalized = value.toLowerCase();
-    return normalized !== '<synthetic>' && normalized !== 'synthetic';
-  }
-
-  private resolvePreferredSessionModel(metaModel: string | null | undefined, entries: Entry[]): string | null {
-    if (this.isRealModelName(metaModel)) {
-      return metaModel.trim();
-    }
-
-    const assistantMatch = entries.find((entry) => (
-      entry.role === 'assistant' && this.isRealModelName(entry.model)
-    ));
-    if (assistantMatch?.model) {
-      return assistantMatch.model.trim();
-    }
-
-    const anyMatch = entries.find((entry) => this.isRealModelName(entry.model));
-    return anyMatch?.model?.trim() ?? null;
   }
 
   // ============================================

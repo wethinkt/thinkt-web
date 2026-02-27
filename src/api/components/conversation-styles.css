@@ -729,6 +729,13 @@
   color: var(--thinkt-text-color, #e0e0e0);
 }
 
+.thinkt-conversation-empty--filtered {
+  min-height: 220px;
+  border: 1px dashed var(--thinkt-border-color, #333);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.02);
+}
+
 /* ============================================
    Toolbar
    ============================================ */

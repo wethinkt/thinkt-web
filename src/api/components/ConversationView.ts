@@ -93,6 +93,7 @@ export class ConversationView {
 
   // Current session entries for export
   private currentEntries: Entry[] = [];
+  private hasLoadedSession = false;
   private currentSessionSource: string | null = null;
   private currentSessionModel: string | null = null;
 
@@ -577,6 +578,36 @@ export class ConversationView {
 
       item.classList.toggle('hidden', hidden);
     });
+
+    this.updateFilteredEmptyState();
+  }
+
+  private updateFilteredEmptyState(): void {
+    const existing = this.contentContainer.querySelector<HTMLElement>('.thinkt-conversation-empty--filtered');
+
+    if (this.currentEntries.length === 0) {
+      existing?.remove();
+      return;
+    }
+
+    const visibleItem = Array.from(this.contentContainer.querySelectorAll<HTMLElement>('[data-role]'))
+      .find((item) => !item.classList.contains('hidden'));
+
+    if (visibleItem) {
+      existing?.remove();
+      return;
+    }
+
+    if (existing) return;
+
+    const filteredEmpty = document.createElement('div');
+    filteredEmpty.className = 'thinkt-conversation-empty thinkt-conversation-empty--filtered';
+    filteredEmpty.innerHTML = `
+      <div class="thinkt-conversation-empty__icon">\u{1F441}</div>
+      <div class="thinkt-conversation-empty__title">${i18n._('Everything is hidden by current filters')}</div>
+      <div>${i18n._('Adjust the Show filters to view conversation entries')}</div>
+    `;
+    this.contentContainer.appendChild(filteredEmpty);
   }
 
   /**
@@ -625,10 +656,10 @@ export class ConversationView {
   displayEntries(entries: Entry[]): void {
     this.contentContainer.replaceChildren();
     this.currentEntries = entries || [];
+    this.hasLoadedSession = true;
 
     if (this.currentEntries.length === 0) {
-      this.showEmpty();
-      this.renderFilterBar();
+      this.showSessionEmpty();
       return;
     }
 
@@ -655,6 +686,7 @@ export class ConversationView {
   beginProgressiveDisplay(): void {
     this.contentContainer.replaceChildren();
     this.currentEntries = [];
+    this.hasLoadedSession = true;
     this.toolResultIndex.clear();
     this.inlinedToolResults.clear();
     this.currentEntryCount = 0;
@@ -683,6 +715,11 @@ export class ConversationView {
    * to link tool_use blocks with their results.
    */
   finalizeProgressiveDisplay(): void {
+    if (this.currentEntries.length === 0) {
+      this.showSessionEmpty();
+      return;
+    }
+
     this.buildToolResultIndex(this.currentEntries);
 
     // Only re-render if there are tool results to link
@@ -925,6 +962,7 @@ export class ConversationView {
 
   private showEmpty(): void {
     this.currentEntries = [];
+    this.hasLoadedSession = false;
     this.contentContainer.innerHTML = `
       <div class="thinkt-conversation-empty">
         <div class="thinkt-conversation-empty__icon">\u{1F4AC}</div>
@@ -935,10 +973,23 @@ export class ConversationView {
     this.renderFilterBar();
   }
 
+  private showSessionEmpty(): void {
+    this.currentEntries = [];
+    this.contentContainer.innerHTML = `
+      <div class="thinkt-conversation-empty">
+        <div class="thinkt-conversation-empty__icon">\u{1F4ED}</div>
+        <div class="thinkt-conversation-empty__title">${i18n._('This session has no conversation entries')}</div>
+        <div>${i18n._('No messages were found in this session.')}</div>
+      </div>
+    `;
+    this.renderFilterBar();
+  }
+
   /**
    * Clear the view
    */
   clear(): void {
+    this.hasLoadedSession = false;
     this.currentSessionSource = null;
     this.currentSessionModel = null;
     this.showEmpty();
@@ -958,7 +1009,11 @@ export class ConversationView {
     this.renderToolbar();
 
     if (this.currentEntries.length === 0) {
-      this.showEmpty();
+      if (this.hasLoadedSession) {
+        this.showSessionEmpty();
+      } else {
+        this.showEmpty();
+      }
       return;
     }
 
