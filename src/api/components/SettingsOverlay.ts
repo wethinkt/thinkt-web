@@ -57,6 +57,7 @@ export class SettingsOverlay {
   private refreshToken = 0;
   private indexerRefreshIntervalId: ReturnType<typeof setInterval> | null = null;
   private showAuthToken = false;
+  private serverAuthEnabled: boolean | null = null;
 
   constructor(options: SettingsOverlayOptions) {
     this.elements = options.elements;
@@ -99,6 +100,7 @@ export class SettingsOverlay {
     this.abortController.abort();
     this.abortController = new AbortController();
     this.refreshToken += 1;
+    this.serverAuthEnabled = null;
     this.overlay?.remove();
     this.overlay = null;
   }
@@ -314,6 +316,8 @@ export class SettingsOverlay {
 
     const serverHostPort = this.getServerHostPort();
     const info = infoResult.status === 'fulfilled' ? infoResult.value : undefined;
+    this.serverAuthEnabled = info?.authenticated ?? null;
+    this.renderAuthState();
     const fingerprintValue = info?.fingerprint ?? i18n._('Unavailable');
     const versionValue = info?.version ?? i18n._('Unavailable');
     const revisionValue = this.formatRevision(info?.revision);
@@ -334,13 +338,24 @@ export class SettingsOverlay {
         </div>
       `
       : '';
-    const infoDetailsHtml = `
+    const connectionMeta = connResult.status === 'fulfilled'
+      ? i18n._('Sources endpoint reachable')
+      : this.escapeHtml(this.toError(connResult.reason).message);
+    const connectionStatusClass = connResult.status === 'fulfilled'
+      ? 'thinkt-settings-status--online'
+      : 'thinkt-settings-status--offline';
+    const connectionStatusLabel = connResult.status === 'fulfilled'
+      ? i18n._('Online')
+      : i18n._('Offline');
+    const connectionDetailsHtml = `
       <div class="thinkt-settings-system-detail">
         <span class="thinkt-settings-system-key">${i18n._('Server')}:</span>
         <span>${this.escapeHtml(serverHostPort)}</span>
       </div>
+    `;
+    const infoDetailsHtml = `
       <div class="thinkt-settings-system-detail">
-        <span class="thinkt-settings-system-key">${i18n._('Machine Fingerprint')}:</span>
+        <span class="thinkt-settings-system-key">${i18n._('Fingerprint')}:</span>
         <span>${this.escapeHtml(fingerprintValue)}</span>
       </div>
       <div class="thinkt-settings-system-detail">
@@ -372,25 +387,41 @@ export class SettingsOverlay {
 
     if (connResult.status === 'fulfilled') {
       this.setContent('settings-connection', `
-        <div class="thinkt-settings-list-item">
-          <div class="thinkt-settings-list-content">
-            <div class="thinkt-settings-list-title">${i18n._('API Connection')}</div>
-            <div class="thinkt-settings-list-meta">${i18n._('Sources endpoint reachable')}</div>
-            ${infoDetailsHtml}
+        <div class="thinkt-settings-system-grid">
+          <div class="thinkt-settings-list-item">
+            <div class="thinkt-settings-list-content">
+              <div class="thinkt-settings-list-title">${i18n._('API Connection')}</div>
+              <div class="thinkt-settings-list-meta">${connectionMeta}</div>
+              ${connectionDetailsHtml}
+            </div>
+            <div class="thinkt-settings-status ${connectionStatusClass}">${connectionStatusLabel}</div>
           </div>
-          <div class="thinkt-settings-status thinkt-settings-status--online">${i18n._('Online')}</div>
+          <div class="thinkt-settings-list-item">
+            <div class="thinkt-settings-list-content">
+              <div class="thinkt-settings-list-title">${i18n._('Server Info')}</div>
+              ${infoDetailsHtml}
+            </div>
+          </div>
         </div>
       `);
     } else {
       const error = this.toError(connResult.reason);
       this.setContent('settings-connection', `
-        <div class="thinkt-settings-list-item">
-          <div class="thinkt-settings-list-content">
-            <div class="thinkt-settings-list-title">${i18n._('API Connection')}</div>
-            <div class="thinkt-settings-list-meta">${this.escapeHtml(error.message)}</div>
-            ${infoDetailsHtml}
+        <div class="thinkt-settings-system-grid">
+          <div class="thinkt-settings-list-item">
+            <div class="thinkt-settings-list-content">
+              <div class="thinkt-settings-list-title">${i18n._('API Connection')}</div>
+              <div class="thinkt-settings-list-meta">${connectionMeta}</div>
+              ${connectionDetailsHtml}
+            </div>
+            <div class="thinkt-settings-status ${connectionStatusClass}">${connectionStatusLabel}</div>
           </div>
-          <div class="thinkt-settings-status thinkt-settings-status--offline">${i18n._('Offline')}</div>
+          <div class="thinkt-settings-list-item">
+            <div class="thinkt-settings-list-content">
+              <div class="thinkt-settings-list-title">${i18n._('Server Info')}</div>
+              ${infoDetailsHtml}
+            </div>
+          </div>
         </div>
       `);
       this.options.onError?.(error);
@@ -557,7 +588,7 @@ export class SettingsOverlay {
     const embedHtml = this.renderProgressInfo(i18n._('Embedding Progress'), status.embed_progress);
 
     return `
-      <div class="thinkt-settings-stat-grid">
+      <div class="thinkt-settings-stat-grid thinkt-settings-stat-grid--indexer">
         <div class="thinkt-settings-stat-card">
           <div class="thinkt-settings-stat-label">${i18n._('Model')}</div>
           <div class="thinkt-settings-stat-value">${this.escapeHtml(status.model ?? '—')}</div>
@@ -760,11 +791,12 @@ export class SettingsOverlay {
 
     const token = this.getEffectiveToken();
     const hasToken = typeof token === 'string' && token.length > 0;
+    const hasInjectedToken = !hasToken && this.serverAuthEnabled === true;
     const currentEl = this.overlay.querySelector<HTMLElement>('#settings-auth-current');
     if (currentEl) {
       currentEl.textContent = hasToken
         ? (this.showAuthToken ? token : this.maskToken(token))
-        : i18n._('Not set');
+        : (hasInjectedToken ? i18n._('Set (injected)') : i18n._('Not set'));
     }
 
     const inputEl = this.overlay.querySelector<HTMLInputElement>('#settings-auth-input');
@@ -792,8 +824,12 @@ export class SettingsOverlay {
 
     const statusEl = this.overlay.querySelector<HTMLElement>('#settings-auth-status');
     if (statusEl) {
-      statusEl.textContent = statusMessage ?? '';
-      statusEl.className = statusMessage ? 'thinkt-settings-note' : 'thinkt-settings-muted';
+      const passiveStatusMessage = hasInjectedToken
+        ? i18n._('Token is provided by the runtime and cannot be displayed in the browser.')
+        : '';
+      const message = statusMessage ?? passiveStatusMessage;
+      statusEl.textContent = message;
+      statusEl.className = message ? 'thinkt-settings-note' : 'thinkt-settings-muted';
     }
   }
 

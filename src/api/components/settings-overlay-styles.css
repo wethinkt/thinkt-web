@@ -185,6 +185,10 @@
   gap: 10px;
 }
 
+.thinkt-settings-stat-grid--indexer {
+  grid-template-columns: 2fr 1fr 1fr 1fr;
+}
+
 .thinkt-settings-stat-card {
   background: rgba(255, 255, 255, 0.02);
   border: 1px solid var(--thinkt-border-color, rgba(255, 255, 255, 0.1));
@@ -228,6 +232,17 @@
   display: flex;
   flex-direction: column;
   gap: 8px;
+}
+
+.thinkt-settings-system-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(240px, 1fr));
+  gap: 8px;
+}
+
+.thinkt-settings-system-grid .thinkt-settings-list-item {
+  align-items: flex-start;
+  min-height: 100%;
 }
 
 .thinkt-settings-list-item {
@@ -581,6 +596,10 @@
 
   .thinkt-settings-stat-grid {
     grid-template-columns: repeat(2, minmax(130px, 1fr));
+  }
+
+  .thinkt-settings-system-grid {
+    grid-template-columns: 1fr;
   }
 
   .thinkt-settings-tool-row {
