@@ -21,6 +21,7 @@ const INDEXER_REFRESH_INTERVAL_MS = 5000;
 type OverlayTab = 'dashboard' | 'indexer' | 'sources' | 'apps' | 'auth';
 type SourcesResponse = Awaited<ReturnType<ThinktClient['getSources']>>;
 type SourceItem = SourcesResponse[number];
+type LanguagesPayload = Awaited<ReturnType<ThinktClient['getLanguages']>>;
 type AppsResponse = Awaited<ReturnType<ThinktClient['getOpenInApps']>>;
 type AppItem = NonNullable<AppsResponse['apps']>[number];
 type StatsPayload = Awaited<ReturnType<ThinktClient['getStats']>>;
@@ -288,13 +289,14 @@ export class SettingsOverlay {
 
     const signal = this.abortController.signal;
     const sourcesPromise = this.client.getSources();
+    const languagesPromise = this.client.getLanguages();
     const infoPromise = this.fetchServerInfo(signal);
     const statsPromise = this.client.getStats();
     const indexerPromise = this.client.getIndexerStatus();
     const appsPromise = this.client.getOpenInApps();
 
     void Promise.allSettled([
-      this.renderDashboard(token, sourcesPromise, infoPromise, statsPromise),
+      this.renderDashboard(token, sourcesPromise, languagesPromise, infoPromise, statsPromise),
       this.renderIndexer(token, indexerPromise),
       this.renderSources(token, sourcesPromise),
       this.renderApps(token, appsPromise),
@@ -313,11 +315,13 @@ export class SettingsOverlay {
   private async renderDashboard(
     token: number,
     sourcesPromise: Promise<SourcesResponse>,
+    languagesPromise: Promise<LanguagesPayload>,
     infoPromise: Promise<ServerInfoPayload>,
     statsPromise: Promise<StatsPayload>,
   ): Promise<void> {
-    const [connResult, infoResult, statsResult] = await Promise.allSettled([
+    const [connResult, languagesResult, infoResult, statsResult] = await Promise.allSettled([
       sourcesPromise,
+      languagesPromise,
       infoPromise,
       statsPromise,
     ]);
@@ -331,6 +335,9 @@ export class SettingsOverlay {
     const fingerprintValue = info?.fingerprint ?? i18n._('Unavailable');
     const versionValue = info?.version ?? i18n._('Unavailable');
     const revisionValue = this.formatRevision(info?.revision);
+    const languageValue = languagesResult.status === 'fulfilled'
+      ? this.formatLanguage(languagesResult.value)
+      : i18n._('Unavailable');
     const startedAtValue = this.formatDateTime(info?.started_at);
     const uptimeValue = this.formatUptime(info?.uptime_seconds);
     const pidValue = info?.pid !== undefined ? this.formatNumber(info.pid) : i18n._('Unavailable');
@@ -363,11 +370,7 @@ export class SettingsOverlay {
         <span>${this.escapeHtml(serverHostPort)}</span>
       </div>
     `;
-    const infoDetailsHtml = `
-      <div class="thinkt-settings-system-detail">
-        <span class="thinkt-settings-system-key">${i18n._('Fingerprint')}:</span>
-        <span>${this.escapeHtml(fingerprintValue)}</span>
-      </div>
+    const thinktInfoDetailsHtml = `
       <div class="thinkt-settings-system-detail">
         <span class="thinkt-settings-system-key">${i18n._('Version')}:</span>
         <span>${this.escapeHtml(versionValue)}</span>
@@ -376,6 +379,16 @@ export class SettingsOverlay {
         <span class="thinkt-settings-system-key">${i18n._('Revision')}:</span>
         <span>${this.escapeHtml(revisionValue)}</span>
       </div>
+      <div class="thinkt-settings-system-detail">
+        <span class="thinkt-settings-system-key">${i18n._('Language')}:</span>
+        <span>${this.escapeHtml(languageValue)}</span>
+      </div>
+      <div class="thinkt-settings-system-detail">
+        <span class="thinkt-settings-system-key">${i18n._('Fingerprint')}:</span>
+        <span>${this.escapeHtml(fingerprintValue)}</span>
+      </div>
+    `;
+    const infoDetailsHtml = `
       <div class="thinkt-settings-system-detail">
         <span class="thinkt-settings-system-key">${i18n._('Started At')}:</span>
         <span>${this.escapeHtml(startedAtValue)}</span>
@@ -400,6 +413,12 @@ export class SettingsOverlay {
         <div class="thinkt-settings-system-grid">
           <div class="thinkt-settings-list-item">
             <div class="thinkt-settings-list-content">
+              <div class="thinkt-settings-list-title">${i18n._('thinkt Info')}</div>
+              ${thinktInfoDetailsHtml}
+            </div>
+          </div>
+          <div class="thinkt-settings-list-item">
+            <div class="thinkt-settings-list-content">
               <div class="thinkt-settings-list-title">${i18n._('API Connection')}</div>
               <div class="thinkt-settings-list-meta">${connectionMeta}</div>
               ${connectionDetailsHtml}
@@ -418,6 +437,12 @@ export class SettingsOverlay {
       const error = this.toError(connResult.reason);
       this.setContent('settings-connection', `
         <div class="thinkt-settings-system-grid">
+          <div class="thinkt-settings-list-item">
+            <div class="thinkt-settings-list-content">
+              <div class="thinkt-settings-list-title">${i18n._('thinkt Info')}</div>
+              ${thinktInfoDetailsHtml}
+            </div>
+          </div>
           <div class="thinkt-settings-list-item">
             <div class="thinkt-settings-list-content">
               <div class="thinkt-settings-list-title">${i18n._('API Connection')}</div>
@@ -439,6 +464,9 @@ export class SettingsOverlay {
 
     if (infoResult.status === 'rejected') {
       this.options.onError?.(this.toError(infoResult.reason));
+    }
+    if (languagesResult.status === 'rejected') {
+      this.options.onError?.(this.toError(languagesResult.reason));
     }
 
     if (statsResult.status === 'fulfilled') {
@@ -804,6 +832,15 @@ export class SettingsOverlay {
   private formatRevision(revision?: string): string {
     if (!revision) return '\u2014';
     return revision.length > 7 ? revision.slice(0, 7) : revision;
+  }
+
+  private formatLanguage(payload: LanguagesPayload): string {
+    const active = typeof payload.active === 'string' ? payload.active.trim() : '';
+    if (active.length > 0) return active;
+    const activeLanguage = payload.languages?.find((lang) => lang.active === true);
+    const activeTag = typeof activeLanguage?.tag === 'string' ? activeLanguage.tag.trim() : '';
+    if (activeTag.length > 0) return activeTag;
+    return '\u2014';
   }
 
   private async fetchServerInfo(signal?: AbortSignal): Promise<ServerInfoPayload> {
