@@ -25,7 +25,14 @@ afterEach(() => {
 async function createBar(clientOverrides: Partial<ThinktClient> = {}) {
   const client = { getProjects: vi.fn().mockResolvedValue([]), ...clientOverrides } as unknown as ThinktClient;
   const { ProjectFilterBar } = await import('./ProjectFilterBar');
-  return new ProjectFilterBar({ container, client, filters, signal, onFiltersChanged });
+  return new ProjectFilterBar({
+    container,
+    client,
+    filters,
+    signal,
+    onFiltersChanged,
+    defaultSelectAllSources: true,
+  });
 }
 
 describe('ProjectFilterBar', () => {
@@ -76,16 +83,26 @@ describe('ProjectFilterBar', () => {
   });
 
   describe('mergeDiscoveredSources', () => {
-    it('deduplicates and sorts sources', async () => {
+    it('deduplicates and sorts sources, selecting all by default', async () => {
       const bar = await createBar();
       bar.mergeDiscoveredSources(['Kimi', 'claude', 'KIMI']);
       // Verify dropdown options reflect the merged sources
-      const labels = container.querySelectorAll('.thinkt-source-option span');
-      const texts = Array.from(labels).map((el) => el.textContent);
+      const sourceLabels = Array.from(
+        container.querySelectorAll<HTMLLabelElement>('.thinkt-source-option:not(.thinkt-source-option--toggle)'),
+      );
+      const texts = sourceLabels.map((label) => label.querySelector('span')?.textContent?.trim());
       expect(texts).toContain('Claude');
       expect(texts).toContain('Kimi');
       // "KIMI" should have been deduplicated with "Kimi"
       expect(texts.filter((t) => t?.toLowerCase() === 'kimi')).toHaveLength(1);
+      expect(filters.sources).toEqual(new Set(['claude', 'kimi']));
+      expect(onFiltersChanged).toHaveBeenCalledOnce();
+
+      const options = Array.from(
+        container.querySelectorAll<HTMLInputElement>('.thinkt-source-option:not(.thinkt-source-option--toggle) input[type="checkbox"]'),
+      );
+      expect(options).toHaveLength(2);
+      options.forEach((input) => expect(input.checked).toBe(true));
     });
   });
 

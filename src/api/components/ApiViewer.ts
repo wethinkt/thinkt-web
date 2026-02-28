@@ -143,9 +143,10 @@ export class ApiViewer {
 
     // Restore persisted state (options take priority)
     const persisted = loadPersistedState();
+    const hasPersistedSourceFilter = Array.isArray(persisted.filterSources);
     this.currentProjectView = options.initialProjectView ?? persisted.projectView ?? 'list';
     if (persisted.filterSort) this.projectFilters.sort = persisted.filterSort;
-    if (persisted.filterSources?.length) this.projectFilters.sources = new Set(persisted.filterSources);
+    if (hasPersistedSourceFilter) this.projectFilters.sources = new Set(persisted.filterSources);
     if (persisted.filterIncludeDeleted) this.projectFilters.includeDeleted = persisted.filterIncludeDeleted;
 
     injectStyleSheet('thinkt-source-colors', SOURCE_COLORS);
@@ -172,6 +173,7 @@ export class ApiViewer {
       container: filterBarContainer,
       client: this.client,
       filters: this.projectFilters,
+      defaultSelectAllSources: !hasPersistedSourceFilter,
       signal: this.abortController.signal,
       onFiltersChanged: () => this.applyProjectFilters(),
     });

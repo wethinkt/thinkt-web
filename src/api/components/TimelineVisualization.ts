@@ -125,6 +125,7 @@ export class TimelineVisualization {
   private rows: TimelineRow[] = [];
   private sourceInfos: TimelineSourceInfo[] = [];
   private filters: ProjectFilterState;
+  private readonly showAllWhenNoSourceSelected: boolean;
   private lastLoadedIncludeDeleted = false;
   private tooltip: HTMLElement | null = null;
   private isLoading = false;
@@ -172,6 +173,7 @@ export class TimelineVisualization {
       sort: 'date_desc',
       includeDeleted: false,
     };
+    this.showAllWhenNoSourceSelected = options.filters === undefined;
     this.container = options.elements.container;
     this.viewport = document.createElement('div');
     this.scrollArea = document.createElement('div');
@@ -724,8 +726,9 @@ export class TimelineVisualization {
 
     const query = this.filters.searchQuery.trim().toLowerCase();
     const sourceFilters = this.filters.sources;
+    const showAllSources = this.showAllWhenNoSourceSelected && sourceFilters.size === 0;
     this.sessions = this.allSessions.filter((session) => {
-      if (sourceFilters && sourceFilters.size > 0 && !sourceFilters.has(session.source.toLowerCase())) {
+      if (!showAllSources && !sourceFilters.has(session.source.toLowerCase())) {
         return false;
       }
 

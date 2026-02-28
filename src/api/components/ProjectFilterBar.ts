@@ -27,6 +27,8 @@ export interface ProjectFilterBarOptions {
   container: HTMLElement;
   client: ThinktClient;
   filters: ProjectFilterState;
+  /** If true, first discovered sources are auto-selected when no source filters exist yet */
+  defaultSelectAllSources?: boolean;
   signal: AbortSignal;
   onFiltersChanged: () => void;
   onSourcesDiscovered?: (sources: string[]) => void;
@@ -50,6 +52,7 @@ export class ProjectFilterBar {
   private includeDeletedToggle: HTMLInputElement | null = null;
   private includeDeletedLabel: HTMLSpanElement | null = null;
   private searchDebounceTimer: ReturnType<typeof setTimeout> | null = null;
+  private defaultSelectAllSources = true;
 
   private discoveredSources: string[] = [];
   private sourceCapabilities: SourceCapability[] = [];
@@ -60,6 +63,7 @@ export class ProjectFilterBar {
     this.filters = options.filters;
     this.client = options.client;
     this.signal = options.signal;
+    this.defaultSelectAllSources = options.defaultSelectAllSources ?? true;
     this.createFilterBar();
   }
 
@@ -186,6 +190,12 @@ export class ProjectFilterBar {
   }
 
   mergeDiscoveredSources(sources: string[]): void {
+    const previouslyDiscovered = [...this.discoveredSources];
+    const previouslyAllSelected =
+      previouslyDiscovered.length > 0
+      && previouslyDiscovered.every((source) => this.filters.sources.has(source));
+    let selectionChanged = false;
+
     const merged = new Set(this.discoveredSources);
     for (const source of sources) {
       const normalized = SourceResolver.normalizeSourceName(source);
@@ -194,7 +204,26 @@ export class ProjectFilterBar {
       }
     }
     this.discoveredSources = Array.from(merged).sort((a, b) => a.localeCompare(b));
+
+    if (this.defaultSelectAllSources && this.filters.sources.size === 0 && this.discoveredSources.length > 0) {
+      for (const source of this.discoveredSources) {
+        this.filters.sources.add(source);
+      }
+      selectionChanged = true;
+      this.defaultSelectAllSources = false;
+    } else if (previouslyAllSelected) {
+      for (const source of this.discoveredSources) {
+        if (!this.filters.sources.has(source)) {
+          this.filters.sources.add(source);
+          selectionChanged = true;
+        }
+      }
+    }
+
     this.renderSourceFilterOptions();
+    if (selectionChanged) {
+      this.options.onFiltersChanged();
+    }
   }
 
   async discoverSourcesFromProjects(): Promise<void> {
@@ -260,6 +289,7 @@ export class ProjectFilterBar {
       listContainer.appendChild(label);
 
       checkbox.addEventListener('change', () => {
+        this.defaultSelectAllSources = false;
         if (checkbox.checked) {
           this.filters.sources.add(source);
         } else {
@@ -289,13 +319,18 @@ export class ProjectFilterBar {
     if (!this.sourceDropdownBtn) return;
     const btnText = this.sourceDropdownBtn.querySelector('span:first-child');
     if (btnText) {
-      if (this.filters.sources.size === 0) {
+      const selectedCount = this.filters.sources.size;
+      const totalKnownSources = this.discoveredSources.length;
+
+      if (totalKnownSources > 0 && selectedCount === totalKnownSources) {
         btnText.textContent = i18n._('All Sources');
-      } else if (this.filters.sources.size === 1) {
+      } else if (selectedCount === 0) {
+        btnText.textContent = i18n._('None');
+      } else if (selectedCount === 1) {
         const source = Array.from(this.filters.sources)[0];
         btnText.textContent = source.charAt(0).toUpperCase() + source.slice(1);
       } else {
-        btnText.textContent = i18n._('{count} Sources', { count: this.filters.sources.size });
+        btnText.textContent = i18n._('{count} Sources', { count: selectedCount });
       }
     }
   }

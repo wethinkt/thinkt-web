@@ -97,6 +97,7 @@ export class TreeProjectBrowser {
   private expandedSources: Set<string> = new Set();
   private selectedSessionId: string | null = null;
   private filters: ProjectFilterState;
+  private readonly showAllWhenNoSourceSelected: boolean;
   private lastLoadedIncludeDeleted = false;
   private loadController: AbortController | null = null;
   private abortController = new AbortController();
@@ -115,6 +116,7 @@ export class TreeProjectBrowser {
       sort: 'date_desc',
       includeDeleted: false,
     };
+    this.showAllWhenNoSourceSelected = options.filters === undefined;
     this.init();
   }
 
@@ -699,7 +701,33 @@ export class TreeProjectBrowser {
   }
 
   private hasActiveFilters(): boolean {
-    return this.filters.searchQuery.length > 0 || this.filters.sources.size > 0;
+    if (this.filters.searchQuery.length > 0) {
+      return true;
+    }
+
+    if (this.showAllWhenNoSourceSelected && this.filters.sources.size === 0) {
+      return false;
+    }
+
+    const knownSources = new Set<string>();
+    for (const group of this.projectGroups.values()) {
+      for (const sourceKey of group.sources.keys()) {
+        knownSources.add(sourceKey.toLowerCase());
+      }
+    }
+
+    if (knownSources.size === 0) {
+      return this.filters.sources.size > 0;
+    }
+    if (this.filters.sources.size !== knownSources.size) {
+      return true;
+    }
+    for (const source of knownSources) {
+      if (!this.filters.sources.has(source)) {
+        return true;
+      }
+    }
+    return false;
   }
 
   private getFilteredProjectGroups(): ProjectGroup[] {
@@ -710,7 +738,10 @@ export class TreeProjectBrowser {
     for (const group of this.projectGroups.values()) {
       const matchingSources = new Map<string, SourceGroup>();
       for (const [sourceKey, sourceGroup] of group.sources) {
-        if (sourceFilters && sourceFilters.size > 0 && !sourceFilters.has(sourceKey.toLowerCase())) {
+        const normalizedSource = sourceKey.toLowerCase();
+        const includeSource = (this.showAllWhenNoSourceSelected && sourceFilters.size === 0)
+          || sourceFilters.has(normalizedSource);
+        if (!includeSource) {
           continue;
         }
         matchingSources.set(sourceKey, sourceGroup);

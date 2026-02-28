@@ -3,6 +3,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { SessionMeta } from '@wethinkt/ts-thinkt';
 import type { ThinktClient } from '@wethinkt/ts-thinkt/api';
+import type { ProjectFilterState } from './ApiViewer';
 import { TimelineVisualization } from './TimelineVisualization';
 
 function createSession(
@@ -756,6 +757,43 @@ describe('TimelineVisualization', () => {
     const labelsAfter = Array.from(container.querySelectorAll('.thinkt-timeline-label-item'))
       .map((el) => (el.textContent ?? '').trim().toLowerCase());
     expect(labelsAfter).toEqual(['projectfast(claude)', 'projectslow(kimi)']);
+
+    timeline.dispose();
+  });
+
+  it('shows no sessions when shared source filters select none', async () => {
+    const container = document.createElement('div');
+    document.body.appendChild(container);
+
+    const filters: ProjectFilterState = {
+      searchQuery: '',
+      sources: new Set(['claude', 'kimi']),
+      sort: 'date_desc',
+      includeDeleted: false,
+    };
+    const client = createClient(
+      {
+        projectA: [createSession('a1', '2026-02-01T10:00:00Z', 'claude')],
+        projectB: [createSession('b1', '2026-02-02T10:00:00Z', 'kimi')],
+      },
+      { projectA: 'claude', projectB: 'kimi' },
+    );
+
+    const timeline = new TimelineVisualization({
+      elements: { container },
+      client,
+      groupBy: 'project',
+      filters,
+    });
+    await flush();
+
+    expect(container.querySelector('.thinkt-timeline-chart-content')).toBeTruthy();
+
+    filters.sources.clear();
+    timeline.applyFilters();
+    await flush();
+
+    expect(container.querySelector('.thinkt-timeline-empty')).toBeTruthy();
 
     timeline.dispose();
   });

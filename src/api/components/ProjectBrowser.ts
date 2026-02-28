@@ -72,6 +72,7 @@ export class ProjectBrowser {
   private filteredProjects: Project[] = [];
   private discoveredSources: string[] = [];
   private filters: ProjectFilterState;
+  private readonly showAllWhenNoSourceSelected: boolean;
   private lastLoadedIncludeDeleted = false;
   private selectedIndex = -1;
   private loadController: AbortController | null = null;
@@ -94,6 +95,7 @@ export class ProjectBrowser {
       sort: 'date_desc',
       includeDeleted: false,
     };
+    this.showAllWhenNoSourceSelected = options.filters === undefined;
 
     // Get client (either provided or default)
     this.client = options.client ?? getDefaultClient();
@@ -343,8 +345,9 @@ export class ProjectBrowser {
         project.name?.toLowerCase().includes(searchTerm) ||
         project.path?.toLowerCase().includes(searchTerm);
 
-      const matchesSource = sourceFilters.size === 0 ||
-        (typeof project.source === 'string' && sourceFilters.has(project.source.trim().toLowerCase()));
+      const normalizedSource = typeof project.source === 'string' ? project.source.trim().toLowerCase() : '';
+      const matchesSource = (this.showAllWhenNoSourceSelected && sourceFilters.size === 0)
+        || (normalizedSource.length > 0 && sourceFilters.has(normalizedSource));
 
       return matchesSearch && matchesSource;
     });
