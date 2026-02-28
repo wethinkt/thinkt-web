@@ -4,7 +4,7 @@
  * Provides HTML and Markdown export of conversation entries.
  */
 
-import type { Entry, ThinkingBlock, ToolUseBlock, ToolResultBlock } from '@wethinkt/ts-thinkt';
+import type { Entry, ThinkingBlock, ToolUseBlock, ToolResultBlock, ImageBlock, DocumentBlock } from '@wethinkt/ts-thinkt';
 import { escapeHtml, renderMarkdown, formatToolSummary, formatDuration } from './conversation-renderers';
 import HTML_EXPORT_STYLES from './export-styles.css?inline';
 
@@ -17,6 +17,7 @@ export interface ExportFilterState {
   thinking: boolean;
   toolUse: boolean;
   toolResult: boolean;
+  media: boolean;
   system: boolean;
 }
 
@@ -42,12 +43,16 @@ function getDefaultExportFilters(): ExportFilterState {
     thinking: true,
     toolUse: true,
     toolResult: true,
+    media: true,
     system: false,
   };
 }
 
-function normalizeExportFilters(filterState?: ExportFilterState): ExportFilterState {
-  return filterState ?? getDefaultExportFilters();
+function normalizeExportFilters(filterState?: Partial<ExportFilterState>): ExportFilterState {
+  return {
+    ...getDefaultExportFilters(),
+    ...(filterState ?? {}),
+  };
 }
 
 function isRoleVisible(role: string | undefined, filters: ExportFilterState): boolean {
@@ -84,6 +89,9 @@ function filterVisibleEntries(entries: Entry[], filters: ExportFilterState): Ent
           return filters.toolUse;
         case 'tool_result':
           return filters.toolResult;
+        case 'image':
+        case 'document':
+          return filters.media;
         default:
           return true;
       }
@@ -129,7 +137,7 @@ export function downloadFile(content: string, filename: string, mimeType: string
  * Generate HTML export of the conversation
  * Each block type (thinking, tool, output) gets its own box
  */
-export function exportAsHtml(entries: Entry[], title: string, filterState?: ExportFilterState): string {
+export function exportAsHtml(entries: Entry[], title: string, filterState?: Partial<ExportFilterState>): string {
   const filters = normalizeExportFilters(filterState);
 
   let html = `<!DOCTYPE html>
@@ -211,6 +219,20 @@ export function exportAsHtml(entries: Entry[], title: string, filterState?: Expo
             // Only show if not already inlined with its tool_use
             if (filters.toolResult && !inlinedToolResults.has(toolResult.toolUseId)) {
               contentHtml += renderToolResultBlockToHtml(toolResult);
+              hasVisibleContent = true;
+            }
+            break;
+          }
+          case 'image': {
+            if (filters.media) {
+              contentHtml += renderImageBlockToHtml(block as ImageBlock);
+              hasVisibleContent = true;
+            }
+            break;
+          }
+          case 'document': {
+            if (filters.media) {
+              contentHtml += renderDocumentBlockToHtml(block as DocumentBlock);
               hasVisibleContent = true;
             }
             break;
@@ -317,11 +339,66 @@ function renderToolResultBlockToHtml(toolResult: ToolResultBlock): string {
 `;
 }
 
+function getMediaSource(mediaType: string, mediaData: string): string {
+  const trimmedData = mediaData.trim();
+  if (!trimmedData) return '';
+  if (/^(data:|blob:|https?:)/i.test(trimmedData)) return trimmedData;
+  return `data:${mediaType};base64,${trimmedData}`;
+}
+
+function getDefaultDocumentFilename(mediaType: string): string {
+  if (mediaType === 'application/pdf') return 'document.pdf';
+  if (mediaType === 'text/plain') return 'document.txt';
+  if (mediaType === 'application/json') return 'document.json';
+  if (mediaType === 'text/markdown') return 'document.md';
+  return 'document.bin';
+}
+
+function renderImageBlockToHtml(image: ImageBlock): string {
+  const mediaType = image.mediaType?.trim() || 'application/octet-stream';
+  const mediaSource = getMediaSource(mediaType, image.mediaData);
+  const imageHtml = mediaSource
+    ? `<img class="media-image-preview" src="${escapeHtml(mediaSource)}" alt="Image preview" loading="lazy" />`
+    : `<div class="media-empty">No image data available</div>`;
+
+  return `      <div class="media media-image">
+        <div class="media-header">
+          <span class="media-label">Image</span>
+          <span class="media-type">${escapeHtml(mediaType)}</span>
+        </div>
+        <div class="media-content">
+          ${imageHtml}
+        </div>
+      </div>
+`;
+}
+
+function renderDocumentBlockToHtml(documentBlock: DocumentBlock): string {
+  const mediaType = documentBlock.mediaType?.trim() || 'application/octet-stream';
+  const mediaSource = getMediaSource(mediaType, documentBlock.mediaData);
+  const filename = documentBlock.filename?.trim() || getDefaultDocumentFilename(mediaType);
+  const actionHtml = mediaSource
+    ? `<a class="media-link" href="${escapeHtml(mediaSource)}" download="${escapeHtml(filename)}" target="_blank" rel="noopener noreferrer">Download</a>`
+    : '<div class="media-empty">No document data available</div>';
+
+  return `      <div class="media media-document">
+        <div class="media-header">
+          <span class="media-label">Document</span>
+          <span class="media-type">${escapeHtml(mediaType)}</span>
+        </div>
+        <div class="media-content">
+          <div class="media-filename">${escapeHtml(filename)}</div>
+          ${actionHtml}
+        </div>
+      </div>
+`;
+}
+
 /**
  * Generate Markdown export of the conversation
  * Each block type (thinking, tool, output) shown separately
  */
-export function exportAsMarkdown(entries: Entry[], title: string, filterState?: ExportFilterState): string {
+export function exportAsMarkdown(entries: Entry[], title: string, filterState?: Partial<ExportFilterState>): string {
   const filters = normalizeExportFilters(filterState);
 
   let md = `# ${title}\n\n`;
@@ -401,6 +478,23 @@ export function exportAsMarkdown(entries: Entry[], title: string, filterState?: 
             }
             break;
           }
+          case 'image': {
+            if (filters.media) {
+              const image = block as ImageBlock;
+              const mediaType = image.mediaType?.trim() || 'application/octet-stream';
+              contentMd += `> Image: ${mediaType}\n\n`;
+            }
+            break;
+          }
+          case 'document': {
+            if (filters.media) {
+              const documentBlock = block as DocumentBlock;
+              const mediaType = documentBlock.mediaType?.trim() || 'application/octet-stream';
+              const filename = documentBlock.filename?.trim() || getDefaultDocumentFilename(mediaType);
+              contentMd += `> Document: ${filename} (${mediaType})\n\n`;
+            }
+            break;
+          }
         }
       }
     }
@@ -437,7 +531,7 @@ export function exportAsMarkdown(entries: Entry[], title: string, filterState?: 
 export function exportAsRawJson(
   entries: Entry[],
   title: string,
-  filterState?: ExportFilterState,
+  filterState?: Partial<ExportFilterState>,
   options?: RawJsonExportOptions,
 ): string {
   const filters = normalizeExportFilters(filterState);

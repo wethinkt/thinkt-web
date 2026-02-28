@@ -363,22 +363,32 @@ export class SessionList {
   // ============================================
 
   private filterSessions(): void {
-    const searchTerm = this.elements.searchInput?.value.toLowerCase() ?? '';
+    const searchTerm = (this.elements.searchInput?.value ?? '').trim().toLowerCase();
+    const normalizedSearchTerm = searchTerm.replace(/[^a-z0-9]/g, '');
 
     this.filteredSessions = this.sessions.filter(session => {
       if (!searchTerm) return true;
 
       const searchFields = [
         session.id,
+        session.title,
         session.summary,
         session.firstPrompt,
         session.model,
         session.gitBranch,
       ];
 
-      return searchFields.some(field =>
-        field?.toLowerCase().includes(searchTerm)
-      );
+      if (searchFields.some(field => field?.toLowerCase().includes(searchTerm))) {
+        return true;
+      }
+
+      // Session ID also matches without separators (e.g. "ae5cfbc" against UUID)
+      if (normalizedSearchTerm) {
+        const normalizedSessionId = (session.id ?? '').toLowerCase().replace(/[^a-z0-9]/g, '');
+        return normalizedSessionId.includes(normalizedSearchTerm);
+      }
+
+      return false;
     });
     this.filteredSessions.sort((a, b) => this.compareSessions(a, b));
 
@@ -503,6 +513,7 @@ export class SessionList {
     li.setAttribute('aria-selected', 'false');
     li.dataset.index = String(index);
     li.dataset.sessionId = session.id;
+    li.title = session.id ?? '';
 
     const source = session.source ?? 'claude';
     const isChunked = (session.chunkCount ?? 0) > 1;

@@ -124,6 +124,65 @@ describe('exportAsHtml', () => {
     expect(html).toContain('Done!');
   });
 
+  it('should render image blocks in HTML export', async () => {
+    const { exportAsHtml } = await loadExport();
+    const entries: Entry[] = [
+      createEntry('assistant', [
+        { type: 'image', mediaType: 'image/png', mediaData: 'abc123==' },
+      ]),
+    ];
+
+    const html = exportAsHtml(entries, 'Test');
+
+    expect(html).toContain('class="media media-image"');
+    expect(html).toContain('data:image/png;base64,abc123==');
+    expect(html).toContain('Image');
+  });
+
+  it('should render document blocks in HTML export', async () => {
+    const { exportAsHtml } = await loadExport();
+    const entries: Entry[] = [
+      createEntry('assistant', [
+        { type: 'document', mediaType: 'application/pdf', mediaData: 'xyz456==', filename: 'report.pdf' },
+      ]),
+    ];
+
+    const html = exportAsHtml(entries, 'Test');
+
+    expect(html).toContain('class="media media-document"');
+    expect(html).toContain('report.pdf');
+    expect(html).toContain('download="report.pdf"');
+  });
+
+  it('should skip media blocks when media filter is false', async () => {
+    const { exportAsHtml } = await loadExport();
+    const entries: Entry[] = [
+      createEntry('assistant', [
+        { type: 'text', text: 'Before' },
+        { type: 'image', mediaType: 'image/png', mediaData: 'abc123==' },
+        { type: 'document', mediaType: 'application/pdf', mediaData: 'xyz456==', filename: 'report.pdf' },
+        { type: 'text', text: 'After' },
+      ]),
+    ];
+
+    const filters = {
+      user: true,
+      assistant: true,
+      thinking: true,
+      toolUse: true,
+      toolResult: true,
+      media: false,
+      system: false,
+    };
+
+    const html = exportAsHtml(entries, 'Test', filters);
+
+    expect(html).toContain('Before');
+    expect(html).toContain('After');
+    expect(html).not.toContain('class="media media-image"');
+    expect(html).not.toContain('class="media media-document"');
+  });
+
   it('should filter out user entries when user filter is false', async () => {
     const { exportAsHtml } = await loadExport();
     const entries: Entry[] = [
@@ -137,6 +196,7 @@ describe('exportAsHtml', () => {
       thinking: true,
       toolUse: true,
       toolResult: true,
+      media: true,
       system: false,
     };
 
@@ -164,6 +224,7 @@ describe('exportAsHtml', () => {
       thinking: false, // Disable thinking
       toolUse: true,
       toolResult: true,
+      media: true,
       system: false,
     };
 
@@ -192,6 +253,7 @@ describe('exportAsHtml', () => {
       thinking: true,
       toolUse: false, // Disable tool use
       toolResult: true,
+      media: true,
       system: false,
     };
 
@@ -297,6 +359,7 @@ describe('exportAsMarkdown', () => {
       thinking: true,
       toolUse: true,
       toolResult: true,
+      media: true,
       system: false,
     };
 
@@ -304,6 +367,21 @@ describe('exportAsMarkdown', () => {
     
     expect(md).not.toContain('User message');
     expect(md).toContain('Assistant message');
+  });
+
+  it('should include image and document summaries in markdown export', async () => {
+    const { exportAsMarkdown } = await loadExport();
+    const entries: Entry[] = [
+      createEntry('assistant', [
+        { type: 'image', mediaType: 'image/png', mediaData: 'abc123==' },
+        { type: 'document', mediaType: 'application/pdf', mediaData: 'xyz456==', filename: 'report.pdf' },
+      ]),
+    ];
+
+    const md = exportAsMarkdown(entries, 'Test');
+
+    expect(md).toContain('Image: image/png');
+    expect(md).toContain('Document: report.pdf (application/pdf)');
   });
 });
 
@@ -359,6 +437,7 @@ describe('exportAsRawJson', () => {
       thinking: false,
       toolUse: true,
       toolResult: true,
+      media: true,
       system: false,
     };
 
@@ -368,6 +447,33 @@ describe('exportAsRawJson', () => {
     expect(payload.visibleEntries.length).toBe(1);
     expect(payload.visibleEntries[0]?.role).toBe('assistant');
     expect(payload.visibleEntries[0]?.contentBlocks?.some((b) => b.type === 'thinking')).toBe(false);
+    expect(payload.visibleEntries[0]?.contentBlocks?.some((b) => b.type === 'text')).toBe(true);
+  });
+
+  it('should exclude media blocks from visibleEntries when media filter is false', async () => {
+    const { exportAsRawJson } = await loadExport();
+    const entries: Entry[] = [
+      createEntry('assistant', [
+        { type: 'text', text: 'Assistant message' },
+        { type: 'image', mediaType: 'image/png', mediaData: 'abc123==' },
+      ]),
+    ];
+
+    const filters = {
+      user: true,
+      assistant: true,
+      thinking: true,
+      toolUse: true,
+      toolResult: true,
+      media: false,
+      system: false,
+    };
+
+    const json = exportAsRawJson(entries, 'Filtered', filters);
+    const payload = JSON.parse(json) as { visibleEntries: Entry[] };
+
+    expect(payload.visibleEntries.length).toBe(1);
+    expect(payload.visibleEntries[0]?.contentBlocks?.some((b) => b.type === 'image')).toBe(false);
     expect(payload.visibleEntries[0]?.contentBlocks?.some((b) => b.type === 'text')).toBe(true);
   });
 });

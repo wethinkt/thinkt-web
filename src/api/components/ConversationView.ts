@@ -10,7 +10,7 @@
  */
 
 import type { ThinktClient, AppInfo } from '@wethinkt/ts-thinkt/api';
-import type { Entry, ToolResultBlock } from '@wethinkt/ts-thinkt';
+import type { Entry, ToolResultBlock, ImageBlock, DocumentBlock } from '@wethinkt/ts-thinkt';
 import { i18n } from '@lingui/core';
 import CONVERSATION_STYLES from './conversation-styles.css?inline';
 import { escapeHtml, formatToolSummary, renderMarkdown, formatDuration } from './conversation-renderers';
@@ -62,6 +62,7 @@ export interface FilterState {
   thinking: boolean;
   toolUse: boolean;
   toolResult: boolean;
+  media: boolean;
   system: boolean;
 }
 
@@ -83,13 +84,14 @@ export class ConversationView {
   private onToggleSidebar: (() => void) | null = null;
   private isSidebarCollapsed: (() => boolean) | null = null;
 
-  // Filter state (default: show user and assistant, hide thinking/tools)
+  // Filter state (default: show user, assistant, and media; hide thinking/tools)
   private filterState: FilterState = {
     user: true,
     assistant: true,
     thinking: false,
     toolUse: false,
     toolResult: false,
+    media: true,
     system: false,
   };
 
@@ -483,11 +485,11 @@ export class ConversationView {
       <button class="thinkt-conversation-view__filter-btn ${this.filterState.thinking ? 'active' : ''}" data-filter="thinking">
         ${i18n._('Thinking')}
       </button>
-      <button class="thinkt-conversation-view__filter-btn ${this.filterState.toolUse ? 'active' : ''}" data-filter="toolUse">
-        ${i18n._('Tool Use')}
+      <button class="thinkt-conversation-view__filter-btn ${this.isToolFilterActive() ? 'active' : ''}" data-filter="tool">
+        ${i18n._('Tool')}
       </button>
-      <button class="thinkt-conversation-view__filter-btn ${this.filterState.toolResult ? 'active' : ''}" data-filter="toolResult">
-        ${i18n._('Tool Result')}
+      <button class="thinkt-conversation-view__filter-btn ${this.filterState.media ? 'active' : ''}" data-filter="media">
+        ${i18n._('Media')}
       </button>
       <button class="thinkt-conversation-view__filter-btn ${this.filterState.system ? 'active' : ''}" data-filter="system">
         ${i18n._('System')}
@@ -589,12 +591,14 @@ export class ConversationView {
       : i18n._('conversation');
 
     // Pass current filter state to export
+    const toolVisible = this.isToolFilterActive();
     const exportFilters = {
       user: this.filterState.user,
       assistant: this.filterState.assistant,
       thinking: this.filterState.thinking,
-      toolUse: this.filterState.toolUse,
-      toolResult: this.filterState.toolResult,
+      toolUse: toolVisible,
+      toolResult: toolVisible,
+      media: this.filterState.media,
       system: this.filterState.system,
     };
 
@@ -621,12 +625,19 @@ export class ConversationView {
     const buttons = this.filterContainer.querySelectorAll('.thinkt-conversation-view__filter-btn');
     buttons.forEach((btn) => {
       const button = btn as HTMLElement;
-      const filter = button.dataset.filter as keyof FilterState;
+      const filter = button.dataset.filter as keyof FilterState | 'tool';
       if (!filter) return;
 
       const handler = () => {
-        this.filterState[filter] = !this.filterState[filter];
-        button.classList.toggle('active', this.filterState[filter]);
+        if (filter === 'tool') {
+          const next = !this.isToolFilterActive();
+          this.filterState.toolUse = next;
+          this.filterState.toolResult = next;
+          button.classList.toggle('active', next);
+        } else {
+          this.filterState[filter] = !this.filterState[filter];
+          button.classList.toggle('active', this.filterState[filter]);
+        }
         this.applyFilters();
       };
 
@@ -650,8 +661,8 @@ export class ConversationView {
       // Check block-type filter (standalone blocks only)
       if (!hidden && blockType) {
         if (blockType === 'thinking') hidden = !this.filterState.thinking;
-        else if (blockType === 'toolUse') hidden = !this.filterState.toolUse;
-        else if (blockType === 'toolResult') hidden = !this.filterState.toolResult;
+        else if (blockType === 'toolUse' || blockType === 'toolResult') hidden = !this.isToolFilterActive();
+        else if (blockType === 'image' || blockType === 'document') hidden = !this.filterState.media;
       }
 
       item.classList.toggle('hidden', hidden);
@@ -700,9 +711,18 @@ export class ConversationView {
    */
   setFilterState(state: Partial<FilterState>): void {
     Object.assign(this.filterState, state);
+    if (state.toolUse !== undefined || state.toolResult !== undefined) {
+      const next = state.toolUse ?? state.toolResult ?? this.isToolFilterActive();
+      this.filterState.toolUse = next;
+      this.filterState.toolResult = next;
+    }
     this.renderFilterBar();
     this.setupFilters();
     this.applyFilters();
+  }
+
+  private isToolFilterActive(): boolean {
+    return this.filterState.toolUse || this.filterState.toolResult;
   }
 
   // ============================================
@@ -822,7 +842,7 @@ export class ConversationView {
   /**
    * Render an entry as a DocumentFragment.
    * Text blocks go into entry cards (with header).
-   * Thinking, tool_use, and tool_result blocks render as standalone peers.
+   * Thinking, tool_use, tool_result, image, and document blocks render as standalone peers.
    * Block order is preserved.
    */
   private renderEntry(entry: Entry, entryIndex?: number): DocumentFragment {
@@ -884,6 +904,18 @@ export class ConversationView {
               this.renderToolResultBlock(block)));
           }
           break;
+
+        case 'image':
+          flushText();
+          fragment.appendChild(this.createStandaloneBlock(role, 'image',
+            this.renderImageBlock(block)));
+          break;
+
+        case 'document':
+          flushText();
+          fragment.appendChild(this.createStandaloneBlock(role, 'document',
+            this.renderDocumentBlock(block)));
+          break;
       }
     }
 
@@ -944,6 +976,88 @@ export class ConversationView {
         <div class="thinkt-conversation-entry__text">${escapeHtml(String(block.toolResult || ''))}</div>
       </div>
     `;
+  }
+
+  private renderImageBlock(block: ImageBlock): string {
+    const mediaType = block.mediaType?.trim() || 'application/octet-stream';
+    const mediaSource = this.resolveMediaSource(mediaType, block.mediaData);
+
+    if (!mediaSource) {
+      return `
+        <div class="thinkt-media-block thinkt-media-block--image">
+          <div class="thinkt-media-block__header">
+            <span class="thinkt-media-block__label">${i18n._('Image')}</span>
+            <span class="thinkt-media-block__type">${escapeHtml(mediaType)}</span>
+          </div>
+          <div class="thinkt-media-block__content">
+            <div class="thinkt-media-block__empty">${i18n._('No image data available')}</div>
+          </div>
+        </div>
+      `;
+    }
+
+    return `
+      <div class="thinkt-media-block thinkt-media-block--image">
+        <div class="thinkt-media-block__header">
+          <span class="thinkt-media-block__label">${i18n._('Image')}</span>
+          <span class="thinkt-media-block__type">${escapeHtml(mediaType)}</span>
+        </div>
+        <div class="thinkt-media-block__content">
+          <img
+            class="thinkt-media-block__image"
+            src="${escapeHtml(mediaSource)}"
+            alt="${escapeHtml(i18n._('Embedded image'))}"
+            loading="lazy"
+          />
+        </div>
+      </div>
+    `;
+  }
+
+  private renderDocumentBlock(block: DocumentBlock): string {
+    const mediaType = block.mediaType?.trim() || 'application/octet-stream';
+    const mediaSource = this.resolveMediaSource(mediaType, block.mediaData);
+    const filename = block.filename?.trim() || this.getDefaultDocumentFilename(mediaType);
+
+    const actionHtml = mediaSource
+      ? `
+          <a
+            class="thinkt-media-block__link"
+            href="${escapeHtml(mediaSource)}"
+            download="${escapeHtml(filename)}"
+            target="_blank"
+            rel="noopener noreferrer"
+          >${i18n._('Download')}</a>
+        `
+      : `<span class="thinkt-media-block__empty">${i18n._('No document data available')}</span>`;
+
+    return `
+      <div class="thinkt-media-block thinkt-media-block--document">
+        <div class="thinkt-media-block__header">
+          <span class="thinkt-media-block__label">${i18n._('Document')}</span>
+          <span class="thinkt-media-block__type">${escapeHtml(mediaType)}</span>
+        </div>
+        <div class="thinkt-media-block__content">
+          <div class="thinkt-media-block__filename">${escapeHtml(filename)}</div>
+          ${actionHtml}
+        </div>
+      </div>
+    `;
+  }
+
+  private resolveMediaSource(mediaType: string, mediaData: string): string {
+    const trimmedData = mediaData.trim();
+    if (!trimmedData) return '';
+    if (/^(data:|blob:|https?:)/i.test(trimmedData)) return trimmedData;
+    return `data:${mediaType};base64,${trimmedData}`;
+  }
+
+  private getDefaultDocumentFilename(mediaType: string): string {
+    if (mediaType === 'application/pdf') return 'document.pdf';
+    if (mediaType === 'text/plain') return 'document.txt';
+    if (mediaType === 'application/json') return 'document.json';
+    if (mediaType === 'text/markdown') return 'document.md';
+    return 'document.bin';
   }
 
   // ============================================

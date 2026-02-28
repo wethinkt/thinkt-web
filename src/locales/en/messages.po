@@ -12,14 +12,9 @@ msgstr ""
 "Plural-Forms: \n"
 
 #. js-lingui-explicit-id
-#: src/main.ts:177
-msgid "Toggle sidebar panel"
-msgstr "Toggle sidebar panel"
-
-#. js-lingui-explicit-id
-#: src/api/components/ConversationView.ts:253
-msgid "Open sidebar"
-msgstr "Open sidebar"
+#: src/api/components/ConversationView.ts:489
+msgid "Tool"
+msgstr "Tool"
 
 #. js-lingui-explicit-id
 #: src/main.ts:154
@@ -27,11 +22,18 @@ msgid "{sessionTitle} - THINKT"
 msgstr "{sessionTitle} - THINKT"
 
 #. js-lingui-explicit-id
+#: src/api/components/ConversationView.ts:257
 #: src/main.ts:168
 msgid "Open search dialog ({shortcut})"
 msgstr "Open search dialog ({shortcut})"
 
 #. js-lingui-explicit-id
+#: src/main.ts:177
+msgid "Toggle sidebar panel"
+msgstr "Toggle sidebar panel"
+
+#. js-lingui-explicit-id
+#: src/api/components/ConversationView.ts:256
 #: src/main.ts:186
 msgid "Open settings and info"
 msgstr "Open settings and info"
@@ -76,7 +78,7 @@ msgstr "Select projects from the sidebar to filter"
 
 #. js-lingui-explicit-id
 #: src/api/components/ProjectBrowser.ts:465
-#: src/api/components/ProjectTimelinePanel.ts:436
+#: src/api/components/ProjectTimelinePanel.ts:441
 #: src/api/components/SearchResultRenderer.ts:96
 #: src/api/components/SearchResultRenderer.ts:181
 #: src/api/components/SessionList.ts:74
@@ -116,7 +118,7 @@ msgid "The search feature requires the thinkt-indexer to be installed and config
 msgstr "The search feature requires the thinkt-indexer to be installed and configured."
 
 #. js-lingui-explicit-id
-#: src/api/components/ProjectTimelinePanel.ts:499
+#: src/api/components/ProjectTimelinePanel.ts:530
 #: src/api/components/SearchResultRenderer.ts:247
 #: src/api/components/TimelineVisualization.ts:1259
 #: src/api/components/TreeProjectBrowser.ts:637
@@ -159,92 +161,12 @@ msgid "{weeks}w ago"
 msgstr "{weeks}w ago"
 
 #. js-lingui-explicit-id
-#: src/api/components/SearchOverlay.ts:144
-msgid "Search Sessions"
-msgstr "Search Sessions"
-
-#. js-lingui-explicit-id
-#: src/api/components/SearchOverlay.ts:146
-msgid "Text"
-msgstr "Text"
-
-#. js-lingui-explicit-id
-#: src/api/components/SearchOverlay.ts:147
-msgid "Semantic"
-msgstr "Semantic"
-
-#. js-lingui-explicit-id
-#: src/api/components/ProjectTimelinePanel.ts:106
-#: src/api/components/SearchOverlay.ts:151
-#: src/api/components/SearchOverlay.ts:151
-#: src/api/components/SettingsOverlay.ts:129
-#: src/api/components/SettingsOverlay.ts:129
-msgid "Close"
-msgstr "Close"
-
-#. js-lingui-explicit-id
-#: src/api/components/SearchOverlay.ts:156
-#: src/api/components/SearchOverlay.ts:300
-msgid "Type to search across all sessions..."
-msgstr "Type to search across all sessions..."
-
-#. js-lingui-explicit-id
-#: src/api/components/SearchOverlay.ts:161
-msgid "Case sensitive"
-msgstr "Case sensitive"
-
-#. js-lingui-explicit-id
-#: src/api/components/SearchOverlay.ts:165
-msgid "Regex"
-msgstr "Regex"
-
-#. js-lingui-explicit-id
-#: src/api/components/SearchOverlay.ts:169
-msgid "Ask a question in natural language"
-msgstr "Ask a question in natural language"
-
-#. js-lingui-explicit-id
 #: src/api/components/SearchOverlay.ts:175
 #: src/api/components/SettingsOverlay.ts:555
 #: src/api/components/SettingsOverlay.ts:667
 #: src/api/components/TreeProjectBrowser.ts:136
 msgid "Projects"
 msgstr "Projects"
-
-#. js-lingui-explicit-id
-#: src/api/components/SearchOverlay.ts:177
-msgid "All"
-msgstr "All"
-
-#. js-lingui-explicit-id
-#: src/api/components/SearchOverlay.ts:178
-msgid "None"
-msgstr "None"
-
-#. js-lingui-explicit-id
-#: src/api/components/SearchOverlay.ts:186
-msgid "Type to search across all indexed sessions"
-msgstr "Type to search across all indexed sessions"
-
-#. js-lingui-explicit-id
-#: src/api/components/SearchOverlay.ts:191
-msgid "to navigate"
-msgstr "to navigate"
-
-#. js-lingui-explicit-id
-#: src/api/components/SearchOverlay.ts:191
-msgid "to select"
-msgstr "to select"
-
-#. js-lingui-explicit-id
-#: src/api/components/SearchOverlay.ts:192
-msgid "Search uses the indexer database"
-msgstr "Search uses the indexer database"
-
-#. js-lingui-explicit-id
-#: src/api/components/SearchOverlay.ts:301
-msgid "Ask a question about your sessions..."
-msgstr "Ask a question about your sessions..."
 
 #. js-lingui-explicit-id
 #: src/api/components/TreeProjectBrowser.ts:139
@@ -458,6 +380,15 @@ msgstr "Apps"
 #: src/api/components/SettingsOverlay.ts:392
 msgid "Auth"
 msgstr "Auth"
+
+#. js-lingui-explicit-id
+#: src/api/components/ProjectTimelinePanel.ts:107
+#: src/api/components/SearchOverlay.ts:151
+#: src/api/components/SearchOverlay.ts:151
+#: src/api/components/SettingsOverlay.ts:129
+#: src/api/components/SettingsOverlay.ts:129
+msgid "Close"
+msgstr "Close"
 
 #. js-lingui-explicit-id
 #: src/api/components/SettingsOverlay.ts:137
@@ -879,72 +810,6 @@ msgid "Auth token cleared."
 msgstr "Auth token cleared."
 
 #. js-lingui-explicit-id
-#: src/api/components/ProjectTimelinePanel.ts:105
-msgid "Project Timeline"
-msgstr "Project Timeline"
-
-#. js-lingui-explicit-id
-#: src/api/components/ProjectTimelinePanel.ts:123
-msgid "Start"
-msgstr "Start"
-
-#. js-lingui-explicit-id
-#: src/api/components/ProjectTimelinePanel.ts:127
-msgid "End"
-msgstr "End"
-
-#. js-lingui-explicit-id
-#: src/api/components/ProjectTimelinePanel.ts:131
-msgid "Session duration"
-msgstr "Session duration"
-
-#. js-lingui-explicit-id
-#: src/api/components/ProjectTimelinePanel.ts:438
-msgid "Started"
-msgstr "Started"
-
-#. js-lingui-explicit-id
-#: src/api/components/ProjectTimelinePanel.ts:438
-msgid "Ended"
-msgstr "Ended"
-
-#. js-lingui-explicit-id
-#: src/api/components/ProjectTimelinePanel.ts:446
-msgid "Duration: {duration}"
-msgstr "Duration: {duration}"
-
-#. js-lingui-explicit-id
-#: src/api/components/ProjectTimelinePanel.ts:448
-msgid "Source: {source}"
-msgstr "Source: {source}"
-
-#. js-lingui-explicit-id
-#: src/api/components/ProjectTimelinePanel.ts:474
-msgid "< 1 min"
-msgstr "< 1 min"
-
-#. js-lingui-explicit-id
-#: src/api/components/ProjectTimelinePanel.ts:475
-msgid "{count} min"
-msgstr "{count} min"
-
-#. js-lingui-explicit-id
-#: src/api/components/ProjectTimelinePanel.ts:478
-msgid "{hours}h {mins}m"
-msgstr "{hours}h {mins}m"
-
-#. js-lingui-explicit-id
-#: src/api/components/ProjectTimelinePanel.ts:487
-#: src/api/components/TimelineVisualization.ts:1243
-msgid "Loading timeline..."
-msgstr "Loading timeline..."
-
-#. js-lingui-explicit-id
-#: src/api/components/ProjectTimelinePanel.ts:493
-msgid "No sessions with timing data"
-msgstr "No sessions with timing data"
-
-#. js-lingui-explicit-id
 #: src/api/components/ProjectBrowser.ts:137
 #: src/api/components/ProjectBrowser.ts:595
 #: src/api/components/ProjectFilterBar.ts:77
@@ -980,18 +845,6 @@ msgid "Name Z-A"
 msgstr "Name Z-A"
 
 #. js-lingui-explicit-id
-#: src/api/components/ApiViewer.ts:191
-#: src/api/components/ApiViewer.ts:210
-msgid "List"
-msgstr "List"
-
-#. js-lingui-explicit-id
-#: src/api/components/ApiViewer.ts:192
-#: src/api/components/ApiViewer.ts:211
-msgid "Tree"
-msgstr "Tree"
-
-#. js-lingui-explicit-id
 #: src/api/components/ApiViewer.ts:193
 #: src/api/components/ApiViewer.ts:212
 #: src/api/components/TimelineVisualization.ts:195
@@ -1009,9 +862,345 @@ msgid "By Source"
 msgstr "By Source"
 
 #. js-lingui-explicit-id
+#: src/api/components/ProjectTimelinePanel.ts:518
+#: src/api/components/TimelineVisualization.ts:1243
+msgid "Loading timeline..."
+msgstr "Loading timeline..."
+
+#. js-lingui-explicit-id
 #: src/api/components/TimelineVisualization.ts:1251
 msgid "No sessions to display"
 msgstr "No sessions to display"
+
+#. js-lingui-explicit-id
+#: src/api/components/SearchOverlay.ts:144
+msgid "Search Sessions"
+msgstr "Search Sessions"
+
+#. js-lingui-explicit-id
+#: src/api/components/SearchOverlay.ts:146
+msgid "Text"
+msgstr "Text"
+
+#. js-lingui-explicit-id
+#: src/api/components/SearchOverlay.ts:147
+msgid "Semantic"
+msgstr "Semantic"
+
+#. js-lingui-explicit-id
+#: src/api/components/SearchOverlay.ts:156
+#: src/api/components/SearchOverlay.ts:300
+msgid "Type to search across all sessions..."
+msgstr "Type to search across all sessions..."
+
+#. js-lingui-explicit-id
+#: src/api/components/SearchOverlay.ts:161
+msgid "Case sensitive"
+msgstr "Case sensitive"
+
+#. js-lingui-explicit-id
+#: src/api/components/SearchOverlay.ts:165
+msgid "Regex"
+msgstr "Regex"
+
+#. js-lingui-explicit-id
+#: src/api/components/SearchOverlay.ts:169
+msgid "Ask a question in natural language"
+msgstr "Ask a question in natural language"
+
+#. js-lingui-explicit-id
+#: src/api/components/SearchOverlay.ts:177
+msgid "All"
+msgstr "All"
+
+#. js-lingui-explicit-id
+#: src/api/components/SearchOverlay.ts:178
+msgid "None"
+msgstr "None"
+
+#. js-lingui-explicit-id
+#: src/api/components/SearchOverlay.ts:186
+msgid "Type to search across all indexed sessions"
+msgstr "Type to search across all indexed sessions"
+
+#. js-lingui-explicit-id
+#: src/api/components/SearchOverlay.ts:191
+msgid "to navigate"
+msgstr "to navigate"
+
+#. js-lingui-explicit-id
+#: src/api/components/SearchOverlay.ts:191
+msgid "to select"
+msgstr "to select"
+
+#. js-lingui-explicit-id
+#: src/api/components/SearchOverlay.ts:192
+msgid "Search uses the indexer database"
+msgstr "Search uses the indexer database"
+
+#. js-lingui-explicit-id
+#: src/api/components/SearchOverlay.ts:301
+msgid "Ask a question about your sessions..."
+msgstr "Ask a question about your sessions..."
+
+#. js-lingui-explicit-id
+#: src/api/components/ProjectTimelinePanel.ts:106
+msgid "Project Timeline"
+msgstr "Project Timeline"
+
+#. js-lingui-explicit-id
+#: src/api/components/ProjectTimelinePanel.ts:124
+msgid "Start"
+msgstr "Start"
+
+#. js-lingui-explicit-id
+#: src/api/components/ProjectTimelinePanel.ts:128
+msgid "End"
+msgstr "End"
+
+#. js-lingui-explicit-id
+#: src/api/components/ProjectTimelinePanel.ts:132
+msgid "Session duration"
+msgstr "Session duration"
+
+#. js-lingui-explicit-id
+#: src/api/components/ProjectTimelinePanel.ts:443
+msgid "Started"
+msgstr "Started"
+
+#. js-lingui-explicit-id
+#: src/api/components/ProjectTimelinePanel.ts:443
+msgid "Ended"
+msgstr "Ended"
+
+#. js-lingui-explicit-id
+#: src/api/components/ProjectTimelinePanel.ts:451
+msgid "Duration: {duration}"
+msgstr "Duration: {duration}"
+
+#. js-lingui-explicit-id
+#: src/api/components/ProjectTimelinePanel.ts:453
+msgid "Source: {source}"
+msgstr "Source: {source}"
+
+#. js-lingui-explicit-id
+#: src/api/components/ProjectTimelinePanel.ts:505
+msgid "< 1 min"
+msgstr "< 1 min"
+
+#. js-lingui-explicit-id
+#: src/api/components/ProjectTimelinePanel.ts:506
+msgid "{count} min"
+msgstr "{count} min"
+
+#. js-lingui-explicit-id
+#: src/api/components/ProjectTimelinePanel.ts:509
+msgid "{hours}h {mins}m"
+msgstr "{hours}h {mins}m"
+
+#. js-lingui-explicit-id
+#: src/api/components/ProjectTimelinePanel.ts:524
+msgid "No sessions with timing data"
+msgstr "No sessions with timing data"
+
+#. js-lingui-explicit-id
+#: src/api/components/ApiViewer.ts:191
+#: src/api/components/ApiViewer.ts:210
+msgid "List"
+msgstr "List"
+
+#. js-lingui-explicit-id
+#: src/api/components/ApiViewer.ts:192
+#: src/api/components/ApiViewer.ts:211
+msgid "Tree"
+msgstr "Tree"
+
+#. js-lingui-explicit-id
+#: src/api/components/ConversationView.ts:252
+msgid "No project selected"
+msgstr "No project selected"
+
+#. js-lingui-explicit-id
+#: src/api/components/ConversationView.ts:255
+msgid "Open sidebar"
+msgstr "Open sidebar"
+
+#. js-lingui-explicit-id
+#: src/api/components/ConversationView.ts:260
+msgid "Resume"
+msgstr "Resume"
+
+#. js-lingui-explicit-id
+#: src/api/components/ConversationView.ts:267
+msgid "Hide Timeline"
+msgstr "Hide Timeline"
+
+#. js-lingui-explicit-id
+#: src/api/components/ConversationView.ts:267
+msgid "Show Timeline"
+msgstr "Show Timeline"
+
+#. js-lingui-explicit-id
+#: src/api/components/ConversationView.ts:276
+msgid "Open in"
+msgstr "Open in"
+
+#. js-lingui-explicit-id
+#: src/api/components/ConversationView.ts:320
+msgid "{count, plural, one {# entry} other {# entries}}"
+msgstr "{count, plural, one {# entry} other {# entries}}"
+
+#. js-lingui-explicit-id
+#: src/api/components/ConversationView.ts:325
+msgid "Open"
+msgstr "Open"
+
+#. js-lingui-explicit-id
+#: src/api/components/ConversationView.ts:330
+msgid "Copy Path"
+msgstr "Copy Path"
+
+#. js-lingui-explicit-id
+#: src/api/components/ConversationView.ts:478
+msgid "Show:"
+msgstr "Show:"
+
+#. js-lingui-explicit-id
+#: src/api/components/ConversationView.ts:480
+msgid "User"
+msgstr "User"
+
+#. js-lingui-explicit-id
+#: src/api/components/ConversationView.ts:483
+msgid "Assistant"
+msgstr "Assistant"
+
+#. js-lingui-explicit-id
+#: src/api/components/ConversationView.ts:486
+#: src/api/components/ConversationView.ts:1079
+msgid "Thinking"
+msgstr "Thinking"
+
+#. js-lingui-explicit-id
+#: src/api/components/ConversationView.ts:492
+msgid "Media"
+msgstr "Media"
+
+#. js-lingui-explicit-id
+#: src/api/components/ConversationView.ts:495
+msgid "System"
+msgstr "System"
+
+#. js-lingui-explicit-id
+#: src/api/components/ConversationView.ts:499
+msgid "Export"
+msgstr "Export"
+
+#. js-lingui-explicit-id
+#: src/api/components/ConversationView.ts:503
+msgid "Export as HTML"
+msgstr "Export as HTML"
+
+#. js-lingui-explicit-id
+#: src/api/components/ConversationView.ts:506
+msgid "Export as Markdown"
+msgstr "Export as Markdown"
+
+#. js-lingui-explicit-id
+#: src/api/components/ConversationView.ts:509
+msgid "Export as Raw JSON"
+msgstr "Export as Raw JSON"
+
+#. js-lingui-explicit-id
+#: src/api/components/ConversationView.ts:590
+#: src/api/components/ConversationView.ts:591
+msgid "conversation"
+msgstr "conversation"
+
+#. js-lingui-explicit-id
+#: src/api/components/ConversationView.ts:696
+msgid "Everything is hidden by current filters"
+msgstr "Everything is hidden by current filters"
+
+#. js-lingui-explicit-id
+#: src/api/components/ConversationView.ts:697
+msgid "Adjust the Show filters to view conversation entries"
+msgstr "Adjust the Show filters to view conversation entries"
+
+#. js-lingui-explicit-id
+#: src/api/components/ConversationView.ts:963
+#: src/api/components/ConversationView.ts:1121
+#: src/api/components/ConversationView.ts:1143
+msgid "Copy"
+msgstr "Copy"
+
+#. js-lingui-explicit-id
+#: src/api/components/ConversationView.ts:972
+#: src/api/components/ConversationView.ts:1117
+msgid "Error"
+msgstr "Error"
+
+#. js-lingui-explicit-id
+#: src/api/components/ConversationView.ts:972
+#: src/api/components/ConversationView.ts:1117
+msgid "Result"
+msgstr "Result"
+
+#. js-lingui-explicit-id
+#: src/api/components/ConversationView.ts:989
+#: src/api/components/ConversationView.ts:1002
+msgid "Image"
+msgstr "Image"
+
+#. js-lingui-explicit-id
+#: src/api/components/ConversationView.ts:993
+msgid "No image data available"
+msgstr "No image data available"
+
+#. js-lingui-explicit-id
+#: src/api/components/ConversationView.ts:1009
+msgid "Embedded image"
+msgstr "Embedded image"
+
+#. js-lingui-explicit-id
+#: src/api/components/ConversationView.ts:1030
+msgid "Download"
+msgstr "Download"
+
+#. js-lingui-explicit-id
+#: src/api/components/ConversationView.ts:1032
+msgid "No document data available"
+msgstr "No document data available"
+
+#. js-lingui-explicit-id
+#: src/api/components/ConversationView.ts:1037
+msgid "Document"
+msgstr "Document"
+
+#. js-lingui-explicit-id
+#: src/api/components/ConversationView.ts:1142
+msgid "Input"
+msgstr "Input"
+
+#. js-lingui-explicit-id
+#: src/api/components/ConversationView.ts:1161
+msgid "No conversation loaded"
+msgstr "No conversation loaded"
+
+#. js-lingui-explicit-id
+#: src/api/components/ConversationView.ts:1162
+msgid "Select a session to view the conversation"
+msgstr "Select a session to view the conversation"
+
+#. js-lingui-explicit-id
+#: src/api/components/ConversationView.ts:1173
+msgid "This session has no conversation entries"
+msgstr "This session has no conversation entries"
+
+#. js-lingui-explicit-id
+#: src/api/components/ConversationView.ts:1174
+msgid "No messages were found in this session."
+msgstr "No messages were found in this session."
 
 #. js-lingui-explicit-id
 #: src/api/components/ProjectBrowser.ts:407
@@ -1034,160 +1223,14 @@ msgid "{count, plural, one {session} other {sessions}}"
 msgstr "{count, plural, one {session} other {sessions}}"
 
 #. js-lingui-explicit-id
-#: src/api/components/ConversationView.ts:250
-msgid "No project selected"
-msgstr "No project selected"
+#: src/api/components/ConversationView.ts:489
+#~ msgid "Tool Use"
+#~ msgstr "Tool Use"
 
 #. js-lingui-explicit-id
-#: src/api/components/ConversationView.ts:256
-msgid "Resume"
-msgstr "Resume"
-
-#. js-lingui-explicit-id
-#: src/api/components/ConversationView.ts:263
-msgid "Hide Timeline"
-msgstr "Hide Timeline"
-
-#. js-lingui-explicit-id
-#: src/api/components/ConversationView.ts:263
-msgid "Show Timeline"
-msgstr "Show Timeline"
-
-#. js-lingui-explicit-id
-#: src/api/components/ConversationView.ts:272
-msgid "Open in"
-msgstr "Open in"
-
-#. js-lingui-explicit-id
-#: src/api/components/ConversationView.ts:300
-msgid "{count, plural, one {# entry} other {# entries}}"
-msgstr "{count, plural, one {# entry} other {# entries}}"
-
-#. js-lingui-explicit-id
-#: src/api/components/ConversationView.ts:305
-msgid "Open"
-msgstr "Open"
-
-#. js-lingui-explicit-id
-#: src/api/components/ConversationView.ts:310
-msgid "Copy Path"
-msgstr "Copy Path"
-
-#. js-lingui-explicit-id
-#: src/api/components/ConversationView.ts:432
-msgid "Show:"
-msgstr "Show:"
-
-#. js-lingui-explicit-id
-#: src/api/components/ConversationView.ts:434
-msgid "User"
-msgstr "User"
-
-#. js-lingui-explicit-id
-#: src/api/components/ConversationView.ts:437
-msgid "Assistant"
-msgstr "Assistant"
-
-#. js-lingui-explicit-id
-#: src/api/components/ConversationView.ts:440
-#: src/api/components/ConversationView.ts:921
-msgid "Thinking"
-msgstr "Thinking"
-
-#. js-lingui-explicit-id
-#: src/api/components/ConversationView.ts:443
-msgid "Tool Use"
-msgstr "Tool Use"
-
-#. js-lingui-explicit-id
-#: src/api/components/ConversationView.ts:446
-msgid "Tool Result"
-msgstr "Tool Result"
-
-#. js-lingui-explicit-id
-#: src/api/components/ConversationView.ts:449
-msgid "System"
-msgstr "System"
-
-#. js-lingui-explicit-id
-#: src/api/components/ConversationView.ts:453
-msgid "Export"
-msgstr "Export"
-
-#. js-lingui-explicit-id
-#: src/api/components/ConversationView.ts:457
-msgid "Export as HTML"
-msgstr "Export as HTML"
-
-#. js-lingui-explicit-id
-#: src/api/components/ConversationView.ts:460
-msgid "Export as Markdown"
-msgstr "Export as Markdown"
-
-#. js-lingui-explicit-id
-#: src/api/components/ConversationView.ts:463
-msgid "Export as Raw JSON"
-msgstr "Export as Raw JSON"
-
-#. js-lingui-explicit-id
-#: src/api/components/ConversationView.ts:544
-#: src/api/components/ConversationView.ts:545
-msgid "conversation"
-msgstr "conversation"
-
-#. js-lingui-explicit-id
-#: src/api/components/ConversationView.ts:641
-msgid "Everything is hidden by current filters"
-msgstr "Everything is hidden by current filters"
-
-#. js-lingui-explicit-id
-#: src/api/components/ConversationView.ts:642
-msgid "Adjust the Show filters to view conversation entries"
-msgstr "Adjust the Show filters to view conversation entries"
-
-#. js-lingui-explicit-id
-#: src/api/components/ConversationView.ts:887
-#: src/api/components/ConversationView.ts:963
-#: src/api/components/ConversationView.ts:985
-msgid "Copy"
-msgstr "Copy"
-
-#. js-lingui-explicit-id
-#: src/api/components/ConversationView.ts:896
-#: src/api/components/ConversationView.ts:959
-msgid "Error"
-msgstr "Error"
-
-#. js-lingui-explicit-id
-#: src/api/components/ConversationView.ts:896
-#: src/api/components/ConversationView.ts:959
-msgid "Result"
-msgstr "Result"
-
-#. js-lingui-explicit-id
-#: src/api/components/ConversationView.ts:984
-msgid "Input"
-msgstr "Input"
-
-#. js-lingui-explicit-id
-#: src/api/components/ConversationView.ts:1003
-msgid "No conversation loaded"
-msgstr "No conversation loaded"
-
-#. js-lingui-explicit-id
-#: src/api/components/ConversationView.ts:1004
-msgid "Select a session to view the conversation"
-msgstr "Select a session to view the conversation"
-
-#. js-lingui-explicit-id
-#: src/api/components/ConversationView.ts:1015
-msgid "This session has no conversation entries"
-msgstr "This session has no conversation entries"
-
-#. js-lingui-explicit-id
-#: src/api/components/ConversationView.ts:1016
-msgid "No messages were found in this session."
-msgstr "No messages were found in this session."
+#: src/api/components/ConversationView.ts:492
+#~ msgid "Tool Result"
+#~ msgstr "Tool Result"
 
 #. js-lingui-explicit-id
 #: src/api/components/SettingsOverlay.ts:639
