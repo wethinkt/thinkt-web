@@ -402,7 +402,7 @@ export class SearchOverlay {
     };
 
     const response = await this.client.search(options);
-    this.results = response.sessions ?? [];
+    this.results = response.results ?? [];
 
     this.projectFilter!.extractProjects(this.results);
     this.filteredResults = [...this.results];
