@@ -21,6 +21,7 @@ export default defineConfig({
     rollupOptions: {
       input: {
         main: resolve(__dirname, 'index.html'),
+        conversation: resolve(__dirname, 'conversation.html'),
       },
       output: {
         // No content hashes — assets are embedded in the Go binary at compile time,

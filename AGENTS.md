@@ -42,6 +42,15 @@ npm run lint         # ESLint only
 npm run i18n         # Extract + compile translations
 ```
 
+## Entry Points
+
+Two Vite entry points (configured in `vite.config.ts` under `rollupOptions.input`):
+
+- **`index.html`** → `src/main.ts` — Full app (project browser + session list + conversation + overlays). Used by `thinkt serve` and the VS Code "Thinkt Web" hosted panel.
+- **`conversation.html`** → `src/conversation.ts` — Standalone conversation viewer for a single session. Mounts only `ConversationView`. Used by the VS Code extension (`ConversationPanel`) which passes `token` and `session_path` via URL fragment. No sidebar, no project browser, no settings overlay.
+
+Both produce separate JS bundles in `dist/`.
+
 ## File Layout
 
 - `src/main.ts`
@@ -49,6 +58,11 @@ npm run i18n         # Extract + compile translations
   - Configures API client from runtime config
   - Wires global search and settings overlays
   - Supports startup deep-link session loading (`getInitialSessionTarget`)
+- `src/conversation.ts`
+  - Standalone entry point for single-session conversation viewing
+  - Inits i18n, reads token/session_path from URL fragment via `config.ts`
+  - Configures API client, creates `ConversationView`, streams entries progressively
+  - Wires resume support based on source capabilities
 - `src/config.ts`
   - API base URL resolution (`api-url` query, globals/meta/env fallback)
   - Auth token resolution (`#token` preferred, `?token` fallback)

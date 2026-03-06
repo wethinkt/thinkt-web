@@ -43,6 +43,13 @@ const apiClient = createApiClient({ baseUrl: 'http://localhost:8784' });
 const response = await apiClient.getProjects(); // returns snake_case types
 ```
 
+## Entry Points
+
+The project has two HTML entry points, both built by Vite:
+
+- **`index.html`** → `src/main.ts` — Full app with project browser, session list, conversation view, search, and settings. Used by `thinkt serve` and the VS Code "Thinkt Web" panel.
+- **`conversation.html`** → `src/conversation.ts` — Lightweight page that mounts only `ConversationView` for a single session. Used by the VS Code extension's conversation panel (`ConversationPanel`). Reads `token` and `session_path` from the URL fragment.
+
 ## UI Components
 
 ### ProjectBrowser
